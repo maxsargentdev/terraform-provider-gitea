@@ -15,8 +15,12 @@ tfplugingen-openapi generate \
     --config generator_config.yaml \
     --output ./provider_code_spec.json openapi_3.json
 
-tfplugingen-framework generate all \
+tfplugingen-framework generate resources \
     --input provider_code_spec.json \
-    --output ./go
+    --output $REPO_ROOT/internal
+
+tfplugingen-framework generate data-sources \
+    --input provider_code_spec.json \
+    --output $REPO_ROOT/internal
 
 popd

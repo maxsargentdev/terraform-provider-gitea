@@ -9,3 +9,16 @@ A terraform provider for gitea generated from its openAPI spec.
 3 - Generate: `./hack/generate.sh <version>` e.g. `./hack/generate.sh 1.25.3`
 
 The result of this is code we can use in the provider.
+
+## .terraformrc
+
+C:\Users\<USER>\go\bin
+
+~~~
+provider_installation {
+dev_overrides {
+"hashicorp.com/maxsargentdev/gitea" = "C:\Users\SargentM\go\bin"
+}
+direct {}
+}
+~~~
