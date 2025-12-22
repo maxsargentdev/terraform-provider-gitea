@@ -1,7 +1,7 @@
 #!/bin/bash
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
-pushd $REPO_ROOT/$1
+pushd $REPO_ROOT/openapi/$1
 
 docker run --rm -v "$PWD:/local" openapitools/openapi-generator-cli generate -i /local/openapi_2.yaml -g openapi -o /local/tmp
 
