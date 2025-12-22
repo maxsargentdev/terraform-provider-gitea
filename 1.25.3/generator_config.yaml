@@ -1,0 +1,14 @@
+provider:
+  name: gitea
+
+resources:
+
+data_sources:
+  user:
+    read:
+      path: /users/{username}
+      method: GET
+    schema:
+      attributes:
+        aliases:
+          username: id
