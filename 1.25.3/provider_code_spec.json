@@ -1,0 +1,164 @@
+{
+	"datasources": [
+		{
+			"name": "user",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "username of the user whose data is to be listed"
+						}
+					},
+					{
+						"name": "active",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Is user active"
+						}
+					},
+					{
+						"name": "avatar_url",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "URL to the user's avatar"
+						}
+					},
+					{
+						"name": "created",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "the user's description"
+						}
+					},
+					{
+						"name": "email",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "followers_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "user counts"
+						}
+					},
+					{
+						"name": "following_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "full_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "the user's full name"
+						}
+					},
+					{
+						"name": "html_url",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "URL to the user's gitea page"
+						}
+					},
+					{
+						"name": "is_admin",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Is the user an administrator"
+						}
+					},
+					{
+						"name": "language",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "User locale"
+						}
+					},
+					{
+						"name": "last_login",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "location",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "the user's location"
+						}
+					},
+					{
+						"name": "login",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "login of the user, same as `username`"
+						}
+					},
+					{
+						"name": "login_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "identifier of the user, provided by the external authenticator (if configured)"
+						}
+					},
+					{
+						"name": "prohibit_login",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Is user login prohibited"
+						}
+					},
+					{
+						"name": "restricted",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Is user restricted"
+						}
+					},
+					{
+						"name": "source_id",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The ID of the user's Authentication Source"
+						}
+					},
+					{
+						"name": "starred_repos_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "visibility",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "User visibility level option: public, limited, private"
+						}
+					},
+					{
+						"name": "website",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "the user's website"
+						}
+					}
+				]
+			}
+		}
+	],
+	"provider": {
+		"name": "gitea"
+	},
+	"version": "0.1"
+}

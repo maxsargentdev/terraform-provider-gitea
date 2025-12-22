@@ -9,12 +9,14 @@ mv tmp/openapi.json ./openapi_3.json
 
 rm -rf tmp
 
+sed -i 's|#/definitions/|#/components/schemas/|g' openapi_3.json
+
 tfplugingen-openapi generate \
     --config generator_config.yaml \
     --output ./provider_code_spec.json openapi_3.json
 
 tfplugingen-framework generate all \
     --input provider_code_spec.json \
-    --output ./test
+    --output ./go
 
 popd
