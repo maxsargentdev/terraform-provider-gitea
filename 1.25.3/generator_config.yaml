@@ -2,6 +2,23 @@ provider:
   name: gitea
 
 resources:
+  user:
+    create:
+      path: /admin/users
+      method: POST
+    read:
+      path: /users/{username}
+      method: GET
+    update:
+      path: /admin/users/{username}
+      method: PATCH
+    delete:
+      path: /admin/users/{username}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          username: id
 
 data_sources:
   user:
