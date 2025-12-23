@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"terraform-provider-gitea/internal/resource_token"
 )
@@ -29,11 +31,22 @@ func (r *tokenResource) Metadata(_ context.Context, req resource.MetadataRequest
 func (r *tokenResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	baseSchema := resource_token.TokenResourceSchema(ctx)
 	
-	// Make username required
+	// Make username required and force replacement on change
 	baseSchema.Attributes["username"] = schema.StringAttribute{
 		Required:            true,
 		Description:         "The username of the user for whom the token is created",
 		MarkdownDescription: "The username of the user for whom the token is created",
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
+		},
+	}
+	
+	// Add RequiresReplace to name (tokens can't be updated)
+	if nameAttr, ok := baseSchema.Attributes["name"].(schema.StringAttribute); ok {
+		nameAttr.PlanModifiers = []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
+		}
+		baseSchema.Attributes["name"] = nameAttr
 	}
 	
 	// Make sha1 sensitive
@@ -150,17 +163,11 @@ func (r *tokenResource) Read(ctx context.Context, req resource.ReadRequest, resp
 }
 
 func (r *tokenResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan resource_token.TokenModel
-	
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	
-	// Tokens cannot be updated - force recreation
+	// This should never be called because all attributes have RequiresReplace plan modifiers
+	// Terraform will automatically use delete+create pattern instead of update
 	resp.Diagnostics.AddError(
 		"Update Not Supported",
-		"Tokens cannot be updated. Terraform will recreate the resource.",
+		"Tokens cannot be updated and should trigger replacement. This is a provider bug.",
 	)
 }
 

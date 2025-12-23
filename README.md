@@ -34,6 +34,8 @@ sed -i 's|#/definitions/|#/components/schemas/|g' openapi_3.json
 
 We had to `go mod vendor` the gitea SDK and make some changes to support units_map to allow the correct setting of permissions.
 
+The modifications are committed directly to the vendored code in `vendor/code.gitea.io/sdk/gitea/org_team.go`.
+
 ## Priorities
 
 I am aiming to use this to replace my own usage of that provider so will start by recreating the following resources:

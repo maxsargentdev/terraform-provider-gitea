@@ -127,12 +127,12 @@ type CreateTeamOption struct {
 	CanCreateOrgRepo        bool              `json:"can_create_org_repo"`
 	IncludesAllRepositories bool              `json:"includes_all_repositories"`
 	Units                   []RepoUnitType    `json:"units"`
-	UnitsMap                map[string]string `json:"units_map,omitempty"`
+	UnitsMap                map[string]string `json:"units_map"`
 }
 
 // Validate the CreateTeamOption struct
 func (opt *CreateTeamOption) Validate() error {
-	// When units_map is specified, permission can be empty (unit-based permissions)
+	// Skip permission validation if UnitsMap is specified (unit-based permissions)
 	if len(opt.UnitsMap) == 0 {
 		if opt.Permission == AccessModeOwner {
 			opt.Permission = AccessModeAdmin
@@ -177,12 +177,12 @@ type EditTeamOption struct {
 	CanCreateOrgRepo        *bool             `json:"can_create_org_repo"`
 	IncludesAllRepositories *bool             `json:"includes_all_repositories"`
 	Units                   []RepoUnitType    `json:"units"`
-	UnitsMap                map[string]string `json:"units_map,omitempty"`
+	UnitsMap                map[string]string `json:"units_map"`
 }
 
 // Validate the EditTeamOption struct
 func (opt *EditTeamOption) Validate() error {
-	// When units_map is specified, permission can be empty (unit-based permissions)
+	// Skip permission validation if UnitsMap is specified (unit-based permissions)
 	if len(opt.UnitsMap) == 0 {
 		if opt.Permission == AccessModeOwner {
 			opt.Permission = AccessModeAdmin
