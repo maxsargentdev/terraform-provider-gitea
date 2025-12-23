@@ -3,13 +3,13 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 
 pushd $REPO_ROOT/openapi/$1
 
-docker run --rm -v "$PWD:/local" openapitools/openapi-generator-cli generate -i /local/openapi_2.yaml -g openapi -o /local/tmp
+# docker run --rm -v "$PWD:/local" openapitools/openapi-generator-cli generate -i /local/openapi_2.yaml -g openapi -o /local/tmp
 
-mv tmp/openapi.json ./openapi_3.json
+# mv tmp/openapi.json ./openapi_3.json
 
-rm -rf tmp
+# rm -rf tmp
 
-sed -i 's|#/definitions/|#/components/schemas/|g' openapi_3.json
+# sed -i 's|#/definitions/|#/components/schemas/|g' openapi_3.json
 
 tfplugingen-openapi generate \
     --config generator_config.yaml \

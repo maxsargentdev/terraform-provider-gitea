@@ -10,9 +10,9 @@
     "version" : "1.25.3"
   },
   "servers" : [ {
-    "url" : "https://https://gitea.com/api/v1"
+    "url" : "https://gitea.com/api/v1"
   }, {
-    "url" : "http://https://gitea.com/api/v1"
+    "url" : "http://gitea.com/api/v1"
   } ],
   "security" : [ {
     "BasicAuth" : [ ]
