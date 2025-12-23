@@ -1,6 +1,262 @@
 {
 	"datasources": [
 		{
+			"name": "branch_protection",
+			"schema": {
+				"attributes": [
+					{
+						"name": "owner",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "owner of the repo"
+						}
+					},
+					{
+						"name": "repo",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "name of the repo"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "name of protected branch"
+						}
+					},
+					{
+						"name": "approvals_whitelist_teams",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "approvals_whitelist_username",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "block_admin_merge_override",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "block_on_official_review_requests",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "block_on_outdated_branch",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "block_on_rejected_reviews",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "branch_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Deprecated: true"
+						}
+					},
+					{
+						"name": "created_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "dismiss_stale_approvals",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_approvals_whitelist",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_force_push",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_force_push_allowlist",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_merge_whitelist",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_push",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_push_whitelist",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_status_check",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "force_push_allowlist_deploy_keys",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "force_push_allowlist_teams",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "force_push_allowlist_usernames",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "ignore_stale_approvals",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "merge_whitelist_teams",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "merge_whitelist_usernames",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "priority",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Priority is the priority of this branch protection rule"
+						}
+					},
+					{
+						"name": "protected_file_patterns",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "push_whitelist_deploy_keys",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "push_whitelist_teams",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "push_whitelist_usernames",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "require_signed_commits",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "required_approvals",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "rule_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "RuleName is the name of the branch protection rule"
+						}
+					},
+					{
+						"name": "status_check_contexts",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "unprotected_file_patterns",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "updated_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "org",
 			"schema": {
 				"attributes": [
@@ -1218,6 +1474,262 @@
 		"name": "gitea"
 	},
 	"resources": [
+		{
+			"name": "branch_protection",
+			"schema": {
+				"attributes": [
+					{
+						"name": "approvals_whitelist_teams",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "approvals_whitelist_username",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "block_admin_merge_override",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "block_on_official_review_requests",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "block_on_outdated_branch",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "block_on_rejected_reviews",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "branch_name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Deprecated: true"
+						}
+					},
+					{
+						"name": "dismiss_stale_approvals",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_approvals_whitelist",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_force_push",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_force_push_allowlist",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_merge_whitelist",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_push",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_push_whitelist",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_status_check",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "force_push_allowlist_deploy_keys",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "force_push_allowlist_teams",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "force_push_allowlist_usernames",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "ignore_stale_approvals",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "merge_whitelist_teams",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "merge_whitelist_usernames",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "priority",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Priority is the priority of this branch protection rule"
+						}
+					},
+					{
+						"name": "protected_file_patterns",
+						"string": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "push_whitelist_deploy_keys",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "push_whitelist_teams",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "push_whitelist_usernames",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "require_signed_commits",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "required_approvals",
+						"int64": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "rule_name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "RuleName is the name of the branch protection rule"
+						}
+					},
+					{
+						"name": "status_check_contexts",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "unprotected_file_patterns",
+						"string": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "created_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "updated_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "owner",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "owner of the repo"
+						}
+					},
+					{
+						"name": "repo",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "name of the repo"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "name of protected branch"
+						}
+					}
+				]
+			}
+		},
 		{
 			"name": "org",
 			"schema": {

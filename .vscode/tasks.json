@@ -20,7 +20,7 @@
 		{
 			"label": "Clean Gitea",
 			"type": "shell",
-			"command": "docker compose down -v",
+			"command": "docker compose down -v; Remove-Item terraform.tfstate*",
 			"options": {
 				"cwd": "${workspaceFolder}/test"
 			}

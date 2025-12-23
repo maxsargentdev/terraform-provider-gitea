@@ -58,6 +58,24 @@ resources:
       ignores:
         - parent
 
+  branch_protection:
+    create:
+      path: /repos/{owner}/{repo}/branch_protections
+      method: POST
+    read:
+      path: /repos/{owner}/{repo}/branch_protections/{name}
+      method: GET
+    update:
+      path: /repos/{owner}/{repo}/branch_protections/{name}
+      method: PATCH
+    delete:
+      path: /repos/{owner}/{repo}/branch_protections/{name}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          branch_name: id
+
 data_sources:
   user:
     read:
@@ -87,3 +105,12 @@ data_sources:
           name: id
       ignores:
         - parent
+
+  branch_protection:
+    read:
+      path: /repos/{owner}/{repo}/branch_protections/{name}
+      method: GET
+    schema:
+      attributes:
+        aliases:
+          branch_name: id
