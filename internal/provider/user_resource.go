@@ -17,6 +17,40 @@ func NewUserResource() resource.Resource {
 	return &userResource{}
 }
 
+// Helper function to map Gitea User to Terraform model
+func mapUserToModel(user *gitea.User, model *resource_user.UserModel) {
+	model.Id = types.Int64Value(user.ID)
+	model.Username = types.StringValue(user.UserName)
+	model.Email = types.StringValue(user.Email)
+	model.FullName = types.StringValue(user.FullName)
+	model.AvatarUrl = types.StringValue(user.AvatarURL)
+	model.IsAdmin = types.BoolValue(user.IsAdmin)
+	model.Active = types.BoolValue(user.IsActive)
+	model.Description = types.StringValue(user.Description)
+	model.Location = types.StringValue(user.Location)
+	model.Website = types.StringValue(user.Website)
+	model.Language = types.StringValue(user.Language)
+	model.Visibility = types.StringValue(string(user.Visibility))
+	model.Created = types.StringValue(user.Created.String())
+	model.LastLogin = types.StringValue(user.LastLogin.String())
+	model.ProhibitLogin = types.BoolValue(user.ProhibitLogin)
+	model.Restricted = types.BoolValue(user.Restricted)
+	model.HtmlUrl = types.StringValue("")
+	model.Login = types.StringValue(user.UserName)
+	if user.LoginName != "" {
+		model.LoginName = types.StringValue(user.LoginName)
+	} else if model.LoginName.IsNull() || model.LoginName.IsUnknown() {
+		model.LoginName = types.StringValue("empty")
+	}
+	model.SourceId = types.Int64Value(user.SourceID)
+	model.FollowersCount = types.Int64Null()
+	model.FollowingCount = types.Int64Null()
+	model.StarredReposCount = types.Int64Null()
+	model.SendNotify = types.BoolNull()
+	model.MustChangePassword = types.BoolNull()
+	model.CreatedAt = types.StringNull()
+}
+
 type userResource struct {
 	client *gitea.Client
 }
@@ -76,36 +110,7 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	// Map response to model
-	data.Id = types.Int64Value(user.ID)
-	data.Username = types.StringValue(user.UserName)
-	data.Email = types.StringValue(user.Email)
-	data.FullName = types.StringValue(user.FullName)
-	data.AvatarUrl = types.StringValue(user.AvatarURL)
-	data.IsAdmin = types.BoolValue(user.IsAdmin)
-	data.Active = types.BoolValue(user.IsActive)
-	data.Description = types.StringValue(user.Description)
-	data.Location = types.StringValue(user.Location)
-	data.Website = types.StringValue(user.Website)
-	data.Language = types.StringValue(user.Language)
-	data.Visibility = types.StringValue(string(user.Visibility))
-	data.Created = types.StringValue(user.Created.String())
-	data.LastLogin = types.StringValue(user.LastLogin.String())
-	data.ProhibitLogin = types.BoolValue(user.ProhibitLogin)
-	data.Restricted = types.BoolValue(user.Restricted)
-	data.HtmlUrl = types.StringValue("")
-	data.Login = types.StringValue(user.UserName)
-	if user.LoginName != "" {
-		data.LoginName = types.StringValue(user.LoginName)
-	} else if data.LoginName.IsNull() || data.LoginName.IsUnknown() {
-		data.LoginName = types.StringValue("empty")
-	}
-	data.SourceId = types.Int64Value(user.SourceID)
-	data.FollowersCount = types.Int64Null()
-	data.FollowingCount = types.Int64Null()
-	data.StarredReposCount = types.Int64Null()
-	data.SendNotify = types.BoolNull()
-	data.MustChangePassword = types.BoolNull()
-	data.CreatedAt = types.StringNull()
+	mapUserToModel(user, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -129,36 +134,7 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Map response to model
-	data.Id = types.Int64Value(user.ID)
-	data.Username = types.StringValue(user.UserName)
-	data.Email = types.StringValue(user.Email)
-	data.FullName = types.StringValue(user.FullName)
-	data.AvatarUrl = types.StringValue(user.AvatarURL)
-	data.IsAdmin = types.BoolValue(user.IsAdmin)
-	data.Active = types.BoolValue(user.IsActive)
-	data.Description = types.StringValue(user.Description)
-	data.Location = types.StringValue(user.Location)
-	data.Website = types.StringValue(user.Website)
-	data.Language = types.StringValue(user.Language)
-	data.Visibility = types.StringValue(string(user.Visibility))
-	data.Created = types.StringValue(user.Created.String())
-	data.LastLogin = types.StringValue(user.LastLogin.String())
-	data.ProhibitLogin = types.BoolValue(user.ProhibitLogin)
-	data.Restricted = types.BoolValue(user.Restricted)
-	data.HtmlUrl = types.StringValue("")
-	data.Login = types.StringValue(user.UserName)
-	if user.LoginName != "" {
-		data.LoginName = types.StringValue(user.LoginName)
-	} else if data.LoginName.IsNull() || data.LoginName.IsUnknown() {
-		data.LoginName = types.StringValue("empty")
-	}
-	data.SourceId = types.Int64Value(user.SourceID)
-	data.FollowersCount = types.Int64Null()
-	data.FollowingCount = types.Int64Null()
-	data.StarredReposCount = types.Int64Null()
-	data.SendNotify = types.BoolNull()
-	data.MustChangePassword = types.BoolNull()
-	data.CreatedAt = types.StringNull()
+	mapUserToModel(user, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

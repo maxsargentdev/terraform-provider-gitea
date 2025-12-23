@@ -20,6 +20,32 @@ func NewRepositoryDataSource() datasource.DataSource {
 	return &repositoryDataSource{}
 }
 
+// Helper function to map Gitea Repository to Terraform data source model
+func mapRepositoryToDataSourceModel(repo *gitea.Repository, model *datasource_repository.RepositoryModel) {
+	model.Id = types.Int64Value(repo.ID)
+	model.Name = types.StringValue(repo.Name)
+	model.FullName = types.StringValue(repo.FullName)
+	model.Description = types.StringValue(repo.Description)
+	model.Private = types.BoolValue(repo.Private)
+	model.DefaultBranch = types.StringValue(repo.DefaultBranch)
+	model.Website = types.StringValue(repo.Website)
+	model.HtmlUrl = types.StringValue(repo.HTMLURL)
+	model.CloneUrl = types.StringValue(repo.CloneURL)
+	model.SshUrl = types.StringValue(repo.SSHURL)
+	model.Empty = types.BoolValue(repo.Empty)
+	model.Fork = types.BoolValue(repo.Fork)
+	model.Mirror = types.BoolValue(repo.Mirror)
+	model.Size = types.Int64Value(int64(repo.Size))
+	model.Archived = types.BoolValue(repo.Archived)
+	model.StarsCount = types.Int64Value(int64(repo.Stars))
+	model.WatchersCount = types.Int64Value(int64(repo.Watchers))
+	model.ForksCount = types.Int64Value(int64(repo.Forks))
+	model.OpenIssuesCount = types.Int64Value(int64(repo.OpenIssues))
+	model.AvatarUrl = types.StringValue(repo.AvatarURL)
+	model.Template = types.BoolValue(repo.Template)
+	model.Internal = types.BoolValue(repo.Internal)
+}
+
 type repositoryDataSource struct {
 	client *gitea.Client
 }
@@ -91,12 +117,7 @@ func (d *repositoryDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	// Map response to data
-	data.Id = types.Int64Value(repo.ID)
-	data.Name = types.StringValue(repo.Name)
-	data.FullName = types.StringValue(repo.FullName)
-	data.Description = types.StringValue(repo.Description)
-	data.Private = types.BoolValue(repo.Private)
-	data.DefaultBranch = types.StringValue(repo.DefaultBranch)
+	mapRepositoryToDataSourceModel(repo, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

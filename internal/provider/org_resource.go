@@ -17,6 +17,22 @@ func NewOrgResource() resource.Resource {
 	return &orgResource{}
 }
 
+// Helper function to map Gitea Organization to Terraform model
+func mapOrgToModel(org *gitea.Organization, model *resource_org.OrgModel) {
+	model.Id = types.Int64Value(org.ID)
+	model.Username = types.StringValue(org.UserName)
+	model.Name = types.StringValue(org.UserName)
+	model.FullName = types.StringValue(org.FullName)
+	model.Description = types.StringValue(org.Description)
+	model.Website = types.StringValue(org.Website)
+	model.Location = types.StringValue(org.Location)
+	model.AvatarUrl = types.StringValue(org.AvatarURL)
+	model.Visibility = types.StringValue(org.Visibility)
+	model.RepoAdminChangeTeamAccess = types.BoolNull()
+	model.Email = types.StringNull()
+	model.Org = types.StringValue(org.UserName)
+}
+
 type orgResource struct {
 	client *gitea.Client
 }
@@ -74,18 +90,7 @@ func (r *orgResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 
 	// Map response to model
-	data.Id = types.Int64Value(org.ID)
-	data.Username = types.StringValue(org.UserName)
-	data.Name = types.StringValue(org.UserName)
-	data.FullName = types.StringValue(org.FullName)
-	data.Description = types.StringValue(org.Description)
-	data.Website = types.StringValue(org.Website)
-	data.Location = types.StringValue(org.Location)
-	data.AvatarUrl = types.StringValue(org.AvatarURL)
-	data.Visibility = types.StringValue(org.Visibility)
-	data.RepoAdminChangeTeamAccess = types.BoolNull()
-	data.Email = types.StringNull()
-	data.Org = types.StringValue(org.UserName)
+	mapOrgToModel(org, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -109,18 +114,7 @@ func (r *orgResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	}
 
 	// Map response to model
-	data.Id = types.Int64Value(org.ID)
-	data.Username = types.StringValue(org.UserName)
-	data.Name = types.StringValue(org.UserName)
-	data.FullName = types.StringValue(org.FullName)
-	data.Description = types.StringValue(org.Description)
-	data.Website = types.StringValue(org.Website)
-	data.Location = types.StringValue(org.Location)
-	data.AvatarUrl = types.StringValue(org.AvatarURL)
-	data.Visibility = types.StringValue(org.Visibility)
-	data.RepoAdminChangeTeamAccess = types.BoolNull()
-	data.Email = types.StringNull()
-	data.Org = types.StringValue(org.UserName)
+	mapOrgToModel(org, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -162,18 +156,7 @@ func (r *orgResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	}
 
 	// Map response to model
-	data.Id = types.Int64Value(org.ID)
-	data.Username = types.StringValue(org.UserName)
-	data.Name = types.StringValue(org.UserName)
-	data.FullName = types.StringValue(org.FullName)
-	data.Description = types.StringValue(org.Description)
-	data.Website = types.StringValue(org.Website)
-	data.Location = types.StringValue(org.Location)
-	data.AvatarUrl = types.StringValue(org.AvatarURL)
-	data.Visibility = types.StringValue(org.Visibility)
-	data.RepoAdminChangeTeamAccess = types.BoolNull()
-	data.Email = types.StringNull()
-	data.Org = types.StringValue(org.UserName)
+	mapOrgToModel(org, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -17,6 +17,22 @@ func NewOrgDataSource() datasource.DataSource {
 	return &orgDataSource{}
 }
 
+// Helper function to map Gitea Organization to Terraform data source model
+func mapOrgToDataSourceModel(org *gitea.Organization, model *datasource_org.OrgModel) {
+	model.Id = types.Int64Value(org.ID)
+	model.Org = types.StringValue(org.UserName)
+	model.Username = types.StringValue(org.UserName)
+	model.Name = types.StringValue(org.UserName)
+	model.FullName = types.StringValue(org.FullName)
+	model.Description = types.StringValue(org.Description)
+	model.Website = types.StringValue(org.Website)
+	model.Location = types.StringValue(org.Location)
+	model.AvatarUrl = types.StringValue(org.AvatarURL)
+	model.Visibility = types.StringValue(org.Visibility)
+	model.RepoAdminChangeTeamAccess = types.BoolNull()
+	model.Email = types.StringNull()
+}
+
 type orgDataSource struct {
 	client *gitea.Client
 }
@@ -68,18 +84,7 @@ func (d *orgDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	}
 
 	// Map response to model
-	data.Id = types.Int64Value(org.ID)
-	data.Org = types.StringValue(org.UserName)
-	data.Username = types.StringValue(org.UserName)
-	data.Name = types.StringValue(org.UserName)
-	data.FullName = types.StringValue(org.FullName)
-	data.Description = types.StringValue(org.Description)
-	data.Website = types.StringValue(org.Website)
-	data.Location = types.StringValue(org.Location)
-	data.AvatarUrl = types.StringValue(org.AvatarURL)
-	data.Visibility = types.StringValue(org.Visibility)
-	data.RepoAdminChangeTeamAccess = types.BoolNull()
-	data.Email = types.StringNull()
+	mapOrgToDataSourceModel(org, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"terraform-provider-gitea/internal/datasource_branch_protection"
+
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"terraform-provider-gitea/internal/datasource_branch_protection"
 )
 
 var (

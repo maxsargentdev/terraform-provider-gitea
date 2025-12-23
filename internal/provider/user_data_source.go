@@ -17,6 +17,36 @@ func NewUserDataSource() datasource.DataSource {
 	return &userDataSource{}
 }
 
+// Helper function to map Gitea User to Terraform data source model
+func mapUserToDataSourceModel(user *gitea.User, model *datasource_user.UserModel) {
+	model.Id = types.StringValue(user.UserName)
+	model.Login = types.StringValue(user.UserName)
+	model.Email = types.StringValue(user.Email)
+	model.FullName = types.StringValue(user.FullName)
+	model.AvatarUrl = types.StringValue(user.AvatarURL)
+	model.IsAdmin = types.BoolValue(user.IsAdmin)
+	model.Active = types.BoolValue(user.IsActive)
+	model.Description = types.StringValue(user.Description)
+	model.Location = types.StringValue(user.Location)
+	model.Website = types.StringValue(user.Website)
+	model.Language = types.StringValue(user.Language)
+	model.Visibility = types.StringValue(string(user.Visibility))
+	model.Created = types.StringValue(user.Created.String())
+	model.LastLogin = types.StringValue(user.LastLogin.String())
+	model.ProhibitLogin = types.BoolValue(user.ProhibitLogin)
+	model.Restricted = types.BoolValue(user.Restricted)
+	model.HtmlUrl = types.StringValue("")
+	if user.LoginName != "" {
+		model.LoginName = types.StringValue(user.LoginName)
+	} else {
+		model.LoginName = types.StringNull()
+	}
+	model.SourceId = types.Int64Value(user.SourceID)
+	model.FollowersCount = types.Int64Null()
+	model.FollowingCount = types.Int64Null()
+	model.StarredReposCount = types.Int64Null()
+}
+
 type userDataSource struct {
 	client *gitea.Client
 }
@@ -68,23 +98,7 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	// Map response to model
-	data.Id = types.StringValue(user.UserName)
-	data.Login = types.StringValue(user.UserName)
-	data.Email = types.StringValue(user.Email)
-	data.FullName = types.StringValue(user.FullName)
-	data.AvatarUrl = types.StringValue(user.AvatarURL)
-	data.IsAdmin = types.BoolValue(user.IsAdmin)
-	data.Active = types.BoolValue(user.IsActive)
-	data.Description = types.StringValue(user.Description)
-	data.Location = types.StringValue(user.Location)
-	data.Website = types.StringValue(user.Website)
-	data.Language = types.StringValue(user.Language)
-	data.Visibility = types.StringValue(string(user.Visibility))
-	data.Created = types.StringValue(user.Created.String())
-	data.LastLogin = types.StringValue(user.LastLogin.String())
-	data.ProhibitLogin = types.BoolValue(user.ProhibitLogin)
-	data.Restricted = types.BoolValue(user.Restricted)
-	data.HtmlUrl = types.StringValue("")
+	mapUserToDataSourceModel(user, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
