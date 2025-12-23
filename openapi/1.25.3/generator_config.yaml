@@ -108,6 +108,20 @@ resources:
       attributes:
         aliases:
           id: id
+  team_membership:
+    create:
+      path: /teams/{id}/members/{username}
+      method: PUT
+    read:
+      path: /teams/{id}/members/{username}
+      method: GET
+    delete:
+      path: /teams/{id}/members/{username}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          id: id
 
 data_sources:
   user:

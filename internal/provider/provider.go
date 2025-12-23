@@ -139,5 +139,6 @@ func (p *giteaProvider) Resources(ctx context.Context) []func() resource.Resourc
 		NewBranchProtectionResource,
 		NewTeamResource,
 		NewTokenResource,
+		NewTeamMembershipResource,
 	}
 }

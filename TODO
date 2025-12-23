@@ -1,0 +1,3 @@
+- use a generated schema and data model for resource_team_membership and datasource_team_membership
+- review all generated code and create better tests
+- setup resource imports

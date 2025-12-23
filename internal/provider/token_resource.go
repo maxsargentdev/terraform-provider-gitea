@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"terraform-provider-gitea/internal/resource_token"
+
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -11,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"terraform-provider-gitea/internal/resource_token"
 )
 
 var _ resource.Resource = &tokenResource{}
@@ -30,7 +31,7 @@ func (r *tokenResource) Metadata(_ context.Context, req resource.MetadataRequest
 
 func (r *tokenResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	baseSchema := resource_token.TokenResourceSchema(ctx)
-	
+
 	// Make username required and force replacement on change
 	baseSchema.Attributes["username"] = schema.StringAttribute{
 		Required:            true,
@@ -40,7 +41,7 @@ func (r *tokenResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
-	
+
 	// Add RequiresReplace to name (tokens can't be updated)
 	if nameAttr, ok := baseSchema.Attributes["name"].(schema.StringAttribute); ok {
 		nameAttr.PlanModifiers = []planmodifier.String{
@@ -48,13 +49,13 @@ func (r *tokenResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		}
 		baseSchema.Attributes["name"] = nameAttr
 	}
-	
+
 	// Make sha1 sensitive
 	if sha1Attr, ok := baseSchema.Attributes["sha1"].(schema.StringAttribute); ok {
 		sha1Attr.Sensitive = true
 		baseSchema.Attributes["sha1"] = sha1Attr
 	}
-	
+
 	resp.Schema = baseSchema
 }
 
@@ -82,7 +83,7 @@ func (r *tokenResource) Create(ctx context.Context, req resource.CreateRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	
+
 	opts := gitea.CreateAccessTokenOption{
 		Name: plan.Name.ValueString(),
 	}
@@ -110,9 +111,9 @@ func (r *tokenResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	// Save the original scopes from plan to preserve order
 	originalScopes := plan.Scopes
-	
+
 	mapTokenToModel(token, &plan)
-	
+
 	// Restore the scopes from plan to maintain order consistency
 	// (API might return them in different order but same content)
 	if !originalScopes.IsNull() && !originalScopes.IsUnknown() {
@@ -196,13 +197,13 @@ func mapTokenToModel(token *gitea.AccessToken, model *resource_token.TokenModel)
 	model.Name = types.StringValue(token.Name)
 	model.Sha1 = types.StringValue(token.Token)
 	model.TokenLastEight = types.StringValue(token.TokenLastEight)
-	
+
 	if !token.Created.IsZero() {
 		model.CreatedAt = types.StringValue(token.Created.String())
 	} else {
 		model.CreatedAt = types.StringNull()
 	}
-	
+
 	if !token.Updated.IsZero() {
 		model.LastUsedAt = types.StringValue(token.Updated.String())
 	} else {
@@ -221,7 +222,8 @@ func mapTokenToModel(token *gitea.AccessToken, model *resource_token.TokenModel)
 		model.Scopes = types.ListValueMust(types.StringType, attrValues)
 	} else {
 		model.Scopes = types.ListNull(types.StringType)
-	}	
+	}
 	// Set pagination fields to null (not used in resource)
 	model.Page = types.Int64Null()
-	model.Limit = types.Int64Null()}
+	model.Limit = types.Int64Null()
+}
