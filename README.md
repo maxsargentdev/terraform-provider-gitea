@@ -12,9 +12,9 @@ Then recruited claude to vibe code and test against terraform / giteas API.
 
 ## Generating schemas from openapi spec
 
-1 - Download v2 oas yaml schema for gitea from `https://docs.gitea.com/api/<version>` e.g. `https://docs.gitea.com/api/1.25` and save in a versioned folder with the name `openapi_2.yaml`
-2 - Convert that v2 oas schema into v3 oas schema
-2 - Write or reuse `generator_config.yaml` in that directory to map the gitea API
+* 1 - Download v2 oas yaml schema for gitea from `https://docs.gitea.com/api/<version>` e.g. `https://docs.gitea.com/api/1.25` and save in a versioned folder with the name `openapi_2.yaml`
+* 2 - Convert that v2 oas schema into v3 oas schema
+* 3 - Write or reuse `generator_config.yaml` in that directory to map the gitea API
 
 The result of this is code we can use in the provider which makes for less work.
 
