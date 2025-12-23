@@ -2,16 +2,27 @@
 
 A terraform provider for gitea generated from its openAPI spec an alternative to the go-gitea/terraform-provider-gitea provider.
 
-This is also 
+This is heavily vibe coded content!
 
 ## Generating schemas from openapi spec
 
 1 - Download v2 oas yaml schema for gitea from `https://docs.gitea.com/api/<version>` e.g. `https://docs.gitea.com/api/1.25` and save in a versioned folder with the name `openapi_2.yaml`
-2 - Conver that v2 oas schema into v3 oas schema
+2 - Convert that v2 oas schema into v3 oas schema
 2 - Write or reuse `generator_config.yaml` in that directory to map the gitea API
-3 - Generate: `./hack/generate.sh <version>` e.g. `./hack/generate.sh 1.25.3` to output schemas and data model types for Gitea
 
 The result of this is code we can use in the provider which makes for less work.
+
+This is how I setup the initial schema:
+
+~~~bash
+docker run --rm -v "$PWD:/local" openapitools/openapi-generator-cli generate -i /local/openapi_2.yaml -g openapi -o /local/tmp
+
+mv tmp/openapi.json ./openapi_3.json
+
+rm -rf tmp
+
+sed -i 's|#/definitions/|#/components/schemas/|g' openapi_3.json
+~~~
 
 ## Priorities
 

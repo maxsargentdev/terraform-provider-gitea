@@ -69,6 +69,56 @@
 			"label": "Install and Destroy",
 			"dependsOn": ["Go Install", "Terraform Destroy"],
 			"dependsOrder": "sequence"
+		},
+		{
+			"label": "Terraform Cycle",
+			"dependsOn": ["Terraform Plan", "Terraform Apply", "Terraform Destroy"],
+			"dependsOrder": "sequence"
+		},
+		{
+			"label": "Generate Provider Spec",
+			"type": "shell",
+			"command": "tfplugingen-openapi generate --config generator_config.yaml --output ./provider_code_spec.json openapi_3.json",
+			"options": {
+				"cwd": "${workspaceFolder}/openapi/1.25.3"
+			},
+			"group": "build"
+		},
+		{
+			"label": "Generate Resources",
+			"type": "shell",
+			"command": "tfplugingen-framework generate resources --input provider_code_spec.json --output ../../internal",
+			"options": {
+				"cwd": "${workspaceFolder}/openapi/1.25.3"
+			},
+			"group": "build"
+		},
+		{
+			"label": "Generate Data Sources",
+			"type": "shell",
+			"command": "tfplugingen-framework generate data-sources --input provider_code_spec.json --output ../../internal",
+			"options": {
+				"cwd": "${workspaceFolder}/openapi/1.25.3"
+			},
+			"group": "build"
+		},
+		{
+			"label": "Generate All Code",
+			"dependsOn": ["Generate Provider Spec", "Generate Resources", "Generate Data Sources"],
+			"dependsOrder": "sequence",
+			"group": "build"
+		},
+		{
+			"label": "Full Build",
+			"dependsOn": ["Generate All Code", "Go Install"],
+			"dependsOrder": "sequence",
+			"group": "build"
+		},
+		{
+			"label": "Full Test",
+			"dependsOn": ["Generate All Code", "Go Install", "Terraform Cycle"],
+			"dependsOrder": "sequence",
+			"group": "build"
 		}
 	]
 }

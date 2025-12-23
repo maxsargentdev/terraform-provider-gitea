@@ -38,6 +38,26 @@ resources:
         aliases:
           username: id
 
+  repository:
+    create:
+      path: /user/repos
+      method: POST
+    read:
+      path: /repos/{owner}/{repo}
+      method: GET
+    update:
+      path: /repos/{owner}/{repo}
+      method: PATCH
+    delete:
+      path: /repos/{owner}/{repo}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          name: id
+      ignores:
+        - parent
+
 data_sources:
   user:
     read:
@@ -56,3 +76,14 @@ data_sources:
       attributes:
         aliases:
           name: id
+
+  repository:
+    read:
+      path: /repos/{owner}/{repo}
+      method: GET
+    schema:
+      attributes:
+        aliases:
+          name: id
+      ignores:
+        - parent
