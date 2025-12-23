@@ -1,0 +1,66 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Gitea",
+			"type": "shell",
+			"command": "docker compose up -d",
+			"options": {
+				"cwd": "${workspaceFolder}/test"
+			}
+		},
+		{
+			"label": "Stop Gitea",
+			"type": "shell",
+			"command": "docker compose down",
+			"options": {
+				"cwd": "${workspaceFolder}/test"
+			}
+		},
+		{
+			"label": "Go Install",
+			"type": "shell",
+			"command": "go install",
+			"group": "build"
+		},
+		{
+			"label": "Terraform Plan",
+			"type": "shell",
+			"command": "terraform plan",
+			"options": {
+				"cwd": "${workspaceFolder}/test"
+			}
+		},
+		{
+			"label": "Terraform Apply",
+			"type": "shell",
+			"command": "terraform apply -auto-approve",
+			"options": {
+				"cwd": "${workspaceFolder}/test"
+			}
+		},
+		{
+			"label": "Terraform Destroy",
+			"type": "shell",
+			"command": "terraform destroy -auto-approve",
+			"options": {
+				"cwd": "${workspaceFolder}/test"
+			}
+		},
+		{
+			"label": "Install and Plan",
+			"dependsOn": ["Start Gitea", "Go Install", "Terraform Plan"],
+			"dependsOrder": "sequence"
+		},
+		{
+			"label": "Install and Apply",
+			"dependsOn": ["Start Gitea", "Go Install", "Terraform Apply"],
+			"dependsOrder": "sequence"
+		},
+		{
+			"label": "Install and Destroy",
+			"dependsOn": ["Go Install", "Terraform Destroy"],
+			"dependsOrder": "sequence"
+		}
+	]
+}

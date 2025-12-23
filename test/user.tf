@@ -1,20 +1,11 @@
-terraform {
-  required_providers {
-    gitea = {
-      source = "hashicorp.com/maxsargentdev/gitea"
-    }
-  }
-}
-
-provider "gitea" {}
-
 resource "gitea_user" "test_user" {
   username = "test"
   email    = "test@gitea.local"
+  password = "testpassword123"
 }
 
 data "gitea_user" "test_user" {
-  id = "1"
+  id = gitea_user.test_user.username
 }
 
 output "user" {

@@ -31,22 +31,22 @@ type giteaProvider struct {
 }
 
 type giteaProviderModel struct {
-	giteaUsername types.String `tfsdk:"gitea_username"`
-	giteaPassword types.String `tfsdk:"gitea_password"`
-	giteaHostname types.String `tfsdk:"gitea_hostname"`
+	GiteaUsername types.String `tfsdk:"gitea_username"`
+	GiteaPassword types.String `tfsdk:"gitea_password"`
+	GiteaHostname types.String `tfsdk:"gitea_hostname"`
 }
 
 func (p *giteaProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"gitea_username": schema.StringAttribute{
-				Optional: false,
+				Required: true,
 			},
 			"gitea_password": schema.StringAttribute{
-				Optional: false,
+				Required: true,
 			},
 			"gitea_hostname": schema.StringAttribute{
-				Optional: false,
+				Required: true,
 			},
 		},
 	}
@@ -61,16 +61,16 @@ func (p *giteaProvider) Configure(ctx context.Context, req provider.ConfigureReq
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
-	if data.giteaUsername.ValueString() != "" {
-		giteaUsername = data.giteaUsername.ValueString()
+	if data.GiteaUsername.ValueString() != "" {
+		giteaUsername = data.GiteaUsername.ValueString()
 	}
 
-	if data.giteaPassword.ValueString() != "" {
-		giteaPassword = data.giteaPassword.ValueString()
+	if data.GiteaPassword.ValueString() != "" {
+		giteaPassword = data.GiteaPassword.ValueString()
 	}
 
-	if data.giteaHostname.ValueString() != "" {
-		giteaHostname = data.giteaHostname.ValueString()
+	if data.GiteaHostname.ValueString() != "" {
+		giteaHostname = data.GiteaHostname.ValueString()
 	}
 
 	if giteaUsername == "" {
