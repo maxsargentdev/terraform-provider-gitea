@@ -3347,6 +3347,86 @@
 			}
 		},
 		{
+			"name": "token",
+			"schema": {
+				"attributes": [
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The name of the access token"
+						}
+					},
+					{
+						"name": "scopes",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "The scopes granted to this access token"
+						}
+					},
+					{
+						"name": "created_at",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The timestamp when the token was created"
+						}
+					},
+					{
+						"name": "id",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The unique identifier of the access token"
+						}
+					},
+					{
+						"name": "last_used_at",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The timestamp when the token was last used"
+						}
+					},
+					{
+						"name": "sha1",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The SHA1 hash of the access token"
+						}
+					},
+					{
+						"name": "token_last_eight",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The last eight characters of the token"
+						}
+					},
+					{
+						"name": "username",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "username of to user whose access tokens are to be listed"
+						}
+					},
+					{
+						"name": "page",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "page number of results to return (1-based)"
+						}
+					},
+					{
+						"name": "limit",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "page size of results"
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "user",
 			"schema": {
 				"attributes": [

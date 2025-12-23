@@ -94,6 +94,21 @@ resources:
         aliases:
           id: id
 
+  token:
+    create:
+      path: /users/{username}/tokens
+      method: POST
+    read:
+      path: /users/{username}/tokens
+      method: GET
+    delete:
+      path: /users/{username}/tokens/{token}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          id: id
+
 data_sources:
   user:
     read:
