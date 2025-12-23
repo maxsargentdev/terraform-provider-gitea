@@ -76,6 +76,24 @@ resources:
         aliases:
           branch_name: id
 
+  team:
+    create:
+      path: /orgs/{org}/teams
+      method: POST
+    read:
+      path: /teams/{id}
+      method: GET
+    update:
+      path: /teams/{id}
+      method: PATCH
+    delete:
+      path: /teams/{id}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          id: id
+
 data_sources:
   user:
     read:
@@ -114,3 +132,11 @@ data_sources:
       attributes:
         aliases:
           branch_name: id
+  team:
+    read:
+      path: /teams/{id}
+      method: GET
+    schema:
+      attributes:
+        aliases:
+          id: id

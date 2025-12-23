@@ -1314,6 +1314,158 @@
 			}
 		},
 		{
+			"name": "team",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"int64": {
+							"computed_optional_required": "required",
+							"description": "id of the team to get"
+						}
+					},
+					{
+						"name": "can_create_org_repo",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether the team can create repositories in the organization"
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The description of the team"
+						}
+					},
+					{
+						"name": "includes_all_repositories",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether the team has access to all repositories in the organization"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The name of the team"
+						}
+					},
+					{
+						"name": "organization",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "avatar_url",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The URL of the organization's avatar"
+									}
+								},
+								{
+									"name": "description",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The description of the organization"
+									}
+								},
+								{
+									"name": "email",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The email address of the organization"
+									}
+								},
+								{
+									"name": "full_name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The full display name of the organization"
+									}
+								},
+								{
+									"name": "id",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "The unique identifier of the organization"
+									}
+								},
+								{
+									"name": "location",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The location of the organization"
+									}
+								},
+								{
+									"name": "name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The name of the organization"
+									}
+								},
+								{
+									"name": "repo_admin_change_team_access",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Whether repository administrators can change team access"
+									}
+								},
+								{
+									"name": "username",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "username of the organization\ndeprecated"
+									}
+								},
+								{
+									"name": "visibility",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The visibility level of the organization (public, limited, private)"
+									}
+								},
+								{
+									"name": "website",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The website URL of the organization"
+									}
+								}
+							],
+							"description": "Organization represents an organization"
+						}
+					},
+					{
+						"name": "permission",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "units",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "units_map",
+						"map": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					}
+				]
+			}
+		},
+		{
 			"name": "user",
 			"schema": {
 				"attributes": [
@@ -3025,6 +3177,170 @@
 						"string": {
 							"computed_optional_required": "computed_optional",
 							"description": "name of the repo"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "team",
+			"schema": {
+				"attributes": [
+					{
+						"name": "can_create_org_repo",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Whether the team can create repositories in the organization"
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The description of the team"
+						}
+					},
+					{
+						"name": "includes_all_repositories",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Whether the team has access to all repositories in the organization"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The name of the team"
+						}
+					},
+					{
+						"name": "permission",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"read\",\n\"write\",\n\"admin\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "units",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "units_map",
+						"map": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "id",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The unique identifier of the team"
+						}
+					},
+					{
+						"name": "organization",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "avatar_url",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The URL of the organization's avatar"
+									}
+								},
+								{
+									"name": "description",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The description of the organization"
+									}
+								},
+								{
+									"name": "email",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The email address of the organization"
+									}
+								},
+								{
+									"name": "full_name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The full display name of the organization"
+									}
+								},
+								{
+									"name": "id",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "The unique identifier of the organization"
+									}
+								},
+								{
+									"name": "location",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The location of the organization"
+									}
+								},
+								{
+									"name": "name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The name of the organization"
+									}
+								},
+								{
+									"name": "repo_admin_change_team_access",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Whether repository administrators can change team access"
+									}
+								},
+								{
+									"name": "username",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "username of the organization\ndeprecated"
+									}
+								},
+								{
+									"name": "visibility",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The visibility level of the organization (public, limited, private)"
+									}
+								},
+								{
+									"name": "website",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The website URL of the organization"
+									}
+								}
+							],
+							"description": "Organization represents an organization"
 						}
 					}
 				]
