@@ -1,8 +1,14 @@
 # terraform-provider-gitea
 
+⚠️ Vibe coded project !⚠️
+
 A terraform provider for gitea generated from its openAPI spec an alternative to the go-gitea/terraform-provider-gitea provider.
 
-This is heavily vibe coded content!
+First followed documentation on code generation: https://developer.hashicorp.com/terraform/plugin/code-generation
+
+Then setup a basic local development loop with docker compose and some vscode tasks.
+
+Then recruited claude to vibe code and test against terraform / giteas API.
 
 ## Generating schemas from openapi spec
 
@@ -43,7 +49,7 @@ Currently I have worked around issues with the existing provider and the setting
 
 ## .terraformrc
 
-C:\Users\<USER>\go\bin
+`C:\Users\<USER>\go\bin`
 
 ~~~
 provider_installation {
