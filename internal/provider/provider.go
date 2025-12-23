@@ -127,6 +127,7 @@ func (p *giteaProvider) DataSources(ctx context.Context) []func() datasource.Dat
 		NewOrgDataSource,
 		NewRepositoryDataSource,
 		NewBranchProtectionDataSource,
+		NewTeamDataSource,
 	}
 }
 
@@ -136,5 +137,7 @@ func (p *giteaProvider) Resources(ctx context.Context) []func() resource.Resourc
 		NewOrgResource,
 		NewRepositoryResource,
 		NewBranchProtectionResource,
+		NewTeamResource,
+		NewTokenResource,
 	}
 }

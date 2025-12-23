@@ -30,6 +30,10 @@ rm -rf tmp
 sed -i 's|#/definitions/|#/components/schemas/|g' openapi_3.json
 ~~~
 
+## Vendoring
+
+We had to `go mod vendor` the gitea SDK and make some changes to support units_map to allow the correct setting of permissions.
+
 ## Priorities
 
 I am aiming to use this to replace my own usage of that provider so will start by recreating the following resources:
