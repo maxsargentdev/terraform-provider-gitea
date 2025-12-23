@@ -18,6 +18,14 @@
 			}
 		},
 		{
+			"label": "Clean Gitea",
+			"type": "shell",
+			"command": "docker compose down -v",
+			"options": {
+				"cwd": "${workspaceFolder}/test"
+			}
+		},
+		{
 			"label": "Go Install",
 			"type": "shell",
 			"command": "go install",

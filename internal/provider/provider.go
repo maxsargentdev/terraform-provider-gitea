@@ -124,11 +124,13 @@ func (p *giteaProvider) Metadata(ctx context.Context, req provider.MetadataReque
 func (p *giteaProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewUserDataSource,
+		NewOrgDataSource,
 	}
 }
 
 func (p *giteaProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewUserResource,
+		NewOrgResource,
 	}
 }

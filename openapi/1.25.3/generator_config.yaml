@@ -19,6 +19,24 @@ resources:
       attributes:
         aliases:
           username: id
+  
+  org:
+    create:
+      path: /orgs
+      method: POST
+    read:
+      path: /orgs/{org}
+      method: GET
+    update:
+      path: /orgs/{org}
+      method: PATCH
+    delete:
+      path: /orgs/{org}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          username: id
 
 data_sources:
   user:
@@ -29,3 +47,12 @@ data_sources:
       attributes:
         aliases:
           username: id
+  
+  org:
+    read:
+      path: /orgs/{org}
+      method: GET
+    schema:
+      attributes:
+        aliases:
+          name: id
