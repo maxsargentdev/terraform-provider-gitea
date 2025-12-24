@@ -108,20 +108,22 @@ resources:
       attributes:
         aliases:
           id: id
-  team_membership:
-    create:
-      path: /teams/{id}/members/{username}
-      method: PUT
-    read:
-      path: /teams/{id}/members/{username}
-      method: GET
-    delete:
-      path: /teams/{id}/members/{username}
-      method: DELETE
-    schema:
-      attributes:
-        aliases:
-          id: id
+
+  # there is no clean mapping here so we have created it manually in team_resource_gen.go
+  # team_membership:
+  #   create:
+  #     path: /teams/{id}/members/{username} -> returns 204 No Content
+  #     method: PUT
+  #   read:
+  #     path: /teams/{id}/members/{username} -> returns a user object not a membership object
+  #     method: GET
+  #   delete:
+  #     path: /teams/{id}/members/{username}
+  #     method: DELETE
+  #   schema:
+  #     attributes:
+  #       aliases:
+  #         id: id
 
 data_sources:
   user:
@@ -161,6 +163,7 @@ data_sources:
       attributes:
         aliases:
           branch_name: id
+
   team:
     read:
       path: /teams/{id}
