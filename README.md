@@ -4,11 +4,11 @@
 
 A terraform provider for gitea generated from its openAPI spec an alternative to the go-gitea/terraform-provider-gitea provider.
 
-First followed documentation on code generation: https://developer.hashicorp.com/terraform/plugin/code-generation
+First followed documentation on code generation: https://developer.hashicorp.com/terraform/plugin/code-generation.
 
-Then setup a basic local development loop with docker compose and some vscode tasks.
+Then set up a basic local development loop with docker compose and some vscode tasks.
 
-Then recruited claude to vibe code and test against terraform / giteas API.
+Then recruited claude to vibe code and test against terraform / the Gitea API.
 
 ## Generating schemas from openapi spec
 
@@ -18,7 +18,7 @@ Then recruited claude to vibe code and test against terraform / giteas API.
 
 The result of this is code we can use in the provider which makes for less work.
 
-This is how I setup the initial schema:
+This is how I set up the initial schema:
 
 ~~~bash
 docker run --rm -v "$PWD:/local" openapitools/openapi-generator-cli generate -i /local/openapi_2.yaml -g openapi -o /local/tmp
@@ -36,6 +36,8 @@ We had to `go mod vendor` the gitea SDK and make some changes to support units_m
 
 The modifications are committed directly to the vendored code in `vendor/code.gitea.io/sdk/gitea/org_team.go`.
 
+Patch files to any vendored code are in vendor-patch in case claude rewrites anything.
+
 ## Priorities
 
 I am aiming to use this to replace my own usage of that provider so will start by recreating the following resources:
@@ -51,7 +53,7 @@ I am aiming to use this to replace my own usage of that provider so will start b
 
 Aiming to resolve issues with gitea_team permissions that exist in the current provider.
 
-Currently I have worked around issues with the existing provider and the setting of team permissions, as well as missing resources for org level secrets.
+Currently, I have worked around issues with the existing provider and the setting of team permissions, as well as missing resources for org level secrets.
 
 ## .terraformrc
 
