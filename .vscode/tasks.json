@@ -119,6 +119,14 @@
 			"dependsOn": ["Generate All Code", "Go Install", "Terraform Cycle"],
 			"dependsOrder": "sequence",
 			"group": "build"
+		},
+		{
+			"label": "Generate Docs",
+			"type": "shell",
+			"command": "tfplugindocs generate --provider-dir . -provider-name gitea",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
 		}
 	]
 }
