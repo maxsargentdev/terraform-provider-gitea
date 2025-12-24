@@ -55,6 +55,51 @@ Aiming to resolve issues with gitea_team permissions that exist in the current p
 
 Currently, I have worked around issues with the existing provider and the setting of team permissions, as well as missing resources for org level secrets.
 
+## Future Resources
+
+### High Priority
+
+#### Repository Management
+- **gitea_deploy_key** - Deploy keys for repositories (read-only SSH keys)
+- **gitea_repository_collaborator** - Manage repository collaborators with permissions
+- **gitea_repository_webhook** - Repository webhooks (Discord, Slack, etc.)
+- **gitea_repository_label** - Custom labels for issues/PRs
+- **gitea_repository_milestone** - Project milestones
+- **gitea_repository_release** - Manage releases and tags
+- **gitea_tag_protection** - Protect specific tags from deletion/modification
+
+#### User Management
+- **gitea_user_key** - SSH public keys for users
+- **gitea_user_gpg_key** - GPG keys for commit signing
+- **gitea_user_email** - Additional email addresses for users
+
+#### Organization Management
+- **gitea_org_webhook** - Organization-level webhooks
+- **gitea_org_label** - Organization-wide labels
+- **gitea_org_secret** - Organization secrets for actions
+
+#### Actions/CI
+- **gitea_repository_secret** - Repository secrets for Gitea Actions
+- **gitea_repository_variable** - Repository variables for Actions
+- **gitea_org_variable** - Organization variables for Actions
+
+#### Team Management
+- **gitea_team_repository** - Assign repositories to teams with permissions
+
+### Medium Priority
+
+#### Repository Features
+- **gitea_repository_mirror** - Mirror external repositories
+- **gitea_repository_topic** - Repository topics/tags
+- **gitea_repository_transfer** - Transfer repository ownership
+
+#### Advanced Features
+- **gitea_oauth_application** - OAuth2 applications
+- **gitea_cron_task** - Admin cron tasks (data source/trigger)
+
+#### Packages
+- **gitea_package** - Package information (data source only - packages are published via package managers)
+
 ## .terraformrc
 
 `C:\Users\<USER>\go\bin`
