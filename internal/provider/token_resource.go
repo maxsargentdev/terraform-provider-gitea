@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"terraform-provider-gitea/internal/resource_token"
 
@@ -16,6 +17,7 @@ import (
 )
 
 var _ resource.Resource = &tokenResource{}
+var _ resource.ResourceWithImportState = &tokenResource{}
 
 func NewTokenResource() resource.Resource {
 	return &tokenResource{}
@@ -190,6 +192,52 @@ func (r *tokenResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		)
 		return
 	}
+}
+
+func (r *tokenResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	// Import using the token ID
+	tokenID, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Token ID",
+			"Could not parse token ID: "+err.Error(),
+		)
+		return
+	}
+
+	// List all tokens and find the matching one
+	tokens, _, err := r.client.ListAccessTokens(gitea.ListAccessTokensOptions{})
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Importing Token",
+			"Could not list tokens: "+err.Error(),
+		)
+		return
+	}
+
+	var found *gitea.AccessToken
+	for i := range tokens {
+		if tokens[i].ID == tokenID {
+			found = tokens[i]
+			break
+		}
+	}
+
+	if found == nil {
+		resp.Diagnostics.AddError(
+			"Token Not Found",
+			fmt.Sprintf("Could not find token with ID %d", tokenID),
+		)
+		return
+	}
+
+	var data resource_token.TokenModel
+	mapTokenToModel(found, &data)
+
+	// Note: username field won't be populated from import since API doesn't return it
+	data.Username = types.StringNull()
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func mapTokenToModel(token *gitea.AccessToken, model *resource_token.TokenModel) {

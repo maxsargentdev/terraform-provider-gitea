@@ -8,7 +8,6 @@ import (
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -265,13 +264,59 @@ func (r *branchProtectionResource) Delete(ctx context.Context, req resource.Dele
 }
 
 func (r *branchProtectionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	// Import format: "owner/repo/rule_name"
+	id := req.ID
+
+	// Parse owner/repo/rule_name
+	var owner, repo, ruleName string
+	parts := make([]string, 0, 3)
+	lastSlash := 0
+
+	for i, c := range id {
+		if c == '/' {
+			parts = append(parts, id[lastSlash:i])
+			lastSlash = i + 1
+		}
+	}
+	parts = append(parts, id[lastSlash:])
+
+	if len(parts) != 3 {
+		resp.Diagnostics.AddError(
+			"Invalid Import ID",
+			fmt.Sprintf("Import ID must be in format 'owner/repo/rule_name', got: %s", id),
+		)
+		return
+	}
+
+	owner = parts[0]
+	repo = parts[1]
+	ruleName = parts[2]
+
+	// Fetch the branch protection
+	protection, _, err := r.client.GetBranchProtection(owner, repo, ruleName)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Importing Branch Protection",
+			fmt.Sprintf("Could not import branch protection for %s/%s/%s: %s", owner, repo, ruleName, err.Error()),
+		)
+		return
+	}
+
+	var data resource_branch_protection.BranchProtectionModel
+	data.Owner = types.StringValue(owner)
+	data.Repo = types.StringValue(repo)
+	mapBranchProtectionToModel(ctx, protection, &data)
+	// Set branch_name from the API after mapping (to ensure it's correct)
+	data.BranchName = types.StringValue(protection.BranchName)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 // Helper function to map Gitea BranchProtection to Terraform model
 func mapBranchProtectionToModel(ctx context.Context, protection *gitea.BranchProtection, model *resource_branch_protection.BranchProtectionModel) {
 	// Note: owner, repo, and branch_name need to be preserved from the plan/state (not overwritten from API)
 	model.RuleName = types.StringValue(protection.RuleName)
+	// Note: BranchName from API corresponds to the rule name field in the schema, don't overwrite branch_name
 	model.Name = types.StringValue(protection.BranchName)
 	model.EnablePush = types.BoolValue(protection.EnablePush)
 	model.EnablePushWhitelist = types.BoolValue(protection.EnablePushWhitelist)

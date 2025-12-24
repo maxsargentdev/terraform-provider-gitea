@@ -12,6 +12,7 @@ import (
 
 var _ resource.Resource = (*userResource)(nil)
 var _ resource.ResourceWithConfigure = (*userResource)(nil)
+var _ resource.ResourceWithImportState = (*userResource)(nil)
 
 func NewUserResource() resource.Resource {
 	return &userResource{}
@@ -149,9 +150,10 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	// Update user via Gitea API
 	editOpts := gitea.EditUserOption{
-		Email:    data.Email.ValueStringPointer(),
-		FullName: data.FullName.ValueStringPointer(),
-		Active:   data.Active.ValueBoolPointer(),
+		Email:     data.Email.ValueStringPointer(),
+		FullName:  data.FullName.ValueStringPointer(),
+		Active:    data.Active.ValueBoolPointer(),
+		LoginName: data.Username.ValueString(),
 	}
 
 	_, err := r.client.AdminEditUser(data.Username.ValueString(), editOpts)
@@ -162,6 +164,19 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		)
 		return
 	}
+
+	// Read back the user to get updated values
+	user, _, err := r.client.GetUserInfo(data.Username.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading User After Update",
+			"Could not read user "+data.Username.ValueString()+": "+err.Error(),
+		)
+		return
+	}
+
+	// Map response to model
+	mapUserToModel(user, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -183,6 +198,27 @@ func (r *userResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		)
 		return
 	}
+}
+
+func (r *userResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	// Import using the username
+	username := req.ID
+
+	// Fetch the user from Gitea
+	user, _, err := r.client.GetUserInfo(username)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Importing User",
+			"Could not import user "+username+": "+err.Error(),
+		)
+		return
+	}
+
+	// Map to model
+	var data resource_user.UserModel
+	mapUserToModel(user, &data)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 // Removed callGiteaUserResourceAPI - no longer needed

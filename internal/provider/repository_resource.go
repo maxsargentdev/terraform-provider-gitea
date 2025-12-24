@@ -7,7 +7,6 @@ import (
 	"terraform-provider-gitea/internal/resource_repository"
 
 	"code.gitea.io/sdk/gitea"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -319,5 +318,39 @@ func (r *repositoryResource) Delete(ctx context.Context, req resource.DeleteRequ
 }
 
 func (r *repositoryResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	// Import format: "owner/repo"
+	id := req.ID
+
+	// Parse owner/repo
+	var owner, repo string
+	for i, c := range id {
+		if c == '/' {
+			owner = id[:i]
+			repo = id[i+1:]
+			break
+		}
+	}
+
+	if owner == "" || repo == "" {
+		resp.Diagnostics.AddError(
+			"Invalid Import ID",
+			fmt.Sprintf("Import ID must be in format 'owner/repo', got: %s", id),
+		)
+		return
+	}
+
+	// Fetch the repository
+	repository, _, err := r.client.GetRepo(owner, repo)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Importing Repository",
+			fmt.Sprintf("Could not import repository %s/%s: %s", owner, repo, err.Error()),
+		)
+		return
+	}
+
+	var data resource_repository.RepositoryModel
+	mapRepositoryToModel(repository, &data)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
