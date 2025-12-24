@@ -12,6 +12,7 @@ import (
 
 var _ resource.Resource = (*orgResource)(nil)
 var _ resource.ResourceWithConfigure = (*orgResource)(nil)
+var _ resource.ResourceWithImportState = (*orgResource)(nil)
 
 func NewOrgResource() resource.Resource {
 	return &orgResource{}
@@ -178,4 +179,25 @@ func (r *orgResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 		)
 		return
 	}
+}
+
+func (r *orgResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	// Import using the organization username
+	orgName := req.ID
+
+	// Fetch the organization from Gitea
+	org, _, err := r.client.GetOrg(orgName)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Importing Organization",
+			"Could not import organization "+orgName+": "+err.Error(),
+		)
+		return
+	}
+
+	// Map to model
+	var data resource_org.OrgModel
+	mapOrgToModel(org, &data)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
