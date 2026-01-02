@@ -23,9 +23,10 @@ func TestAccTeamMembershipResource(t *testing.T) {
 			},
 			// ImportState testing
 			{
-				ResourceName:      "gitea_team_membership.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:                         "gitea_team_membership.test",
+				ImportState:                          true,
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "team_id",
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
 					rs, ok := s.RootModule().Resources["gitea_team_membership.test"]
 					if !ok {

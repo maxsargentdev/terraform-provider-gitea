@@ -9,6 +9,9 @@ import (
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -31,7 +34,20 @@ func (r *branchProtectionResource) Metadata(_ context.Context, req resource.Meta
 }
 
 func (r *branchProtectionResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_branch_protection.BranchProtectionResourceSchema(ctx)
+	baseSchema := resource_branch_protection.BranchProtectionResourceSchema(ctx)
+
+	// Mark rule_name as requiring replacement (it's the API identifier and can't be changed)
+	baseSchema.Attributes["rule_name"] = schema.StringAttribute{
+		Optional:            true,
+		Computed:            true,
+		Description:         "RuleName is the name of the branch protection rule",
+		MarkdownDescription: "RuleName is the name of the branch protection rule",
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
+		},
+	}
+
+	resp.Schema = baseSchema
 }
 
 func (r *branchProtectionResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -143,8 +159,10 @@ func (r *branchProtectionResource) Read(ctx context.Context, req resource.ReadRe
 
 func (r *branchProtectionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan resource_branch_protection.BranchProtectionModel
+	var state resource_branch_protection.BranchProtectionModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -219,11 +237,11 @@ func (r *branchProtectionResource) Update(ctx context.Context, req resource.Upda
 		editOpts.UnprotectedFilePatterns = &val
 	}
 
-	// API uses rule_name as the identifier
+	// API uses rule_name as the identifier - use current name from state
 	protection, _, err := r.client.EditBranchProtection(
-		plan.Owner.ValueString(),
-		plan.Repo.ValueString(),
-		plan.RuleName.ValueString(),
+		state.Owner.ValueString(),
+		state.Repo.ValueString(),
+		state.RuleName.ValueString(),
 		editOpts,
 	)
 	if err != nil {

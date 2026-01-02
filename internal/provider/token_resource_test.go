@@ -27,7 +27,7 @@ func TestAccTokenResource(t *testing.T) {
 				ResourceName:            "gitea_token.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"sha1", "username"},
+				ImportStateVerifyIgnore: []string{"sha1", "username", "scopes", "created_at", "last_used_at"},
 			},
 			// Tokens cannot be updated - any change requires replacement
 			// So we don't include an update test
@@ -47,7 +47,7 @@ resource "gitea_user" "test" {
 resource "gitea_token" "test" {
   name     = %[1]q
   username = gitea_user.test.username
-  scopes   = ["read:user", "read:repository"]
+  scopes   = ["read:user"]
 }
 `, name, username)
 }

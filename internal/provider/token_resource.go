@@ -111,16 +111,7 @@ func (r *tokenResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	// Save the original scopes from plan to preserve order
-	originalScopes := plan.Scopes
-
 	mapTokenToModel(token, &plan)
-
-	// Restore the scopes from plan to maintain order consistency
-	// (API might return them in different order but same content)
-	if !originalScopes.IsNull() && !originalScopes.IsUnknown() {
-		plan.Scopes = originalScopes
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -259,15 +250,11 @@ func mapTokenToModel(token *gitea.AccessToken, model *resource_token.TokenModel)
 	}
 
 	if len(token.Scopes) > 0 {
-		scopes := make([]types.String, len(token.Scopes))
+		scopeValues := make([]attr.Value, len(token.Scopes))
 		for i, s := range token.Scopes {
-			scopes[i] = types.StringValue(string(s))
+			scopeValues[i] = types.StringValue(string(s))
 		}
-		attrValues := make([]attr.Value, len(scopes))
-		for i, v := range scopes {
-			attrValues[i] = v
-		}
-		model.Scopes = types.ListValueMust(types.StringType, attrValues)
+		model.Scopes = types.ListValueMust(types.StringType, scopeValues)
 	} else {
 		model.Scopes = types.ListNull(types.StringType)
 	}

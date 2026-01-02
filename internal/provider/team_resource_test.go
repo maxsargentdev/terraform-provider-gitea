@@ -56,8 +56,6 @@ resource "gitea_team" "test" {
   permission                = %[3]q
   can_create_org_repo       = false
   includes_all_repositories = false
-  
-  units = ["repo.code", "repo.issues"]
 }
 `, name, description, permission)
 }

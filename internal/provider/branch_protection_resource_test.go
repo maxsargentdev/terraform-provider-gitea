@@ -36,9 +36,9 @@ func TestAccBranchProtectionResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccBranchProtectionResourceConfig("main", "Updated Protection"),
+				Config: testAccBranchProtectionResourceConfig("main", "Protect main"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("gitea_branch_protection.test", "rule_name", "Updated Protection"),
+					resource.TestCheckResourceAttr("gitea_branch_protection.test", "require_signed_commits", "true"),
 				),
 			},
 		},
