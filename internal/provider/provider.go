@@ -16,8 +16,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 )
 
+// Ensure the implementation satisfies the expected interfaces.
 var _ provider.Provider = (*giteaProvider)(nil)
 
+// New is a helper function to simplify provider server and testing implementation.
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
 		return &giteaProvider{

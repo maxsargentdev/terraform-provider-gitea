@@ -38,11 +38,6 @@ func mapUserToModel(user *gitea.User, model *resource_user.UserModel) {
 	model.Restricted = types.BoolValue(user.Restricted)
 	model.HtmlUrl = types.StringValue("")
 	model.Login = types.StringValue(user.UserName)
-	if user.LoginName != "" {
-		model.LoginName = types.StringValue(user.LoginName)
-	} else if model.LoginName.IsNull() || model.LoginName.IsUnknown() {
-		model.LoginName = types.StringValue("empty")
-	}
 	model.SourceId = types.Int64Value(user.SourceID)
 	model.FollowersCount = types.Int64Null()
 	model.FollowingCount = types.Int64Null()
