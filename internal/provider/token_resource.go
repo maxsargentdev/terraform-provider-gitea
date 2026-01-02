@@ -27,6 +27,22 @@ type tokenResource struct {
 	client *gitea.Client
 }
 
+// tokenModel wraps the generated model with Set type for scopes
+// we do this because the openapi spec for gitea defines it as a list which is order-sensitive
+// we can fix this at the gitea api level by using the custom "format":"set" to the scopes field
+type tokenModel struct {
+	CreatedAt      types.String `tfsdk:"created_at"`
+	Id             types.Int64  `tfsdk:"id"`
+	LastUsedAt     types.String `tfsdk:"last_used_at"`
+	Limit          types.Int64  `tfsdk:"limit"`
+	Name           types.String `tfsdk:"name"`
+	Page           types.Int64  `tfsdk:"page"`
+	Scopes         types.Set    `tfsdk:"scopes"` // Override: Set instead of List
+	Sha1           types.String `tfsdk:"sha1"`
+	TokenLastEight types.String `tfsdk:"token_last_eight"`
+	Username       types.String `tfsdk:"username"`
+}
+
 func (r *tokenResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_token"
 }
@@ -58,6 +74,14 @@ func (r *tokenResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		baseSchema.Attributes["sha1"] = sha1Attr
 	}
 
+	// Override scopes to use Set instead of List since order doesn't matter
+	baseSchema.Attributes["scopes"] = schema.SetAttribute{
+		ElementType:         types.StringType,
+		Optional:            true,
+		Description:         "The scopes of the token",
+		MarkdownDescription: "The scopes of the token",
+	}
+
 	resp.Schema = baseSchema
 }
 
@@ -79,7 +103,7 @@ func (r *tokenResource) Configure(_ context.Context, req resource.ConfigureReque
 }
 
 func (r *tokenResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan resource_token.TokenModel
+	var plan tokenModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -90,10 +114,18 @@ func (r *tokenResource) Create(ctx context.Context, req resource.CreateRequest, 
 		Name: plan.Name.ValueString(),
 	}
 
-	// Set scopes if provided
+	// Set scopes if provided (scopes are Set in schema but we handle as slice)
 	if !plan.Scopes.IsNull() && !plan.Scopes.IsUnknown() {
+		// Convert the Set to a slice for API call
+		scopesSet, diags := types.SetValueFrom(ctx, types.StringType, plan.Scopes)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
 		var scopes []string
-		plan.Scopes.ElementsAs(ctx, &scopes, false)
+		scopesSet.ElementsAs(ctx, &scopes, false)
+
 		// Convert strings to AccessTokenScope
 		giteaScopes := make([]gitea.AccessTokenScope, len(scopes))
 		for i, s := range scopes {
@@ -117,7 +149,7 @@ func (r *tokenResource) Create(ctx context.Context, req resource.CreateRequest, 
 }
 
 func (r *tokenResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state resource_token.TokenModel
+	var state tokenModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -166,7 +198,7 @@ func (r *tokenResource) Update(ctx context.Context, req resource.UpdateRequest, 
 }
 
 func (r *tokenResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state resource_token.TokenModel
+	var state tokenModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -222,7 +254,7 @@ func (r *tokenResource) ImportState(ctx context.Context, req resource.ImportStat
 		return
 	}
 
-	var data resource_token.TokenModel
+	var data tokenModel
 	mapTokenToModel(found, &data)
 
 	// Note: username field won't be populated from import since API doesn't return it
@@ -231,7 +263,7 @@ func (r *tokenResource) ImportState(ctx context.Context, req resource.ImportStat
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func mapTokenToModel(token *gitea.AccessToken, model *resource_token.TokenModel) {
+func mapTokenToModel(token *gitea.AccessToken, model *tokenModel) {
 	model.Id = types.Int64Value(token.ID)
 	model.Name = types.StringValue(token.Name)
 	model.Sha1 = types.StringValue(token.Token)
@@ -250,15 +282,19 @@ func mapTokenToModel(token *gitea.AccessToken, model *resource_token.TokenModel)
 	}
 
 	if len(token.Scopes) > 0 {
+		// Convert to Set (order doesn't matter for Sets)
 		scopeValues := make([]attr.Value, len(token.Scopes))
 		for i, s := range token.Scopes {
 			scopeValues[i] = types.StringValue(string(s))
 		}
-		model.Scopes = types.ListValueMust(types.StringType, scopeValues)
+		// Create a Set value to match schema (even though model field is List type)
+		model.Scopes = types.SetValueMust(types.StringType, scopeValues)
 	} else {
-		model.Scopes = types.ListNull(types.StringType)
+		model.Scopes = types.SetNull(types.StringType)
 	}
 	// Set pagination fields to null (not used in resource)
 	model.Page = types.Int64Null()
 	model.Limit = types.Int64Null()
 }
+
+// sortListPlanModifier is a custom plan modifier that sorts a list of strings
