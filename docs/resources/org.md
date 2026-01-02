@@ -44,3 +44,14 @@ resource "gitea_org" "example" {
 - `avatar_url` (String) The URL of the organization's avatar
 - `id` (Number) The unique identifier of the organization
 - `name` (String) The name of the organization
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+# Import an existing organization by username
+terraform import gitea_org.example my-organization
+```

@@ -77,3 +77,14 @@ resource "gitea_branch_protection" "example" {
 
 - `created_at` (String)
 - `updated_at` (String)
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+# Import an existing branch protection rule by owner/repo/rule_name
+terraform import gitea_branch_protection.example root/my-repo/main
+```

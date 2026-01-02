@@ -71,3 +71,14 @@ Read-Only:
 deprecated
 - `visibility` (String) The visibility level of the organization (public, limited, private)
 - `website` (String) The website URL of the organization
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+# Import an existing team by team ID
+terraform import gitea_team.example 123
+```

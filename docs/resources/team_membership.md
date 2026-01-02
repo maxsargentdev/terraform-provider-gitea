@@ -26,3 +26,14 @@ resource "gitea_team_membership" "example" {
 
 - `team_id` (Number) The ID of the team
 - `username` (String) The username of the user to add to the team
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+# Import an existing team membership by team_id:username
+terraform import gitea_team_membership.example 123:testuser
+```

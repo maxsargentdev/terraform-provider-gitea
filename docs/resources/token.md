@@ -41,3 +41,14 @@ resource "gitea_token" "example" {
 - `last_used_at` (String) The timestamp when the token was last used
 - `sha1` (String, Sensitive) The SHA1 hash of the access token
 - `token_last_eight` (String) The last eight characters of the token
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+# Import an existing access token by token ID
+terraform import gitea_token.example 456
+```
