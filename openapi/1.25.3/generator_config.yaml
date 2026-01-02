@@ -19,6 +19,8 @@ resources:
       attributes:
         aliases:
           username: id
+      ignores:
+        - login_name
   
   org:
     create:

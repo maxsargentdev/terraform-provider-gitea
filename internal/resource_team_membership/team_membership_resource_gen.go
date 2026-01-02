@@ -1,4 +1,4 @@
-// Code generated manually for team_membership resource
+// Code written manually for team_membership resource
 
 package resource_team_membership
 

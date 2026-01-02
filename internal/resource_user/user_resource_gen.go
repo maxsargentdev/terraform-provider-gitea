@@ -4,7 +4,6 @@ package resource_user
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -87,13 +86,6 @@ func UserResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "login of the user, same as `username`",
 				MarkdownDescription: "login of the user, same as `username`",
 			},
-			"login_name": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "identifier of the user, provided by the external authenticator (if configured)",
-				MarkdownDescription: "identifier of the user, provided by the external authenticator (if configured)",
-				Default:             stringdefault.StaticString("empty"),
-			},
 			"must_change_password": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
@@ -169,7 +161,6 @@ type UserModel struct {
 	LastLogin          types.String `tfsdk:"last_login"`
 	Location           types.String `tfsdk:"location"`
 	Login              types.String `tfsdk:"login"`
-	LoginName          types.String `tfsdk:"login_name"`
 	MustChangePassword types.Bool   `tfsdk:"must_change_password"`
 	Password           types.String `tfsdk:"password"`
 	ProhibitLogin      types.Bool   `tfsdk:"prohibit_login"`

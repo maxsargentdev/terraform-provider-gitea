@@ -126,7 +126,30 @@
 			"command": "tfplugindocs generate --provider-dir . -provider-name gitea",
 			"options": {
 				"cwd": "${workspaceFolder}"
-			},
+			}
+		},
+		{
+			"label": "Run Unit Tests",
+			"type": "shell",
+			"command": "go test -v ./internal/provider/...",
+			"group": "test",
+			"problemMatcher": [
+				"$go"
+			],
+			"options": {
+				"env": {
+					"TF_ACC": "1",
+					"GITEA_HOSTNAME": "http://localhost:3000",
+					"GITEA_USERNAME": "root",
+					"GITEA_PASSWORD": "password"
+				}
+			}
+		},
+		{
+			"label": "Build and Test",
+			"dependsOn": ["Start Gitea", "Go Install", "Run Unit Tests"],
+			"dependsOrder": "sequence",
+			"group": "test"
 		}
 	]
 }

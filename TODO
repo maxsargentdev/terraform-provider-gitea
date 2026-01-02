@@ -2,3 +2,4 @@
 - review all generated code and create better tests
 - setup resource imports
 - add descriptions to all attributes for docs
+- To audit: Check each resource's Create/Update/Read against its schema and the SDK's option structs to find gaps.

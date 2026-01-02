@@ -3451,16 +3451,6 @@
 						}
 					},
 					{
-						"name": "login_name",
-						"string": {
-							"computed_optional_required": "computed_optional",
-							"default": {
-								"static": "empty"
-							},
-							"description": "identifier of the user, provided by the external authenticator (if configured)"
-						}
-					},
-					{
 						"name": "must_change_password",
 						"bool": {
 							"computed_optional_required": "computed_optional",

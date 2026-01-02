@@ -14,6 +14,7 @@ import (
 )
 
 var _ resource.Resource = &teamMembershipResource{}
+var _ resource.ResourceWithImportState = &teamMembershipResource{}
 
 func NewTeamMembershipResource() resource.Resource {
 	return &teamMembershipResource{}

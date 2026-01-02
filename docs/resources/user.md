@@ -60,3 +60,14 @@ will be set to "now".
 - `prohibit_login` (Boolean) Is user login prohibited
 - `starred_repos_count` (Number)
 - `website` (String) the user's website
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+# Import an existing user by username
+terraform import gitea_user.example testuser
+```

@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 
 	"terraform-provider-gitea/internal/resource_team"
@@ -10,7 +11,6 @@ import (
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -89,6 +89,15 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	orgName := plan.Org.ValueString()
 
+	// Determine permission mode
+	hasUnits := !plan.Units.IsNull() && !plan.Units.IsUnknown()
+	hasUnitsMap := !plan.UnitsMap.IsNull() && !plan.UnitsMap.IsUnknown()
+
+	var permValue string
+	if !plan.Permission.IsNull() && !plan.Permission.IsUnknown() {
+		permValue = plan.Permission.ValueString()
+	}
+
 	opts := gitea.CreateTeamOption{
 		Name:                    plan.Name.ValueString(),
 		Description:             plan.Description.ValueString(),
@@ -96,27 +105,54 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 		IncludesAllRepositories: plan.IncludesAllRepositories.ValueBool(),
 	}
 
-	// Set permission
-	permValue := plan.Permission.ValueString()
-	if permValue == "none" || permValue == "" {
-		opts.Permission = gitea.AccessModeRead
-	} else {
-		opts.Permission = gitea.AccessMode(permValue)
-	}
-
 	// Check if units_map is specified for per-unit permissions
-	if !plan.UnitsMap.IsNull() && !plan.UnitsMap.IsUnknown() {
+	if hasUnitsMap {
 		unitsMap := make(map[string]string)
 		plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
-		opts.UnitsMap = unitsMap
-	} else if !plan.Units.IsNull() {
+		if len(unitsMap) > 0 {
+			opts.UnitsMap = unitsMap
+			// When using units_map, permission must be "none"
+			opts.Permission = gitea.AccessModeNone
+		} else {
+			// UnitsMap specified but empty, use permission
+			if permValue != "" {
+				opts.Permission = gitea.AccessMode(permValue)
+			} else {
+				opts.Permission = gitea.AccessModeRead
+			}
+		}
+	} else if hasUnits {
 		var unitStrs []string
 		plan.Units.ElementsAs(ctx, &unitStrs, false)
-		units := make([]gitea.RepoUnitType, len(unitStrs))
-		for i, u := range unitStrs {
-			units[i] = gitea.RepoUnitType(u)
+		if len(unitStrs) > 0 {
+			units := make([]gitea.RepoUnitType, len(unitStrs))
+			for i, u := range unitStrs {
+				units[i] = gitea.RepoUnitType(u)
+			}
+			opts.Units = units
+			// When using units, permission must be "none"
+			opts.Permission = gitea.AccessModeNone
+		} else {
+			// Units specified but empty, use permission
+			if permValue != "" {
+				opts.Permission = gitea.AccessMode(permValue)
+			} else {
+				opts.Permission = gitea.AccessModeRead
+			}
 		}
-		opts.Units = units
+	} else {
+		// No units specified - user wants traditional permission-based access
+		// We need to use UnitsMap to specify the permission level for default units
+		// This way the permission field will be respected
+		if permValue == "" {
+			permValue = "read"
+		}
+		opts.Permission = gitea.AccessModeNone
+		opts.UnitsMap = map[string]string{
+			string(gitea.RepoUnitCode):   permValue,
+			string(gitea.RepoUnitIssues): permValue,
+			string(gitea.RepoUnitPulls):  permValue,
+		}
 	}
 
 	team, _, err := r.client.CreateTeam(orgName, opts)
@@ -157,15 +193,36 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan TeamModel
+	var state TeamModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Use ID from state since it's computed and won't be in plan
+	teamID := state.Id.ValueInt64()
+	if teamID == 0 {
+		resp.Diagnostics.AddError(
+			"Missing Team ID",
+			"Team ID is missing from state - cannot update",
+		)
 		return
 	}
 
 	desc := plan.Description.ValueString()
 	canCreate := plan.CanCreateOrgRepo.ValueBool()
 	inclAll := plan.IncludesAllRepositories.ValueBool()
+
+	// Determine permission mode
+	hasUnits := !plan.Units.IsNull() && !plan.Units.IsUnknown()
+	hasUnitsMap := !plan.UnitsMap.IsNull() && !plan.UnitsMap.IsUnknown()
+
+	var permValue string
+	if !plan.Permission.IsNull() && !plan.Permission.IsUnknown() {
+		permValue = plan.Permission.ValueString()
+	}
 
 	opts := gitea.EditTeamOption{
 		Name:                    plan.Name.ValueString(),
@@ -174,37 +231,72 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		IncludesAllRepositories: &inclAll,
 	}
 
-	if !plan.Permission.IsNull() {
-		perm := gitea.AccessMode(plan.Permission.ValueString())
-		opts.Permission = perm
-	}
-
 	// Check if units_map is specified for per-unit permissions
-	if !plan.UnitsMap.IsNull() && !plan.UnitsMap.IsUnknown() {
+	if hasUnitsMap {
 		unitsMap := make(map[string]string)
 		plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
-		opts.UnitsMap = unitsMap
-	} else if !plan.Units.IsNull() {
+		if len(unitsMap) > 0 {
+			opts.UnitsMap = unitsMap
+			opts.Permission = gitea.AccessModeNone
+		} else {
+			// UnitsMap specified but empty, use permission with UnitsMap
+			if permValue == "" {
+				permValue = "read"
+			}
+			opts.Permission = gitea.AccessModeNone
+			opts.UnitsMap = map[string]string{
+				string(gitea.RepoUnitCode):   permValue,
+				string(gitea.RepoUnitIssues): permValue,
+				string(gitea.RepoUnitPulls):  permValue,
+			}
+		}
+	} else if hasUnits {
 		var unitStrs []string
 		plan.Units.ElementsAs(ctx, &unitStrs, false)
-		units := make([]gitea.RepoUnitType, len(unitStrs))
-		for i, u := range unitStrs {
-			units[i] = gitea.RepoUnitType(u)
+		if len(unitStrs) > 0 {
+			units := make([]gitea.RepoUnitType, len(unitStrs))
+			for i, u := range unitStrs {
+				units[i] = gitea.RepoUnitType(u)
+			}
+			opts.Units = units
+			opts.Permission = gitea.AccessModeNone
+		} else {
+			// Units specified but empty, use permission with UnitsMap
+			if permValue == "" {
+				permValue = "read"
+			}
+			opts.Permission = gitea.AccessModeNone
+			opts.UnitsMap = map[string]string{
+				string(gitea.RepoUnitCode):   permValue,
+				string(gitea.RepoUnitIssues): permValue,
+				string(gitea.RepoUnitPulls):  permValue,
+			}
 		}
-		opts.Units = units
+	} else {
+		// No units specified - user wants traditional permission-based access
+		// Use UnitsMap to specify the permission level for default units
+		if permValue == "" {
+			permValue = "read"
+		}
+		opts.Permission = gitea.AccessModeNone
+		opts.UnitsMap = map[string]string{
+			string(gitea.RepoUnitCode):   permValue,
+			string(gitea.RepoUnitIssues): permValue,
+			string(gitea.RepoUnitPulls):  permValue,
+		}
 	}
 
-	_, err := r.client.EditTeam(plan.Id.ValueInt64(), opts)
+	_, err := r.client.EditTeam(teamID, opts)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Team",
-			"Could not update team, unexpected error: "+err.Error(),
+			fmt.Sprintf("Could not update team (ID: %d, Name: %s), unexpected error: %s", teamID, plan.Name.ValueString(), err.Error()),
 		)
 		return
 	}
 
 	// Read back the updated team
-	team, _, err := r.client.GetTeam(plan.Id.ValueInt64())
+	team, _, err := r.client.GetTeam(teamID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Updated Team",
@@ -246,7 +338,21 @@ func (r *teamResource) ImportState(ctx context.Context, req resource.ImportState
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
+	// Fetch the full team details
+	team, _, err := r.client.GetTeam(id)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Importing Team",
+			fmt.Sprintf("Could not fetch team with ID %d: %s", id, err.Error()),
+		)
+		return
+	}
+
+	// Map to model
+	var state TeamModel
+	mapTeamToModel(ctx, team, &state.TeamModel)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func mapTeamToModel(ctx context.Context, team *gitea.Team, model *resource_team.TeamModel) {
@@ -254,15 +360,27 @@ func mapTeamToModel(ctx context.Context, team *gitea.Team, model *resource_team.
 	model.Name = types.StringValue(team.Name)
 	model.Description = types.StringValue(team.Description)
 
-	// Gitea has two permission models:
-	// 1. Admin access (permission = "admin")
-	// 2. General access with units (permission = "none" from API, but we map based on units)
-	// When units are specified, Gitea returns "none" but we should keep the original permission value
-	if team.Permission == "none" && len(team.Units) > 0 {
-		// Unit-based permissions - keep the existing permission value from model
-		// Don't overwrite it
+	// Determine permission value
+	// If UnitsMap has all the same permission value, use that as the permission
+	if len(team.UnitsMap) > 0 {
+		// Check if all permissions in UnitsMap are the same
+		var commonPerm string
+		allSame := true
+		for _, perm := range team.UnitsMap {
+			if commonPerm == "" {
+				commonPerm = perm
+			} else if perm != commonPerm {
+				allSame = false
+				break
+			}
+		}
+		if allSame && commonPerm != "" {
+			model.Permission = types.StringValue(commonPerm)
+		} else {
+			model.Permission = types.StringValue(string(team.Permission))
+		}
 	} else {
-		// Admin or explicit permission - use what API returns
+		// No units_map, use API permission directly
 		model.Permission = types.StringValue(string(team.Permission))
 	}
 
@@ -271,9 +389,16 @@ func mapTeamToModel(ctx context.Context, team *gitea.Team, model *resource_team.
 
 	// Map units list
 	if len(team.Units) > 0 {
-		elements := make([]attr.Value, len(team.Units))
+		// Sort units for consistent ordering
+		unitStrs := make([]string, len(team.Units))
 		for i, v := range team.Units {
-			elements[i] = types.StringValue(string(v))
+			unitStrs[i] = string(v)
+		}
+		sort.Strings(unitStrs)
+
+		elements := make([]attr.Value, len(unitStrs))
+		for i, v := range unitStrs {
+			elements[i] = types.StringValue(v)
 		}
 		model.Units, _ = types.ListValue(types.StringType, elements)
 	} else {
