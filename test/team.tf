@@ -1,46 +1,35 @@
 output "team_id" {
-  value = gitea_team.test_team_none.id
+  value = gitea_team.test_team.id
 }
 
-resource "gitea_team" "test_team_none" {
-  org                        = gitea_org.test_org.username
-  name                       = "test-team"
-  description                = "A test team"
-  can_create_org_repo        = false
-  includes_all_repositories  = false
-  
-  units_map = {
-    "repo.code"     = "write"
-    "repo.issues"   = "read"
-    "repo.pulls"    = "write"
-    "repo.wiki"     = "none"
-    "repo.releases" = "read"
-  }
+output "team_organization" {
+  value = gitea_team.test_team.organization
 }
 
-resource "gitea_team" "test_team_write" {
-  org                        = gitea_org.test_org.username
-  name                       = "test-team-write"
-  description                = "A test team"
-  can_create_org_repo        = false
-  includes_all_repositories  = false
-  
+# Comprehensive test team - tests ALL possible attributes
+resource "gitea_team" "test_team" {
+  # Required attributes
+  org  = gitea_org.test_org.username
+  name = "test-team"
+
+  # Optional string attributes
+  description = "A  test team with all attributes configured"
+
+  # Optional boolean attributes
+  can_create_org_repo       = false
+  includes_all_repositories = true
+
+  # Optional units_map - fine-grained permissions for each repository unit
   units_map = {
-    "repo.code"     = "write"
-    "repo.issues"   = "write"
-    "repo.pulls"    = "write"
+    "repo.code"     = "write"  # Source code access (none, read, write, admin)
+    "repo.issues"   = "write"  # Issue tracker access
+    "repo.pulls"    = "write"  # Pull requests access
+    "repo.wiki"     = "read"   # Wiki access
+    "repo.releases" = "write"  # Releases access
+    "repo.ext_wiki" = "none"   # External wiki access
+    "repo.ext_issues" = "none" # External issue tracker access
   }
-}
-resource "gitea_team" "test_team_read" {
-  org                        = gitea_org.test_org.username
-  name                       = "test-team-read"
-  description                = "A test team"
-  can_create_org_repo        = false
-  includes_all_repositories  = false
-  
-  units_map = {
-    "repo.code"     = "read"
-    "repo.issues"   = "read"
-    "repo.pulls"    = "read"
-  }
+
+  # Note: 'organization' is a computed read-only attribute (returned by API)
+  # Note: 'id' is a computed read-only attribute (assigned by API)
 }
