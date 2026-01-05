@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"terraform-provider-gitea/internal/provider"
+	"github.com/maxsargendev/terraform-provider-gitea/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"terraform-provider-gitea/internal/resource_branch_protection"
+	"github.com/maxsargendev/terraform-provider-gitea/internal/resource_branch_protection"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"

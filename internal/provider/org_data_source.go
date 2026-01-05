@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	"terraform-provider-gitea/internal/datasource_org"
+	"github.com/maxsargendev/terraform-provider-gitea/internal/datasource_org"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
