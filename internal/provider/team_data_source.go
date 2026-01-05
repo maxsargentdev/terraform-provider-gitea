@@ -77,7 +77,6 @@ func mapTeamToDataSourceModel(ctx context.Context, team *gitea.Team, model *data
 	model.Id = types.Int64Value(team.ID)
 	model.Name = types.StringValue(team.Name)
 	model.Description = types.StringValue(team.Description)
-	model.Permission = types.StringValue(string(team.Permission))
 	model.CanCreateOrgRepo = types.BoolValue(team.CanCreateOrgRepo)
 	model.IncludesAllRepositories = types.BoolValue(team.IncludesAllRepositories)
 

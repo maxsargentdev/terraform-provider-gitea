@@ -95,6 +95,8 @@ resources:
       attributes:
         aliases:
           id: id
+      ignores:
+        - permission
 
   token:
     create:
@@ -158,5 +160,7 @@ data_sources:
       attributes:
         aliases:
           id: id
+      ignores:
+        - permission
 
 # manually create datamodel & schemas: team_membership

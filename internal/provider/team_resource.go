@@ -9,11 +9,9 @@ import (
 	"terraform-provider-gitea/internal/resource_team"
 
 	"code.gitea.io/sdk/gitea"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -51,14 +49,6 @@ func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 		MarkdownDescription: "The name of the organization to create the team in",
 	}
 
-	// Override permission validator to accept "none" for unit-based permissions
-	if permAttr, ok := baseSchema.Attributes["permission"].(schema.StringAttribute); ok {
-		permAttr.Validators = []validator.String{
-			stringvalidator.OneOf("read", "write", "admin", "none"),
-		}
-		baseSchema.Attributes["permission"] = permAttr
-	}
-
 	resp.Schema = baseSchema
 }
 
@@ -89,69 +79,20 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	orgName := plan.Org.ValueString()
 
-	// Determine permission mode
-	hasUnits := !plan.Units.IsNull() && !plan.Units.IsUnknown()
-	hasUnitsMap := !plan.UnitsMap.IsNull() && !plan.UnitsMap.IsUnknown()
-
-	var permValue string
-	if !plan.Permission.IsNull() && !plan.Permission.IsUnknown() {
-		permValue = plan.Permission.ValueString()
-	}
-
 	opts := gitea.CreateTeamOption{
 		Name:                    plan.Name.ValueString(),
 		Description:             plan.Description.ValueString(),
 		CanCreateOrgRepo:        plan.CanCreateOrgRepo.ValueBool(),
 		IncludesAllRepositories: plan.IncludesAllRepositories.ValueBool(),
+		Permission:              gitea.AccessModeNone,
 	}
 
-	// Check if units_map is specified for per-unit permissions
-	if hasUnitsMap {
+	// units_map is required for specifying permissions
+	if !plan.UnitsMap.IsNull() && !plan.UnitsMap.IsUnknown() {
 		unitsMap := make(map[string]string)
 		plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
 		if len(unitsMap) > 0 {
 			opts.UnitsMap = unitsMap
-			// When using units_map, permission must be "none"
-			opts.Permission = gitea.AccessModeNone
-		} else {
-			// UnitsMap specified but empty, use permission
-			if permValue != "" {
-				opts.Permission = gitea.AccessMode(permValue)
-			} else {
-				opts.Permission = gitea.AccessModeRead
-			}
-		}
-	} else if hasUnits {
-		var unitStrs []string
-		plan.Units.ElementsAs(ctx, &unitStrs, false)
-		if len(unitStrs) > 0 {
-			units := make([]gitea.RepoUnitType, len(unitStrs))
-			for i, u := range unitStrs {
-				units[i] = gitea.RepoUnitType(u)
-			}
-			opts.Units = units
-			// When using units, permission must be "none"
-			opts.Permission = gitea.AccessModeNone
-		} else {
-			// Units specified but empty, use permission
-			if permValue != "" {
-				opts.Permission = gitea.AccessMode(permValue)
-			} else {
-				opts.Permission = gitea.AccessModeRead
-			}
-		}
-	} else {
-		// No units specified - user wants traditional permission-based access
-		// We need to use UnitsMap to specify the permission level for default units
-		// This way the permission field will be respected
-		if permValue == "" {
-			permValue = "read"
-		}
-		opts.Permission = gitea.AccessModeNone
-		opts.UnitsMap = map[string]string{
-			string(gitea.RepoUnitCode):   permValue,
-			string(gitea.RepoUnitIssues): permValue,
-			string(gitea.RepoUnitPulls):  permValue,
 		}
 	}
 
@@ -215,74 +156,20 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	canCreate := plan.CanCreateOrgRepo.ValueBool()
 	inclAll := plan.IncludesAllRepositories.ValueBool()
 
-	// Determine permission mode
-	hasUnits := !plan.Units.IsNull() && !plan.Units.IsUnknown()
-	hasUnitsMap := !plan.UnitsMap.IsNull() && !plan.UnitsMap.IsUnknown()
-
-	var permValue string
-	if !plan.Permission.IsNull() && !plan.Permission.IsUnknown() {
-		permValue = plan.Permission.ValueString()
-	}
-
 	opts := gitea.EditTeamOption{
 		Name:                    plan.Name.ValueString(),
 		Description:             &desc,
 		CanCreateOrgRepo:        &canCreate,
 		IncludesAllRepositories: &inclAll,
+		Permission:              gitea.AccessModeNone,
 	}
 
-	// Check if units_map is specified for per-unit permissions
-	if hasUnitsMap {
+	// units_map is required for specifying permissions
+	if !plan.UnitsMap.IsNull() && !plan.UnitsMap.IsUnknown() {
 		unitsMap := make(map[string]string)
 		plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
 		if len(unitsMap) > 0 {
 			opts.UnitsMap = unitsMap
-			opts.Permission = gitea.AccessModeNone
-		} else {
-			// UnitsMap specified but empty, use permission with UnitsMap
-			if permValue == "" {
-				permValue = "read"
-			}
-			opts.Permission = gitea.AccessModeNone
-			opts.UnitsMap = map[string]string{
-				string(gitea.RepoUnitCode):   permValue,
-				string(gitea.RepoUnitIssues): permValue,
-				string(gitea.RepoUnitPulls):  permValue,
-			}
-		}
-	} else if hasUnits {
-		var unitStrs []string
-		plan.Units.ElementsAs(ctx, &unitStrs, false)
-		if len(unitStrs) > 0 {
-			units := make([]gitea.RepoUnitType, len(unitStrs))
-			for i, u := range unitStrs {
-				units[i] = gitea.RepoUnitType(u)
-			}
-			opts.Units = units
-			opts.Permission = gitea.AccessModeNone
-		} else {
-			// Units specified but empty, use permission with UnitsMap
-			if permValue == "" {
-				permValue = "read"
-			}
-			opts.Permission = gitea.AccessModeNone
-			opts.UnitsMap = map[string]string{
-				string(gitea.RepoUnitCode):   permValue,
-				string(gitea.RepoUnitIssues): permValue,
-				string(gitea.RepoUnitPulls):  permValue,
-			}
-		}
-	} else {
-		// No units specified - user wants traditional permission-based access
-		// Use UnitsMap to specify the permission level for default units
-		if permValue == "" {
-			permValue = "read"
-		}
-		opts.Permission = gitea.AccessModeNone
-		opts.UnitsMap = map[string]string{
-			string(gitea.RepoUnitCode):   permValue,
-			string(gitea.RepoUnitIssues): permValue,
-			string(gitea.RepoUnitPulls):  permValue,
 		}
 	}
 
@@ -359,31 +246,6 @@ func mapTeamToModel(ctx context.Context, team *gitea.Team, model *resource_team.
 	model.Id = types.Int64Value(team.ID)
 	model.Name = types.StringValue(team.Name)
 	model.Description = types.StringValue(team.Description)
-
-	// Determine permission value
-	// If UnitsMap has all the same permission value, use that as the permission
-	if len(team.UnitsMap) > 0 {
-		// Check if all permissions in UnitsMap are the same
-		var commonPerm string
-		allSame := true
-		for _, perm := range team.UnitsMap {
-			if commonPerm == "" {
-				commonPerm = perm
-			} else if perm != commonPerm {
-				allSame = false
-				break
-			}
-		}
-		if allSame && commonPerm != "" {
-			model.Permission = types.StringValue(commonPerm)
-		} else {
-			model.Permission = types.StringValue(string(team.Permission))
-		}
-	} else {
-		// No units_map, use API permission directly
-		model.Permission = types.StringValue(string(team.Permission))
-	}
-
 	model.CanCreateOrgRepo = types.BoolValue(team.CanCreateOrgRepo)
 	model.IncludesAllRepositories = types.BoolValue(team.IncludesAllRepositories)
 

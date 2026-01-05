@@ -110,9 +110,6 @@ func TeamDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Organization represents an organization",
 				MarkdownDescription: "Organization represents an organization",
 			},
-			"permission": schema.StringAttribute{
-				Computed: true,
-			},
 			"units": schema.ListAttribute{
 				ElementType: types.StringType,
 				Computed:    true,
@@ -132,7 +129,6 @@ type TeamModel struct {
 	IncludesAllRepositories types.Bool        `tfsdk:"includes_all_repositories"`
 	Name                    types.String      `tfsdk:"name"`
 	Organization            OrganizationValue `tfsdk:"organization"`
-	Permission              types.String      `tfsdk:"permission"`
 	Units                   types.List        `tfsdk:"units"`
 	UnitsMap                types.Map         `tfsdk:"units_map"`
 }

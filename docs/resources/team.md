@@ -17,7 +17,6 @@ resource "gitea_team" "example" {
   org                        = "my-organization"
   name                       = "developers"
   description                = "Development team"
-  permission                 = "none"  # Using unit-based permissions
   can_create_org_repo        = true
   includes_all_repositories  = false
   
@@ -45,9 +44,8 @@ resource "gitea_team" "example" {
 - `can_create_org_repo` (Boolean) Whether the team can create repositories in the organization
 - `description` (String) The description of the team
 - `includes_all_repositories` (Boolean) Whether the team has access to all repositories in the organization
-- `permission` (String)
 - `units` (List of String)
-- `units_map` (Map of String)
+- `units_map` (Map of String) Fine-grained permissions for repository units. Each key is a unit type (e.g., "repo.code", "repo.issues", "repo.pulls", "repo.wiki", "repo.releases") and the value is the permission level ("none", "read", "write", or "admin").
 
 ### Read-Only
 

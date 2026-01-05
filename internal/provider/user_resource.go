@@ -84,12 +84,17 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
+	// Preserve plan values for fields not returned by API
+	sendNotify := data.SendNotify
+	mustChangePassword := data.MustChangePassword
+
 	// Create user via Gitea API
 	createOpts := gitea.CreateUserOption{
 		Username:           data.Username.ValueString(),
 		Email:              data.Email.ValueString(),
 		Password:           data.Password.ValueString(),
 		MustChangePassword: data.MustChangePassword.ValueBoolPointer(),
+		SendNotify:         data.SendNotify.ValueBool(),
 	}
 
 	if !data.FullName.IsNull() && !data.FullName.IsUnknown() {
@@ -108,6 +113,18 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 	// Map response to model
 	mapUserToModel(user, &data)
 
+	// Restore plan values for fields not returned by API, but only if they were specified
+	if !sendNotify.IsUnknown() {
+		data.SendNotify = sendNotify
+	} else {
+		data.SendNotify = types.BoolNull()
+	}
+	if !mustChangePassword.IsUnknown() {
+		data.MustChangePassword = mustChangePassword
+	} else {
+		data.MustChangePassword = types.BoolNull()
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -118,6 +135,10 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Preserve state values for fields not returned by API
+	sendNotify := data.SendNotify
+	mustChangePassword := data.MustChangePassword
 
 	// Get user from Gitea API
 	user, _, err := r.client.GetUserInfo(data.Username.ValueString())
@@ -132,6 +153,18 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	// Map response to model
 	mapUserToModel(user, &data)
 
+	// Restore state values for fields not returned by API, but only if they were known
+	if !sendNotify.IsUnknown() {
+		data.SendNotify = sendNotify
+	} else {
+		data.SendNotify = types.BoolNull()
+	}
+	if !mustChangePassword.IsUnknown() {
+		data.MustChangePassword = mustChangePassword
+	} else {
+		data.MustChangePassword = types.BoolNull()
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -142,6 +175,10 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Preserve plan values for fields not returned by API
+	sendNotify := data.SendNotify
+	mustChangePassword := data.MustChangePassword
 
 	// Update user via Gitea API
 	editOpts := gitea.EditUserOption{
@@ -172,6 +209,18 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	// Map response to model
 	mapUserToModel(user, &data)
+
+	// Restore plan values for fields not returned by API, but only if they were specified
+	if !sendNotify.IsUnknown() {
+		data.SendNotify = sendNotify
+	} else {
+		data.SendNotify = types.BoolNull()
+	}
+	if !mustChangePassword.IsUnknown() {
+		data.MustChangePassword = mustChangePassword
+	} else {
+		data.MustChangePassword = types.BoolNull()
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -2,7 +2,6 @@ resource "gitea_team" "example" {
   org                        = "my-organization"
   name                       = "developers"
   description                = "Development team"
-  permission                 = "none"  # Using unit-based permissions
   can_create_org_repo        = true
   includes_all_repositories  = false
   

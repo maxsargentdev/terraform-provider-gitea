@@ -1439,12 +1439,6 @@
 						}
 					},
 					{
-						"name": "permission",
-						"string": {
-							"computed_optional_required": "computed"
-						}
-					},
-					{
 						"name": "units",
 						"list": {
 							"computed_optional_required": "computed",
@@ -3212,24 +3206,6 @@
 						"string": {
 							"computed_optional_required": "required",
 							"description": "The name of the team"
-						}
-					},
-					{
-						"name": "permission",
-						"string": {
-							"computed_optional_required": "computed_optional",
-							"validators": [
-								{
-									"custom": {
-										"imports": [
-											{
-												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-											}
-										],
-										"schema_definition": "stringvalidator.OneOf(\n\"read\",\n\"write\",\n\"admin\",\n)"
-									}
-								}
-							]
 						}
 					},
 					{

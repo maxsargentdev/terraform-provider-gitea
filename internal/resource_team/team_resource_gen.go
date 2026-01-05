@@ -5,10 +5,8 @@ package resource_team
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -115,17 +113,6 @@ func TeamResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Organization represents an organization",
 				MarkdownDescription: "Organization represents an organization",
 			},
-			"permission": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"read",
-						"write",
-						"admin",
-					),
-				},
-			},
 			"units": schema.ListAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
@@ -147,7 +134,6 @@ type TeamModel struct {
 	IncludesAllRepositories types.Bool        `tfsdk:"includes_all_repositories"`
 	Name                    types.String      `tfsdk:"name"`
 	Organization            OrganizationValue `tfsdk:"organization"`
-	Permission              types.String      `tfsdk:"permission"`
 	Units                   types.List        `tfsdk:"units"`
 	UnitsMap                types.Map         `tfsdk:"units_map"`
 }
