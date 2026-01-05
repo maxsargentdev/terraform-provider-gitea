@@ -24,8 +24,7 @@ resource "gitea_team" "test_team" {
     "repo.code"     = "write"  # Source code access (none, read, write, admin)
     "repo.issues"   = "write"  # Issue tracker access
     "repo.pulls"    = "write"  # Pull requests access
-    "repo.wiki"     = "read"   # Wiki access
-    "repo.releases" = "write"  # Releases access
+    "repo.releases" = "none"  # Releases access
     "repo.ext_wiki" = "none"   # External wiki access
     "repo.ext_issues" = "none" # External issue tracker access
   }
