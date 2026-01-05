@@ -34,7 +34,6 @@ resource "gitea_user" "example" {
 migrated from other systems. When omitted, the user's creation timestamp
 will be set to "now".
 - `full_name` (String) The full display name of the user
-- `login_name` (String) identifier of the user, provided by the external authenticator (if configured)
 - `must_change_password` (Boolean) Whether the user must change password on first login
 - `password` (String) The plain text password for the user
 - `restricted` (Boolean) Whether the user has restricted access privileges

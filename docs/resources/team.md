@@ -45,30 +45,11 @@ resource "gitea_team" "example" {
 - `description` (String) The description of the team
 - `includes_all_repositories` (Boolean) Whether the team has access to all repositories in the organization
 - `units` (List of String)
-- `units_map` (Map of String) Fine-grained permissions for repository units. Each key is a unit type (e.g., "repo.code", "repo.issues", "repo.pulls", "repo.wiki", "repo.releases") and the value is the permission level ("none", "read", "write", or "admin").
+- `units_map` (Map of String)
 
 ### Read-Only
 
 - `id` (Number) The unique identifier of the team
-- `organization` (Attributes) Organization represents an organization (see [below for nested schema](#nestedatt--organization))
-
-<a id="nestedatt--organization"></a>
-### Nested Schema for `organization`
-
-Read-Only:
-
-- `avatar_url` (String) The URL of the organization's avatar
-- `description` (String) The description of the organization
-- `email` (String) The email address of the organization
-- `full_name` (String) The full display name of the organization
-- `id` (Number) The unique identifier of the organization
-- `location` (String) The location of the organization
-- `name` (String) The name of the organization
-- `repo_admin_change_team_access` (Boolean) Whether repository administrators can change team access
-- `username` (String) username of the organization
-deprecated
-- `visibility` (String) The visibility level of the organization (public, limited, private)
-- `website` (String) The website URL of the organization
 
 ## Import
 

@@ -32,7 +32,7 @@ resource "gitea_token" "example" {
 
 - `limit` (Number) page size of results
 - `page` (Number) page number of results to return (1-based)
-- `scopes` (List of String) The scopes granted to this access token
+- `scopes` (Set of String) The scopes of the token
 
 ### Read-Only
 
