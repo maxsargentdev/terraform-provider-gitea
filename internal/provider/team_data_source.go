@@ -29,7 +29,43 @@ func (d *teamDataSource) Metadata(_ context.Context, req datasource.MetadataRequ
 }
 
 func (d *teamDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = TeamDataSourceSchema(ctx)
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"can_create_org_repo": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the team can create repositories in the organization",
+				MarkdownDescription: "Whether the team can create repositories in the organization",
+			},
+			"description": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The description of the team",
+				MarkdownDescription: "The description of the team",
+			},
+			"id": schema.Int64Attribute{
+				Required:            true,
+				Description:         "id of the team to get",
+				MarkdownDescription: "id of the team to get",
+			},
+			"includes_all_repositories": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the team has access to all repositories in the organization",
+				MarkdownDescription: "Whether the team has access to all repositories in the organization",
+			},
+			"name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The name of the team",
+				MarkdownDescription: "The name of the team",
+			},
+			"units": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"units_map": schema.MapAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+		},
+	}
 }
 
 func (d *teamDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -101,46 +137,6 @@ func mapTeamToDataSourceModel(ctx context.Context, team *gitea.Team, model *Team
 		model.UnitsMap = types.MapNull(types.StringType)
 	}
 
-}
-
-func TeamDataSourceSchema(ctx context.Context) schema.Schema {
-	return schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"can_create_org_repo": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "Whether the team can create repositories in the organization",
-				MarkdownDescription: "Whether the team can create repositories in the organization",
-			},
-			"description": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The description of the team",
-				MarkdownDescription: "The description of the team",
-			},
-			"id": schema.Int64Attribute{
-				Required:            true,
-				Description:         "id of the team to get",
-				MarkdownDescription: "id of the team to get",
-			},
-			"includes_all_repositories": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "Whether the team has access to all repositories in the organization",
-				MarkdownDescription: "Whether the team has access to all repositories in the organization",
-			},
-			"name": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The name of the team",
-				MarkdownDescription: "The name of the team",
-			},
-			"units": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"units_map": schema.MapAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-		},
-	}
 }
 
 type TeamDataSourceModel struct {

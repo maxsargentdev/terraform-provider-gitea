@@ -54,75 +54,7 @@ func (d *repositoryDataSource) Metadata(_ context.Context, req datasource.Metada
 }
 
 func (d *repositoryDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = RepositoryDataSourceSchema(ctx)
-}
-
-func (d *repositoryDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*gitea.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *gitea.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	d.client = client
-}
-
-func (d *repositoryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data RepositoryDataSourceModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Parse owner and repo from config
-	// For data sources, we expect owner/repo to be provided
-	owner := ""
-	repoName := data.Name.ValueString()
-
-	if !data.FullName.IsNull() && data.FullName.ValueString() != "" {
-		fullName := data.FullName.ValueString()
-		for i, c := range fullName {
-			if c == '/' {
-				owner = fullName[:i]
-				repoName = fullName[i+1:]
-				break
-			}
-		}
-	}
-
-	if owner == "" {
-		resp.Diagnostics.AddError(
-			"Missing Owner",
-			"Repository owner must be specified via full_name (owner/repo format)",
-		)
-		return
-	}
-
-	repo, _, err := d.client.GetRepo(owner, repoName)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Repository",
-			"Could not read repository "+owner+"/"+repoName+": "+err.Error(),
-		)
-		return
-	}
-
-	// Map response to data
-	mapRepositoryToDataSourceModel(repo, &data)
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func RepositoryDataSourceSchema(ctx context.Context) schema.Schema {
-	return schema.Schema{
+	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"allow_fast_forward_only_merge": schema.BoolAttribute{
 				Computed: true,
@@ -309,6 +241,70 @@ func RepositoryDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 		},
 	}
+}
+
+func (d *repositoryDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*gitea.Client)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Data Source Configure Type",
+			fmt.Sprintf("Expected *gitea.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
+		return
+	}
+
+	d.client = client
+}
+
+func (d *repositoryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data RepositoryDataSourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Parse owner and repo from config
+	// For data sources, we expect owner/repo to be provided
+	owner := ""
+	repoName := data.Name.ValueString()
+
+	if !data.FullName.IsNull() && data.FullName.ValueString() != "" {
+		fullName := data.FullName.ValueString()
+		for i, c := range fullName {
+			if c == '/' {
+				owner = fullName[:i]
+				repoName = fullName[i+1:]
+				break
+			}
+		}
+	}
+
+	if owner == "" {
+		resp.Diagnostics.AddError(
+			"Missing Owner",
+			"Repository owner must be specified via full_name (owner/repo format)",
+		)
+		return
+	}
+
+	repo, _, err := d.client.GetRepo(owner, repoName)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading Repository",
+			"Could not read repository "+owner+"/"+repoName+": "+err.Error(),
+		)
+		return
+	}
+
+	// Map response to data
+	mapRepositoryToDataSourceModel(repo, &data)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 type RepositoryDataSourceModel struct {

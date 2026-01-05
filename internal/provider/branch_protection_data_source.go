@@ -29,7 +29,139 @@ func (d *branchProtectionDataSource) Metadata(_ context.Context, req datasource.
 }
 
 func (d *branchProtectionDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = BranchProtectionDataSourceSchema(ctx)
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"approvals_whitelist_teams": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"approvals_whitelist_username": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"block_admin_merge_override": schema.BoolAttribute{
+				Computed: true,
+			},
+			"block_on_official_review_requests": schema.BoolAttribute{
+				Computed: true,
+			},
+			"block_on_outdated_branch": schema.BoolAttribute{
+				Computed: true,
+			},
+			"block_on_rejected_reviews": schema.BoolAttribute{
+				Computed: true,
+			},
+			"branch_name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Deprecated: true",
+				MarkdownDescription: "Deprecated: true",
+			},
+			"created_at": schema.StringAttribute{
+				Computed: true,
+			},
+			"dismiss_stale_approvals": schema.BoolAttribute{
+				Computed: true,
+			},
+			"enable_approvals_whitelist": schema.BoolAttribute{
+				Computed: true,
+			},
+			"enable_force_push": schema.BoolAttribute{
+				Computed: true,
+			},
+			"enable_force_push_allowlist": schema.BoolAttribute{
+				Computed: true,
+			},
+			"enable_merge_whitelist": schema.BoolAttribute{
+				Computed: true,
+			},
+			"enable_push": schema.BoolAttribute{
+				Computed: true,
+			},
+			"enable_push_whitelist": schema.BoolAttribute{
+				Computed: true,
+			},
+			"enable_status_check": schema.BoolAttribute{
+				Computed: true,
+			},
+			"force_push_allowlist_deploy_keys": schema.BoolAttribute{
+				Computed: true,
+			},
+			"force_push_allowlist_teams": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"force_push_allowlist_usernames": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"ignore_stale_approvals": schema.BoolAttribute{
+				Computed: true,
+			},
+			"merge_whitelist_teams": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"merge_whitelist_usernames": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "name of protected branch",
+				MarkdownDescription: "name of protected branch",
+			},
+			"owner": schema.StringAttribute{
+				Required:            true,
+				Description:         "owner of the repo",
+				MarkdownDescription: "owner of the repo",
+			},
+			"priority": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "Priority is the priority of this branch protection rule",
+				MarkdownDescription: "Priority is the priority of this branch protection rule",
+			},
+			"protected_file_patterns": schema.StringAttribute{
+				Computed: true,
+			},
+			"push_whitelist_deploy_keys": schema.BoolAttribute{
+				Computed: true,
+			},
+			"push_whitelist_teams": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"push_whitelist_usernames": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"repo": schema.StringAttribute{
+				Required:            true,
+				Description:         "name of the repo",
+				MarkdownDescription: "name of the repo",
+			},
+			"require_signed_commits": schema.BoolAttribute{
+				Computed: true,
+			},
+			"required_approvals": schema.Int64Attribute{
+				Computed: true,
+			},
+			"rule_name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "RuleName is the name of the branch protection rule",
+				MarkdownDescription: "RuleName is the name of the branch protection rule",
+			},
+			"status_check_contexts": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"unprotected_file_patterns": schema.StringAttribute{
+				Computed: true,
+			},
+			"updated_at": schema.StringAttribute{
+				Computed: true,
+			},
+		},
+	}
 }
 
 func (d *branchProtectionDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -183,142 +315,6 @@ func mapBranchProtectionToDataSourceModel(ctx context.Context, protection *gitea
 	model.ForcePushAllowlistDeployKeys = types.BoolNull()
 	model.IgnoreStaleApprovals = types.BoolNull()
 	model.Priority = types.Int64Null()
-}
-
-func BranchProtectionDataSourceSchema(ctx context.Context) schema.Schema {
-	return schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"approvals_whitelist_teams": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"approvals_whitelist_username": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"block_admin_merge_override": schema.BoolAttribute{
-				Computed: true,
-			},
-			"block_on_official_review_requests": schema.BoolAttribute{
-				Computed: true,
-			},
-			"block_on_outdated_branch": schema.BoolAttribute{
-				Computed: true,
-			},
-			"block_on_rejected_reviews": schema.BoolAttribute{
-				Computed: true,
-			},
-			"branch_name": schema.StringAttribute{
-				Computed:            true,
-				Description:         "Deprecated: true",
-				MarkdownDescription: "Deprecated: true",
-			},
-			"created_at": schema.StringAttribute{
-				Computed: true,
-			},
-			"dismiss_stale_approvals": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_approvals_whitelist": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_force_push": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_force_push_allowlist": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_merge_whitelist": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_push": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_push_whitelist": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_status_check": schema.BoolAttribute{
-				Computed: true,
-			},
-			"force_push_allowlist_deploy_keys": schema.BoolAttribute{
-				Computed: true,
-			},
-			"force_push_allowlist_teams": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"force_push_allowlist_usernames": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"ignore_stale_approvals": schema.BoolAttribute{
-				Computed: true,
-			},
-			"merge_whitelist_teams": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"merge_whitelist_usernames": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"name": schema.StringAttribute{
-				Required:            true,
-				Description:         "name of protected branch",
-				MarkdownDescription: "name of protected branch",
-			},
-			"owner": schema.StringAttribute{
-				Required:            true,
-				Description:         "owner of the repo",
-				MarkdownDescription: "owner of the repo",
-			},
-			"priority": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "Priority is the priority of this branch protection rule",
-				MarkdownDescription: "Priority is the priority of this branch protection rule",
-			},
-			"protected_file_patterns": schema.StringAttribute{
-				Computed: true,
-			},
-			"push_whitelist_deploy_keys": schema.BoolAttribute{
-				Computed: true,
-			},
-			"push_whitelist_teams": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"push_whitelist_usernames": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"repo": schema.StringAttribute{
-				Required:            true,
-				Description:         "name of the repo",
-				MarkdownDescription: "name of the repo",
-			},
-			"require_signed_commits": schema.BoolAttribute{
-				Computed: true,
-			},
-			"required_approvals": schema.Int64Attribute{
-				Computed: true,
-			},
-			"rule_name": schema.StringAttribute{
-				Computed:            true,
-				Description:         "RuleName is the name of the branch protection rule",
-				MarkdownDescription: "RuleName is the name of the branch protection rule",
-			},
-			"status_check_contexts": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"unprotected_file_patterns": schema.StringAttribute{
-				Computed: true,
-			},
-			"updated_at": schema.StringAttribute{
-				Computed: true,
-			},
-		},
-	}
 }
 
 type BranchProtectionDataSourceModel struct {

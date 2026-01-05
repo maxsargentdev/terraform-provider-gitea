@@ -46,7 +46,65 @@ func (r *tokenResource) Metadata(_ context.Context, req resource.MetadataRequest
 }
 
 func (r *tokenResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	baseSchema := TokenResourceSchema(ctx)
+	baseSchema := schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"created_at": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The timestamp when the token was created",
+				MarkdownDescription: "The timestamp when the token was created",
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The unique identifier of the access token",
+				MarkdownDescription: "The unique identifier of the access token",
+			},
+			"last_used_at": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The timestamp when the token was last used",
+				MarkdownDescription: "The timestamp when the token was last used",
+			},
+			"limit": schema.Int64Attribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "page size of results",
+				MarkdownDescription: "page size of results",
+			},
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the access token",
+				MarkdownDescription: "The name of the access token",
+			},
+			"page": schema.Int64Attribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "page number of results to return (1-based)",
+				MarkdownDescription: "page number of results to return (1-based)",
+			},
+			"scopes": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "The scopes granted to this access token",
+				MarkdownDescription: "The scopes granted to this access token",
+			},
+			"sha1": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The SHA1 hash of the access token",
+				MarkdownDescription: "The SHA1 hash of the access token",
+			},
+			"token_last_eight": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The last eight characters of the token",
+				MarkdownDescription: "The last eight characters of the token",
+			},
+			"username": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "username of to user whose access tokens are to be listed",
+				MarkdownDescription: "username of to user whose access tokens are to be listed",
+			},
+		},
+	}
 
 	// Make username required and force replacement on change
 	baseSchema.Attributes["username"] = schema.StringAttribute{
@@ -293,68 +351,6 @@ func mapTokenToModel(token *gitea.AccessToken, model *tokenModel) {
 	// Set pagination fields to null (not used in resource)
 	model.Page = types.Int64Null()
 	model.Limit = types.Int64Null()
-}
-
-func TokenResourceSchema(ctx context.Context) schema.Schema {
-	return schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"created_at": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The timestamp when the token was created",
-				MarkdownDescription: "The timestamp when the token was created",
-			},
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "The unique identifier of the access token",
-				MarkdownDescription: "The unique identifier of the access token",
-			},
-			"last_used_at": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The timestamp when the token was last used",
-				MarkdownDescription: "The timestamp when the token was last used",
-			},
-			"limit": schema.Int64Attribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "page size of results",
-				MarkdownDescription: "page size of results",
-			},
-			"name": schema.StringAttribute{
-				Required:            true,
-				Description:         "The name of the access token",
-				MarkdownDescription: "The name of the access token",
-			},
-			"page": schema.Int64Attribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "page number of results to return (1-based)",
-				MarkdownDescription: "page number of results to return (1-based)",
-			},
-			"scopes": schema.ListAttribute{
-				ElementType:         types.StringType,
-				Optional:            true,
-				Computed:            true,
-				Description:         "The scopes granted to this access token",
-				MarkdownDescription: "The scopes granted to this access token",
-			},
-			"sha1": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The SHA1 hash of the access token",
-				MarkdownDescription: "The SHA1 hash of the access token",
-			},
-			"token_last_eight": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The last eight characters of the token",
-				MarkdownDescription: "The last eight characters of the token",
-			},
-			"username": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "username of to user whose access tokens are to be listed",
-				MarkdownDescription: "username of to user whose access tokens are to be listed",
-			},
-		},
-	}
 }
 
 type TokenModel struct {

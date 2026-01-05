@@ -32,7 +32,48 @@ func (r *teamResource) Metadata(_ context.Context, req resource.MetadataRequest,
 }
 
 func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	baseSchema := TeamResourceSchema(ctx)
+	baseSchema := schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"can_create_org_repo": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the team can create repositories in the organization",
+				MarkdownDescription: "Whether the team can create repositories in the organization",
+			},
+			"description": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The description of the team",
+				MarkdownDescription: "The description of the team",
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The unique identifier of the team",
+				MarkdownDescription: "The unique identifier of the team",
+			},
+			"includes_all_repositories": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the team has access to all repositories in the organization",
+				MarkdownDescription: "Whether the team has access to all repositories in the organization",
+			},
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the team",
+				MarkdownDescription: "The name of the team",
+			},
+			"units": schema.ListAttribute{
+				ElementType: types.StringType,
+				Optional:    true,
+				Computed:    true,
+			},
+			"units_map": schema.MapAttribute{
+				ElementType: types.StringType,
+				Optional:    true,
+				Computed:    true,
+			},
+		},
+	}
 
 	// Add org as a required string field - this is the input for which org to create the team in
 	baseSchema.Attributes["org"] = schema.StringAttribute{
@@ -273,51 +314,6 @@ func mapTeamToModel(ctx context.Context, team *gitea.Team, model *TeamModel) {
 		}
 	}
 
-}
-
-func TeamResourceSchema(ctx context.Context) schema.Schema {
-	return schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"can_create_org_repo": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the team can create repositories in the organization",
-				MarkdownDescription: "Whether the team can create repositories in the organization",
-			},
-			"description": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The description of the team",
-				MarkdownDescription: "The description of the team",
-			},
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "The unique identifier of the team",
-				MarkdownDescription: "The unique identifier of the team",
-			},
-			"includes_all_repositories": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the team has access to all repositories in the organization",
-				MarkdownDescription: "Whether the team has access to all repositories in the organization",
-			},
-			"name": schema.StringAttribute{
-				Required:            true,
-				Description:         "The name of the team",
-				MarkdownDescription: "The name of the team",
-			},
-			"units": schema.ListAttribute{
-				ElementType: types.StringType,
-				Optional:    true,
-				Computed:    true,
-			},
-			"units_map": schema.MapAttribute{
-				ElementType: types.StringType,
-				Optional:    true,
-				Computed:    true,
-			},
-		},
-	}
 }
 
 type TeamModel struct {

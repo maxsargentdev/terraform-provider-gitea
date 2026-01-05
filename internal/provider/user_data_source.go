@@ -56,55 +56,7 @@ func (d *userDataSource) Metadata(ctx context.Context, req datasource.MetadataRe
 }
 
 func (d *userDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = UserDataSourceSchema(ctx)
-}
-
-func (d *userDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*gitea.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *gitea.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	d.client = client
-}
-
-func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data UserDataSourceModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// The schema uses "id" field as the username to query
-	username := data.Id.ValueString()
-
-	// Get user from Gitea API
-	user, _, err := d.client.GetUserInfo(username)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading User",
-			"Could not read user "+username+": "+err.Error(),
-		)
-		return
-	}
-
-	// Map response to model
-	mapUserToDataSourceModel(user, &data)
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func UserDataSourceSchema(ctx context.Context) schema.Schema {
-	return schema.Schema{
+	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"active": schema.BoolAttribute{
 				Computed:            true,
@@ -208,6 +160,50 @@ func UserDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 		},
 	}
+}
+
+func (d *userDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*gitea.Client)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Data Source Configure Type",
+			fmt.Sprintf("Expected *gitea.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
+		return
+	}
+
+	d.client = client
+}
+
+func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data UserDataSourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// The schema uses "id" field as the username to query
+	username := data.Id.ValueString()
+
+	// Get user from Gitea API
+	user, _, err := d.client.GetUserInfo(username)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading User",
+			"Could not read user "+username+": "+err.Error(),
+		)
+		return
+	}
+
+	// Map response to model
+	mapUserToDataSourceModel(user, &data)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 type UserDataSourceModel struct {

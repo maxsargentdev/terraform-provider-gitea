@@ -28,7 +28,22 @@ func (d *teamMembershipDataSource) Metadata(_ context.Context, req datasource.Me
 }
 
 func (d *teamMembershipDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = TeamMembershipDataSourceSchema(ctx)
+	resp.Schema = schema.Schema{
+		Description:         "Get information about a team membership (checks if a user is a member of a team)",
+		MarkdownDescription: "Get information about a team membership (checks if a user is a member of a team)",
+		Attributes: map[string]schema.Attribute{
+			"team_id": schema.Int64Attribute{
+				Required:            true,
+				Description:         "The ID of the team",
+				MarkdownDescription: "The ID of the team",
+			},
+			"username": schema.StringAttribute{
+				Required:            true,
+				Description:         "The username of the team member",
+				MarkdownDescription: "The username of the team member",
+			},
+		},
+	}
 }
 
 func (d *teamMembershipDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -72,25 +87,6 @@ func (d *teamMembershipDataSource) Read(ctx context.Context, req datasource.Read
 	// If we get here, the membership exists
 	// The data already has the required fields from the config
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func TeamMembershipDataSourceSchema(ctx context.Context) schema.Schema {
-	return schema.Schema{
-		Description:         "Get information about a team membership (checks if a user is a member of a team)",
-		MarkdownDescription: "Get information about a team membership (checks if a user is a member of a team)",
-		Attributes: map[string]schema.Attribute{
-			"team_id": schema.Int64Attribute{
-				Required:            true,
-				Description:         "The ID of the team",
-				MarkdownDescription: "The ID of the team",
-			},
-			"username": schema.StringAttribute{
-				Required:            true,
-				Description:         "The username of the team member",
-				MarkdownDescription: "The username of the team member",
-			},
-		},
-	}
 }
 
 type TeamMembershipDataSourceModel struct {

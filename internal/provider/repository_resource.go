@@ -31,7 +31,259 @@ func (r *repositoryResource) Metadata(_ context.Context, req resource.MetadataRe
 }
 
 func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = RepositoryResourceSchema(ctx)
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"allow_fast_forward_only_merge": schema.BoolAttribute{
+				Computed: true,
+			},
+			"allow_manual_merge": schema.BoolAttribute{
+				Computed: true,
+			},
+			"allow_merge_commits": schema.BoolAttribute{
+				Computed: true,
+			},
+			"allow_rebase": schema.BoolAttribute{
+				Computed: true,
+			},
+			"allow_rebase_explicit": schema.BoolAttribute{
+				Computed: true,
+			},
+			"allow_rebase_update": schema.BoolAttribute{
+				Computed: true,
+			},
+			"allow_squash_merge": schema.BoolAttribute{
+				Computed: true,
+			},
+			"archived": schema.BoolAttribute{
+				Computed: true,
+			},
+			"archived_at": schema.StringAttribute{
+				Computed: true,
+			},
+			"auto_init": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the repository should be auto-initialized?",
+				MarkdownDescription: "Whether the repository should be auto-initialized?",
+			},
+			"autodetect_manual_merge": schema.BoolAttribute{
+				Computed: true,
+			},
+			"avatar_url": schema.StringAttribute{
+				Computed: true,
+			},
+			"clone_url": schema.StringAttribute{
+				Computed: true,
+			},
+			"created_at": schema.StringAttribute{
+				Computed: true,
+			},
+			"default_allow_maintainer_edit": schema.BoolAttribute{
+				Computed: true,
+			},
+			"default_branch": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "DefaultBranch of the repository (used when initializes and in template)",
+				MarkdownDescription: "DefaultBranch of the repository (used when initializes and in template)",
+			},
+			"default_delete_branch_after_merge": schema.BoolAttribute{
+				Computed: true,
+			},
+			"default_merge_style": schema.StringAttribute{
+				Computed: true,
+			},
+			"description": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Description of the repository to create",
+				MarkdownDescription: "Description of the repository to create",
+			},
+			"empty": schema.BoolAttribute{
+				Computed: true,
+			},
+			"fork": schema.BoolAttribute{
+				Computed: true,
+			},
+			"forks_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"full_name": schema.StringAttribute{
+				Computed: true,
+			},
+			"gitignores": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Gitignores to use",
+				MarkdownDescription: "Gitignores to use",
+			},
+			"has_actions": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_code": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_issues": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_packages": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_projects": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_pull_requests": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_releases": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_wiki": schema.BoolAttribute{
+				Computed: true,
+			},
+			"html_url": schema.StringAttribute{
+				Computed: true,
+			},
+			"id": schema.Int64Attribute{
+				Computed: true,
+			},
+			"ignore_whitespace_conflicts": schema.BoolAttribute{
+				Computed: true,
+			},
+			"internal": schema.BoolAttribute{
+				Computed: true,
+			},
+			"issue_labels": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Label-Set to use",
+				MarkdownDescription: "Label-Set to use",
+			},
+			"language": schema.StringAttribute{
+				Computed: true,
+			},
+			"languages_url": schema.StringAttribute{
+				Computed: true,
+			},
+			"license": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "License to use",
+				MarkdownDescription: "License to use",
+			},
+			"licenses": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"link": schema.StringAttribute{
+				Computed: true,
+			},
+			"mirror": schema.BoolAttribute{
+				Computed: true,
+			},
+			"mirror_interval": schema.StringAttribute{
+				Computed: true,
+			},
+			"mirror_updated": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "Name of the repository to create",
+				MarkdownDescription: "Name of the repository to create",
+			},
+			"object_format_name": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "ObjectFormatName of the underlying git repository",
+				MarkdownDescription: "ObjectFormatName of the underlying git repository",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"sha1",
+						"sha256",
+					),
+				},
+			},
+			"open_issues_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"open_pr_counter": schema.Int64Attribute{
+				Computed: true,
+			},
+			"original_url": schema.StringAttribute{
+				Computed: true,
+			},
+			"private": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the repository is private",
+				MarkdownDescription: "Whether the repository is private",
+			},
+			"projects_mode": schema.StringAttribute{
+				Computed: true,
+			},
+			"readme": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Readme of the repository to create",
+				MarkdownDescription: "Readme of the repository to create",
+			},
+			"release_counter": schema.Int64Attribute{
+				Computed: true,
+			},
+			"repo": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "name of the repo",
+				MarkdownDescription: "name of the repo",
+			},
+			"size": schema.Int64Attribute{
+				Computed: true,
+			},
+			"ssh_url": schema.StringAttribute{
+				Computed: true,
+			},
+			"stars_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"template": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the repository is template",
+				MarkdownDescription: "Whether the repository is template",
+			},
+			"topics": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"trust_model": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "TrustModel of the repository",
+				MarkdownDescription: "TrustModel of the repository",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"default",
+						"collaborator",
+						"committer",
+						"collaboratorcommitter",
+					),
+				},
+			},
+			"updated_at": schema.StringAttribute{
+				Computed: true,
+			},
+			"url": schema.StringAttribute{
+				Computed: true,
+			},
+			"watchers_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"website": schema.StringAttribute{
+				Computed: true,
+			},
+		},
+	}
 }
 
 // Helper function to map Gitea Repository to Terraform model
@@ -348,262 +600,6 @@ func (r *repositoryResource) ImportState(ctx context.Context, req resource.Impor
 	mapRepositoryToModel(repository, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func RepositoryResourceSchema(ctx context.Context) schema.Schema {
-	return schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"allow_fast_forward_only_merge": schema.BoolAttribute{
-				Computed: true,
-			},
-			"allow_manual_merge": schema.BoolAttribute{
-				Computed: true,
-			},
-			"allow_merge_commits": schema.BoolAttribute{
-				Computed: true,
-			},
-			"allow_rebase": schema.BoolAttribute{
-				Computed: true,
-			},
-			"allow_rebase_explicit": schema.BoolAttribute{
-				Computed: true,
-			},
-			"allow_rebase_update": schema.BoolAttribute{
-				Computed: true,
-			},
-			"allow_squash_merge": schema.BoolAttribute{
-				Computed: true,
-			},
-			"archived": schema.BoolAttribute{
-				Computed: true,
-			},
-			"archived_at": schema.StringAttribute{
-				Computed: true,
-			},
-			"auto_init": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the repository should be auto-initialized?",
-				MarkdownDescription: "Whether the repository should be auto-initialized?",
-			},
-			"autodetect_manual_merge": schema.BoolAttribute{
-				Computed: true,
-			},
-			"avatar_url": schema.StringAttribute{
-				Computed: true,
-			},
-			"clone_url": schema.StringAttribute{
-				Computed: true,
-			},
-			"created_at": schema.StringAttribute{
-				Computed: true,
-			},
-			"default_allow_maintainer_edit": schema.BoolAttribute{
-				Computed: true,
-			},
-			"default_branch": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "DefaultBranch of the repository (used when initializes and in template)",
-				MarkdownDescription: "DefaultBranch of the repository (used when initializes and in template)",
-			},
-			"default_delete_branch_after_merge": schema.BoolAttribute{
-				Computed: true,
-			},
-			"default_merge_style": schema.StringAttribute{
-				Computed: true,
-			},
-			"description": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Description of the repository to create",
-				MarkdownDescription: "Description of the repository to create",
-			},
-			"empty": schema.BoolAttribute{
-				Computed: true,
-			},
-			"fork": schema.BoolAttribute{
-				Computed: true,
-			},
-			"forks_count": schema.Int64Attribute{
-				Computed: true,
-			},
-			"full_name": schema.StringAttribute{
-				Computed: true,
-			},
-			"gitignores": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Gitignores to use",
-				MarkdownDescription: "Gitignores to use",
-			},
-			"has_actions": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_code": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_issues": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_packages": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_projects": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_pull_requests": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_releases": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_wiki": schema.BoolAttribute{
-				Computed: true,
-			},
-			"html_url": schema.StringAttribute{
-				Computed: true,
-			},
-			"id": schema.Int64Attribute{
-				Computed: true,
-			},
-			"ignore_whitespace_conflicts": schema.BoolAttribute{
-				Computed: true,
-			},
-			"internal": schema.BoolAttribute{
-				Computed: true,
-			},
-			"issue_labels": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Label-Set to use",
-				MarkdownDescription: "Label-Set to use",
-			},
-			"language": schema.StringAttribute{
-				Computed: true,
-			},
-			"languages_url": schema.StringAttribute{
-				Computed: true,
-			},
-			"license": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "License to use",
-				MarkdownDescription: "License to use",
-			},
-			"licenses": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"link": schema.StringAttribute{
-				Computed: true,
-			},
-			"mirror": schema.BoolAttribute{
-				Computed: true,
-			},
-			"mirror_interval": schema.StringAttribute{
-				Computed: true,
-			},
-			"mirror_updated": schema.StringAttribute{
-				Computed: true,
-			},
-			"name": schema.StringAttribute{
-				Required:            true,
-				Description:         "Name of the repository to create",
-				MarkdownDescription: "Name of the repository to create",
-			},
-			"object_format_name": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "ObjectFormatName of the underlying git repository",
-				MarkdownDescription: "ObjectFormatName of the underlying git repository",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"sha1",
-						"sha256",
-					),
-				},
-			},
-			"open_issues_count": schema.Int64Attribute{
-				Computed: true,
-			},
-			"open_pr_counter": schema.Int64Attribute{
-				Computed: true,
-			},
-			"original_url": schema.StringAttribute{
-				Computed: true,
-			},
-			"private": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the repository is private",
-				MarkdownDescription: "Whether the repository is private",
-			},
-			"projects_mode": schema.StringAttribute{
-				Computed: true,
-			},
-			"readme": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Readme of the repository to create",
-				MarkdownDescription: "Readme of the repository to create",
-			},
-			"release_counter": schema.Int64Attribute{
-				Computed: true,
-			},
-			"repo": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "name of the repo",
-				MarkdownDescription: "name of the repo",
-			},
-			"size": schema.Int64Attribute{
-				Computed: true,
-			},
-			"ssh_url": schema.StringAttribute{
-				Computed: true,
-			},
-			"stars_count": schema.Int64Attribute{
-				Computed: true,
-			},
-			"template": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the repository is template",
-				MarkdownDescription: "Whether the repository is template",
-			},
-			"topics": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"trust_model": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "TrustModel of the repository",
-				MarkdownDescription: "TrustModel of the repository",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"default",
-						"collaborator",
-						"committer",
-						"collaboratorcommitter",
-					),
-				},
-			},
-			"updated_at": schema.StringAttribute{
-				Computed: true,
-			},
-			"url": schema.StringAttribute{
-				Computed: true,
-			},
-			"watchers_count": schema.Int64Attribute{
-				Computed: true,
-			},
-			"website": schema.StringAttribute{
-				Computed: true,
-			},
-		},
-	}
 }
 
 type RepositoryModel struct {

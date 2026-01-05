@@ -56,7 +56,138 @@ func (r *userResource) Metadata(ctx context.Context, req resource.MetadataReques
 }
 
 func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = UserResourceSchema(ctx)
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"active": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Is user active",
+				MarkdownDescription: "Is user active",
+			},
+			"avatar_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "URL to the user's avatar",
+				MarkdownDescription: "URL to the user's avatar",
+			},
+			"created": schema.StringAttribute{
+				Computed: true,
+			},
+			"created_at": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\".",
+				MarkdownDescription: "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\".",
+			},
+			"description": schema.StringAttribute{
+				Computed:            true,
+				Description:         "the user's description",
+				MarkdownDescription: "the user's description",
+			},
+			"email": schema.StringAttribute{
+				Required: true,
+			},
+			"followers_count": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "user counts",
+				MarkdownDescription: "user counts",
+			},
+			"following_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"full_name": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The full display name of the user",
+				MarkdownDescription: "The full display name of the user",
+			},
+			"html_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "URL to the user's gitea page",
+				MarkdownDescription: "URL to the user's gitea page",
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "the user's id",
+				MarkdownDescription: "the user's id",
+			},
+			"is_admin": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Is the user an administrator",
+				MarkdownDescription: "Is the user an administrator",
+			},
+			"language": schema.StringAttribute{
+				Computed:            true,
+				Description:         "User locale",
+				MarkdownDescription: "User locale",
+			},
+			"last_login": schema.StringAttribute{
+				Computed: true,
+			},
+			"location": schema.StringAttribute{
+				Computed:            true,
+				Description:         "the user's location",
+				MarkdownDescription: "the user's location",
+			},
+			"login": schema.StringAttribute{
+				Computed:            true,
+				Description:         "login of the user, same as `username`",
+				MarkdownDescription: "login of the user, same as `username`",
+			},
+			"must_change_password": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the user must change password on first login",
+				MarkdownDescription: "Whether the user must change password on first login",
+			},
+			"password": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The plain text password for the user",
+				MarkdownDescription: "The plain text password for the user",
+			},
+			"prohibit_login": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Is user login prohibited",
+				MarkdownDescription: "Is user login prohibited",
+			},
+			"restricted": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the user has restricted access privileges",
+				MarkdownDescription: "Whether the user has restricted access privileges",
+			},
+			"send_notify": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether to send welcome notification email to the user",
+				MarkdownDescription: "Whether to send welcome notification email to the user",
+			},
+			"source_id": schema.Int64Attribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The authentication source ID to associate with the user",
+				MarkdownDescription: "The authentication source ID to associate with the user",
+			},
+			"starred_repos_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"username": schema.StringAttribute{
+				Required:            true,
+				Description:         "username of the user",
+				MarkdownDescription: "username of the user",
+			},
+			"visibility": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "User visibility level: public, limited, or private",
+				MarkdownDescription: "User visibility level: public, limited, or private",
+			},
+			"website": schema.StringAttribute{
+				Computed:            true,
+				Description:         "the user's website",
+				MarkdownDescription: "the user's website",
+			},
+		},
+	}
 }
 
 func (r *userResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -263,141 +394,6 @@ func (r *userResource) ImportState(ctx context.Context, req resource.ImportState
 	mapUserToModel(user, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func UserResourceSchema(ctx context.Context) schema.Schema {
-	return schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"active": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "Is user active",
-				MarkdownDescription: "Is user active",
-			},
-			"avatar_url": schema.StringAttribute{
-				Computed:            true,
-				Description:         "URL to the user's avatar",
-				MarkdownDescription: "URL to the user's avatar",
-			},
-			"created": schema.StringAttribute{
-				Computed: true,
-			},
-			"created_at": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\".",
-				MarkdownDescription: "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\".",
-			},
-			"description": schema.StringAttribute{
-				Computed:            true,
-				Description:         "the user's description",
-				MarkdownDescription: "the user's description",
-			},
-			"email": schema.StringAttribute{
-				Required: true,
-			},
-			"followers_count": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "user counts",
-				MarkdownDescription: "user counts",
-			},
-			"following_count": schema.Int64Attribute{
-				Computed: true,
-			},
-			"full_name": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The full display name of the user",
-				MarkdownDescription: "The full display name of the user",
-			},
-			"html_url": schema.StringAttribute{
-				Computed:            true,
-				Description:         "URL to the user's gitea page",
-				MarkdownDescription: "URL to the user's gitea page",
-			},
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "the user's id",
-				MarkdownDescription: "the user's id",
-			},
-			"is_admin": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "Is the user an administrator",
-				MarkdownDescription: "Is the user an administrator",
-			},
-			"language": schema.StringAttribute{
-				Computed:            true,
-				Description:         "User locale",
-				MarkdownDescription: "User locale",
-			},
-			"last_login": schema.StringAttribute{
-				Computed: true,
-			},
-			"location": schema.StringAttribute{
-				Computed:            true,
-				Description:         "the user's location",
-				MarkdownDescription: "the user's location",
-			},
-			"login": schema.StringAttribute{
-				Computed:            true,
-				Description:         "login of the user, same as `username`",
-				MarkdownDescription: "login of the user, same as `username`",
-			},
-			"must_change_password": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the user must change password on first login",
-				MarkdownDescription: "Whether the user must change password on first login",
-			},
-			"password": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The plain text password for the user",
-				MarkdownDescription: "The plain text password for the user",
-			},
-			"prohibit_login": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "Is user login prohibited",
-				MarkdownDescription: "Is user login prohibited",
-			},
-			"restricted": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the user has restricted access privileges",
-				MarkdownDescription: "Whether the user has restricted access privileges",
-			},
-			"send_notify": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether to send welcome notification email to the user",
-				MarkdownDescription: "Whether to send welcome notification email to the user",
-			},
-			"source_id": schema.Int64Attribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The authentication source ID to associate with the user",
-				MarkdownDescription: "The authentication source ID to associate with the user",
-			},
-			"starred_repos_count": schema.Int64Attribute{
-				Computed: true,
-			},
-			"username": schema.StringAttribute{
-				Required:            true,
-				Description:         "username of the user",
-				MarkdownDescription: "username of the user",
-			},
-			"visibility": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "User visibility level: public, limited, or private",
-				MarkdownDescription: "User visibility level: public, limited, or private",
-			},
-			"website": schema.StringAttribute{
-				Computed:            true,
-				Description:         "the user's website",
-				MarkdownDescription: "the user's website",
-			},
-		},
-	}
 }
 
 type UserModel struct {

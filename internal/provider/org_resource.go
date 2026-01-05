@@ -45,7 +45,85 @@ func (r *orgResource) Metadata(ctx context.Context, req resource.MetadataRequest
 }
 
 func (r *orgResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = OrgResourceSchema(ctx)
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"avatar_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The URL of the organization's avatar",
+				MarkdownDescription: "The URL of the organization's avatar",
+			},
+			"description": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The description of the organization",
+				MarkdownDescription: "The description of the organization",
+			},
+			"email": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The email address of the organization",
+				MarkdownDescription: "The email address of the organization",
+			},
+			"full_name": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The full display name of the organization",
+				MarkdownDescription: "The full display name of the organization",
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The unique identifier of the organization",
+				MarkdownDescription: "The unique identifier of the organization",
+			},
+			"location": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The location of the organization",
+				MarkdownDescription: "The location of the organization",
+			},
+			"name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The name of the organization",
+				MarkdownDescription: "The name of the organization",
+			},
+			"org": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "name of the organization to get",
+				MarkdownDescription: "name of the organization to get",
+			},
+			"repo_admin_change_team_access": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether repository administrators can change team access",
+				MarkdownDescription: "Whether repository administrators can change team access",
+			},
+			"username": schema.StringAttribute{
+				Required:            true,
+				Description:         "username of the organization",
+				MarkdownDescription: "username of the organization",
+			},
+			"visibility": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "possible values are `public` (default), `limited` or `private`",
+				MarkdownDescription: "possible values are `public` (default), `limited` or `private`",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"public",
+						"limited",
+						"private",
+					),
+				},
+			},
+			"website": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The website URL of the organization",
+				MarkdownDescription: "The website URL of the organization",
+			},
+		},
+	}
 }
 
 func (r *orgResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -202,88 +280,6 @@ func (r *orgResource) ImportState(ctx context.Context, req resource.ImportStateR
 	mapOrgToModel(org, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func OrgResourceSchema(ctx context.Context) schema.Schema {
-	return schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"avatar_url": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The URL of the organization's avatar",
-				MarkdownDescription: "The URL of the organization's avatar",
-			},
-			"description": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The description of the organization",
-				MarkdownDescription: "The description of the organization",
-			},
-			"email": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The email address of the organization",
-				MarkdownDescription: "The email address of the organization",
-			},
-			"full_name": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The full display name of the organization",
-				MarkdownDescription: "The full display name of the organization",
-			},
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "The unique identifier of the organization",
-				MarkdownDescription: "The unique identifier of the organization",
-			},
-			"location": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The location of the organization",
-				MarkdownDescription: "The location of the organization",
-			},
-			"name": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The name of the organization",
-				MarkdownDescription: "The name of the organization",
-			},
-			"org": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "name of the organization to get",
-				MarkdownDescription: "name of the organization to get",
-			},
-			"repo_admin_change_team_access": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether repository administrators can change team access",
-				MarkdownDescription: "Whether repository administrators can change team access",
-			},
-			"username": schema.StringAttribute{
-				Required:            true,
-				Description:         "username of the organization",
-				MarkdownDescription: "username of the organization",
-			},
-			"visibility": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "possible values are `public` (default), `limited` or `private`",
-				MarkdownDescription: "possible values are `public` (default), `limited` or `private`",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"public",
-						"limited",
-						"private",
-					),
-				},
-			},
-			"website": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The website URL of the organization",
-				MarkdownDescription: "The website URL of the organization",
-			},
-		},
-	}
 }
 
 type OrgModel struct {
