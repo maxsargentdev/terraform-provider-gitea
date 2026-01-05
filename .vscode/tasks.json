@@ -1,0 +1,155 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Gitea",
+			"type": "shell",
+			"command": "docker compose up -d",
+			"options": {
+				"cwd": "${workspaceFolder}/test"
+			}
+		},
+		{
+			"label": "Stop Gitea",
+			"type": "shell",
+			"command": "docker compose down",
+			"options": {
+				"cwd": "${workspaceFolder}/test"
+			}
+		},
+		{
+			"label": "Clean Gitea",
+			"type": "shell",
+			"command": "docker compose down -v; Remove-Item terraform.tfstate*",
+			"options": {
+				"cwd": "${workspaceFolder}/test"
+			}
+		},
+		{
+			"label": "Go Install",
+			"type": "shell",
+			"command": "go install",
+			"group": "build"
+		},
+		{
+			"label": "Terraform Plan",
+			"type": "shell",
+			"command": "terraform plan",
+			"options": {
+				"cwd": "${workspaceFolder}/test"
+			}
+		},
+		{
+			"label": "Terraform Apply",
+			"type": "shell",
+			"command": "terraform apply -auto-approve",
+			"options": {
+				"cwd": "${workspaceFolder}/test"
+			}
+		},
+		{
+			"label": "Terraform Destroy",
+			"type": "shell",
+			"command": "terraform destroy -auto-approve",
+			"options": {
+				"cwd": "${workspaceFolder}/test"
+			}
+		},
+		{
+			"label": "Install and Plan",
+			"dependsOn": ["Start Gitea", "Go Install", "Terraform Plan"],
+			"dependsOrder": "sequence"
+		},
+		{
+			"label": "Install and Apply",
+			"dependsOn": ["Start Gitea", "Go Install", "Terraform Apply"],
+			"dependsOrder": "sequence"
+		},
+		{
+			"label": "Install and Destroy",
+			"dependsOn": ["Go Install", "Terraform Destroy"],
+			"dependsOrder": "sequence"
+		},
+		{
+			"label": "Terraform Cycle",
+			"dependsOn": ["Terraform Plan", "Terraform Apply", "Terraform Destroy"],
+			"dependsOrder": "sequence"
+		},
+		{
+			"label": "Generate Provider Spec",
+			"type": "shell",
+			"command": "tfplugingen-openapi generate --config generator_config.yaml --output ./provider_code_spec.json openapi_3.json",
+			"options": {
+				"cwd": "${workspaceFolder}/openapi/1.25.3"
+			},
+			"group": "build"
+		},
+		{
+			"label": "Generate Resources",
+			"type": "shell",
+			"command": "tfplugingen-framework generate resources --input provider_code_spec.json --output ../../internal",
+			"options": {
+				"cwd": "${workspaceFolder}/openapi/1.25.3"
+			},
+			"group": "build"
+		},
+		{
+			"label": "Generate Data Sources",
+			"type": "shell",
+			"command": "tfplugingen-framework generate data-sources --input provider_code_spec.json --output ../../internal",
+			"options": {
+				"cwd": "${workspaceFolder}/openapi/1.25.3"
+			},
+			"group": "build"
+		},
+		{
+			"label": "Generate All Code",
+			"dependsOn": ["Generate Provider Spec", "Generate Resources", "Generate Data Sources"],
+			"dependsOrder": "sequence",
+			"group": "build"
+		},
+		{
+			"label": "Full Build",
+			"dependsOn": ["Generate All Code", "Go Install"],
+			"dependsOrder": "sequence",
+			"group": "build"
+		},
+		{
+			"label": "Full Test",
+			"dependsOn": ["Generate All Code", "Go Install", "Terraform Cycle"],
+			"dependsOrder": "sequence",
+			"group": "build"
+		},
+		{
+			"label": "Generate Docs",
+			"type": "shell",
+			"command": "tfplugindocs generate --provider-dir . -provider-name gitea",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Run Unit Tests",
+			"type": "shell",
+			"command": "go test -v ./internal/provider/...",
+			"group": "test",
+			"problemMatcher": [
+				"$go"
+			],
+			"options": {
+				"env": {
+					"TF_ACC": "1",
+					"GITEA_HOSTNAME": "http://localhost:3000",
+					"GITEA_USERNAME": "root",
+					"GITEA_PASSWORD": "password"
+				}
+			}
+		},
+		{
+			"label": "Build and Test",
+			"dependsOn": ["Start Gitea", "Go Install", "Run Unit Tests"],
+			"dependsOrder": "sequence",
+			"group": "test"
+		}
+	]
+}

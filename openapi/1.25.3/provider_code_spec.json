@@ -1,0 +1,3591 @@
+{
+	"datasources": [
+		{
+			"name": "branch_protection",
+			"schema": {
+				"attributes": [
+					{
+						"name": "owner",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "owner of the repo"
+						}
+					},
+					{
+						"name": "repo",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "name of the repo"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "name of protected branch"
+						}
+					},
+					{
+						"name": "approvals_whitelist_teams",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "approvals_whitelist_username",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "block_admin_merge_override",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "block_on_official_review_requests",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "block_on_outdated_branch",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "block_on_rejected_reviews",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "branch_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Deprecated: true"
+						}
+					},
+					{
+						"name": "created_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "dismiss_stale_approvals",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_approvals_whitelist",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_force_push",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_force_push_allowlist",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_merge_whitelist",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_push",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_push_whitelist",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "enable_status_check",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "force_push_allowlist_deploy_keys",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "force_push_allowlist_teams",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "force_push_allowlist_usernames",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "ignore_stale_approvals",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "merge_whitelist_teams",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "merge_whitelist_usernames",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "priority",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Priority is the priority of this branch protection rule"
+						}
+					},
+					{
+						"name": "protected_file_patterns",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "push_whitelist_deploy_keys",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "push_whitelist_teams",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "push_whitelist_usernames",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "require_signed_commits",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "required_approvals",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "rule_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "RuleName is the name of the branch protection rule"
+						}
+					},
+					{
+						"name": "status_check_contexts",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "unprotected_file_patterns",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "updated_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "org",
+			"schema": {
+				"attributes": [
+					{
+						"name": "org",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "name of the organization to get"
+						}
+					},
+					{
+						"name": "avatar_url",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The URL of the organization's avatar"
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The description of the organization"
+						}
+					},
+					{
+						"name": "email",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The email address of the organization"
+						}
+					},
+					{
+						"name": "full_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The full display name of the organization"
+						}
+					},
+					{
+						"name": "id",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The unique identifier of the organization"
+						}
+					},
+					{
+						"name": "location",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The location of the organization"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The name of the organization"
+						}
+					},
+					{
+						"name": "repo_admin_change_team_access",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether repository administrators can change team access"
+						}
+					},
+					{
+						"name": "username",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "username of the organization\ndeprecated"
+						}
+					},
+					{
+						"name": "visibility",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The visibility level of the organization (public, limited, private)"
+						}
+					},
+					{
+						"name": "website",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The website URL of the organization"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "repository",
+			"schema": {
+				"attributes": [
+					{
+						"name": "owner",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "owner of the repo"
+						}
+					},
+					{
+						"name": "repo",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "name of the repo"
+						}
+					},
+					{
+						"name": "allow_fast_forward_only_merge",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "allow_manual_merge",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "allow_merge_commits",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "allow_rebase",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "allow_rebase_explicit",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "allow_rebase_update",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "allow_squash_merge",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "archived",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "archived_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "autodetect_manual_merge",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "avatar_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "clone_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "created_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "default_allow_maintainer_edit",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "default_branch",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "default_delete_branch_after_merge",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "default_merge_style",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "empty",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "external_tracker",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "external_tracker_format",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "External Issue Tracker URL Format. Use the placeholders {user}, {repo} and {index} for the username, repository name and issue index."
+									}
+								},
+								{
+									"name": "external_tracker_regexp_pattern",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "External Issue Tracker issue regular expression"
+									}
+								},
+								{
+									"name": "external_tracker_style",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "External Issue Tracker Number Format, either `numeric`, `alphanumeric`, or `regexp`"
+									}
+								},
+								{
+									"name": "external_tracker_url",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "URL of external issue tracker."
+									}
+								}
+							],
+							"description": "ExternalTracker represents settings for external tracker"
+						}
+					},
+					{
+						"name": "external_wiki",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "external_wiki_url",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "URL of external wiki."
+									}
+								}
+							],
+							"description": "ExternalWiki represents setting for external wiki"
+						}
+					},
+					{
+						"name": "fork",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "forks_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "full_name",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_actions",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_code",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_issues",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_packages",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_projects",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_pull_requests",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_releases",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_wiki",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "html_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "id",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "ignore_whitespace_conflicts",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "internal",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "internal_tracker",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "allow_only_contributors_to_track_time",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Let only contributors track time (Built-in issue tracker)"
+									}
+								},
+								{
+									"name": "enable_issue_dependencies",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Enable dependencies for issues and pull requests (Built-in issue tracker)"
+									}
+								},
+								{
+									"name": "enable_time_tracker",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Enable time tracking (Built-in issue tracker)"
+									}
+								}
+							],
+							"description": "InternalTracker represents settings for internal tracker"
+						}
+					},
+					{
+						"name": "language",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "languages_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "licenses",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "link",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "mirror",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "mirror_interval",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "mirror_updated",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "object_format_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ObjectFormatName of the underlying git repository"
+						}
+					},
+					{
+						"name": "open_issues_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "open_pr_counter",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "original_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "permissions",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "admin",
+									"bool": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "pull",
+									"bool": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "push",
+									"bool": {
+										"computed_optional_required": "computed"
+									}
+								}
+							],
+							"description": "Permission represents a set of permissions"
+						}
+					},
+					{
+						"name": "private",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "projects_mode",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "release_counter",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "repo_transfer",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "doer",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "active",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is user active"
+												}
+											},
+											{
+												"name": "avatar_url",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "URL to the user's avatar"
+												}
+											},
+											{
+												"name": "created",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "description",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's description"
+												}
+											},
+											{
+												"name": "email",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "followers_count",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "user counts"
+												}
+											},
+											{
+												"name": "following_count",
+												"int64": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "full_name",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's full name"
+												}
+											},
+											{
+												"name": "html_url",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "URL to the user's gitea page"
+												}
+											},
+											{
+												"name": "id",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "the user's id"
+												}
+											},
+											{
+												"name": "is_admin",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is the user an administrator"
+												}
+											},
+											{
+												"name": "language",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "User locale"
+												}
+											},
+											{
+												"name": "last_login",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "location",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's location"
+												}
+											},
+											{
+												"name": "login",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "login of the user, same as `username`"
+												}
+											},
+											{
+												"name": "login_name",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "identifier of the user, provided by the external authenticator (if configured)"
+												}
+											},
+											{
+												"name": "prohibit_login",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is user login prohibited"
+												}
+											},
+											{
+												"name": "restricted",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is user restricted"
+												}
+											},
+											{
+												"name": "source_id",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "The ID of the user's Authentication Source"
+												}
+											},
+											{
+												"name": "starred_repos_count",
+												"int64": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "visibility",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "User visibility level option: public, limited, private"
+												}
+											},
+											{
+												"name": "website",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's website"
+												}
+											}
+										],
+										"description": "User represents a user"
+									}
+								},
+								{
+									"name": "recipient",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "active",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is user active"
+												}
+											},
+											{
+												"name": "avatar_url",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "URL to the user's avatar"
+												}
+											},
+											{
+												"name": "created",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "description",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's description"
+												}
+											},
+											{
+												"name": "email",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "followers_count",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "user counts"
+												}
+											},
+											{
+												"name": "following_count",
+												"int64": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "full_name",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's full name"
+												}
+											},
+											{
+												"name": "html_url",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "URL to the user's gitea page"
+												}
+											},
+											{
+												"name": "id",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "the user's id"
+												}
+											},
+											{
+												"name": "is_admin",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is the user an administrator"
+												}
+											},
+											{
+												"name": "language",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "User locale"
+												}
+											},
+											{
+												"name": "last_login",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "location",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's location"
+												}
+											},
+											{
+												"name": "login",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "login of the user, same as `username`"
+												}
+											},
+											{
+												"name": "login_name",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "identifier of the user, provided by the external authenticator (if configured)"
+												}
+											},
+											{
+												"name": "prohibit_login",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is user login prohibited"
+												}
+											},
+											{
+												"name": "restricted",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is user restricted"
+												}
+											},
+											{
+												"name": "source_id",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "The ID of the user's Authentication Source"
+												}
+											},
+											{
+												"name": "starred_repos_count",
+												"int64": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "visibility",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "User visibility level option: public, limited, private"
+												}
+											},
+											{
+												"name": "website",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's website"
+												}
+											}
+										],
+										"description": "User represents a user"
+									}
+								},
+								{
+									"name": "teams",
+									"list_nested": {
+										"computed_optional_required": "computed",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "can_create_org_repo",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether the team can create repositories in the organization"
+													}
+												},
+												{
+													"name": "description",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "The description of the team"
+													}
+												},
+												{
+													"name": "id",
+													"int64": {
+														"computed_optional_required": "computed",
+														"description": "The unique identifier of the team"
+													}
+												},
+												{
+													"name": "includes_all_repositories",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether the team has access to all repositories in the organization"
+													}
+												},
+												{
+													"name": "name",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "The name of the team"
+													}
+												},
+												{
+													"name": "organization",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"attributes": [
+															{
+																"name": "avatar_url",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The URL of the organization's avatar"
+																}
+															},
+															{
+																"name": "description",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The description of the organization"
+																}
+															},
+															{
+																"name": "email",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The email address of the organization"
+																}
+															},
+															{
+																"name": "full_name",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The full display name of the organization"
+																}
+															},
+															{
+																"name": "id",
+																"int64": {
+																	"computed_optional_required": "computed",
+																	"description": "The unique identifier of the organization"
+																}
+															},
+															{
+																"name": "location",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The location of the organization"
+																}
+															},
+															{
+																"name": "name",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The name of the organization"
+																}
+															},
+															{
+																"name": "repo_admin_change_team_access",
+																"bool": {
+																	"computed_optional_required": "computed",
+																	"description": "Whether repository administrators can change team access"
+																}
+															},
+															{
+																"name": "username",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "username of the organization\ndeprecated"
+																}
+															},
+															{
+																"name": "visibility",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The visibility level of the organization (public, limited, private)"
+																}
+															},
+															{
+																"name": "website",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The website URL of the organization"
+																}
+															}
+														],
+														"description": "Organization represents an organization"
+													}
+												},
+												{
+													"name": "permission",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "units",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														}
+													}
+												},
+												{
+													"name": "units_map",
+													"map": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														}
+													}
+												}
+											]
+										}
+									}
+								}
+							],
+							"description": "RepoTransfer represents a pending repo transfer"
+						}
+					},
+					{
+						"name": "size",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "ssh_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "stars_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "template",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "topics",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "updated_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "watchers_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "website",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "team",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"int64": {
+							"computed_optional_required": "required",
+							"description": "id of the team to get"
+						}
+					},
+					{
+						"name": "can_create_org_repo",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether the team can create repositories in the organization"
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The description of the team"
+						}
+					},
+					{
+						"name": "includes_all_repositories",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether the team has access to all repositories in the organization"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The name of the team"
+						}
+					},
+					{
+						"name": "organization",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "avatar_url",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The URL of the organization's avatar"
+									}
+								},
+								{
+									"name": "description",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The description of the organization"
+									}
+								},
+								{
+									"name": "email",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The email address of the organization"
+									}
+								},
+								{
+									"name": "full_name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The full display name of the organization"
+									}
+								},
+								{
+									"name": "id",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "The unique identifier of the organization"
+									}
+								},
+								{
+									"name": "location",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The location of the organization"
+									}
+								},
+								{
+									"name": "name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The name of the organization"
+									}
+								},
+								{
+									"name": "repo_admin_change_team_access",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Whether repository administrators can change team access"
+									}
+								},
+								{
+									"name": "username",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "username of the organization\ndeprecated"
+									}
+								},
+								{
+									"name": "visibility",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The visibility level of the organization (public, limited, private)"
+									}
+								},
+								{
+									"name": "website",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The website URL of the organization"
+									}
+								}
+							],
+							"description": "Organization represents an organization"
+						}
+					},
+					{
+						"name": "units",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "units_map",
+						"map": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "user",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "username of the user whose data is to be listed"
+						}
+					},
+					{
+						"name": "active",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Is user active"
+						}
+					},
+					{
+						"name": "avatar_url",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "URL to the user's avatar"
+						}
+					},
+					{
+						"name": "created",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "the user's description"
+						}
+					},
+					{
+						"name": "email",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "followers_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "user counts"
+						}
+					},
+					{
+						"name": "following_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "full_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "the user's full name"
+						}
+					},
+					{
+						"name": "html_url",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "URL to the user's gitea page"
+						}
+					},
+					{
+						"name": "is_admin",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Is the user an administrator"
+						}
+					},
+					{
+						"name": "language",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "User locale"
+						}
+					},
+					{
+						"name": "last_login",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "location",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "the user's location"
+						}
+					},
+					{
+						"name": "login",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "login of the user, same as `username`"
+						}
+					},
+					{
+						"name": "login_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "identifier of the user, provided by the external authenticator (if configured)"
+						}
+					},
+					{
+						"name": "prohibit_login",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Is user login prohibited"
+						}
+					},
+					{
+						"name": "restricted",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Is user restricted"
+						}
+					},
+					{
+						"name": "source_id",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The ID of the user's Authentication Source"
+						}
+					},
+					{
+						"name": "starred_repos_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "visibility",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "User visibility level option: public, limited, private"
+						}
+					},
+					{
+						"name": "website",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "the user's website"
+						}
+					}
+				]
+			}
+		}
+	],
+	"provider": {
+		"name": "gitea"
+	},
+	"resources": [
+		{
+			"name": "branch_protection",
+			"schema": {
+				"attributes": [
+					{
+						"name": "approvals_whitelist_teams",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "approvals_whitelist_username",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "block_admin_merge_override",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "block_on_official_review_requests",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "block_on_outdated_branch",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "block_on_rejected_reviews",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "branch_name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Deprecated: true"
+						}
+					},
+					{
+						"name": "dismiss_stale_approvals",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_approvals_whitelist",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_force_push",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_force_push_allowlist",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_merge_whitelist",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_push",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_push_whitelist",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "enable_status_check",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "force_push_allowlist_deploy_keys",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "force_push_allowlist_teams",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "force_push_allowlist_usernames",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "ignore_stale_approvals",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "merge_whitelist_teams",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "merge_whitelist_usernames",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "priority",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Priority is the priority of this branch protection rule"
+						}
+					},
+					{
+						"name": "protected_file_patterns",
+						"string": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "push_whitelist_deploy_keys",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "push_whitelist_teams",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "push_whitelist_usernames",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "require_signed_commits",
+						"bool": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "required_approvals",
+						"int64": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "rule_name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "RuleName is the name of the branch protection rule"
+						}
+					},
+					{
+						"name": "status_check_contexts",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "unprotected_file_patterns",
+						"string": {
+							"computed_optional_required": "computed_optional"
+						}
+					},
+					{
+						"name": "created_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "updated_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "owner",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "owner of the repo"
+						}
+					},
+					{
+						"name": "repo",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "name of the repo"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "name of protected branch"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "org",
+			"schema": {
+				"attributes": [
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The description of the organization"
+						}
+					},
+					{
+						"name": "email",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The email address of the organization"
+						}
+					},
+					{
+						"name": "full_name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The full display name of the organization"
+						}
+					},
+					{
+						"name": "location",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The location of the organization"
+						}
+					},
+					{
+						"name": "repo_admin_change_team_access",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Whether repository administrators can change team access"
+						}
+					},
+					{
+						"name": "username",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "username of the organization"
+						}
+					},
+					{
+						"name": "visibility",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "possible values are `public` (default), `limited` or `private`",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"public\",\n\"limited\",\n\"private\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "website",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The website URL of the organization"
+						}
+					},
+					{
+						"name": "avatar_url",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The URL of the organization's avatar"
+						}
+					},
+					{
+						"name": "id",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The unique identifier of the organization"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The name of the organization"
+						}
+					},
+					{
+						"name": "org",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "name of the organization to get"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "repository",
+			"schema": {
+				"attributes": [
+					{
+						"name": "auto_init",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Whether the repository should be auto-initialized?"
+						}
+					},
+					{
+						"name": "default_branch",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "DefaultBranch of the repository (used when initializes and in template)"
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Description of the repository to create"
+						}
+					},
+					{
+						"name": "gitignores",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Gitignores to use"
+						}
+					},
+					{
+						"name": "issue_labels",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Label-Set to use"
+						}
+					},
+					{
+						"name": "license",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "License to use"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Name of the repository to create"
+						}
+					},
+					{
+						"name": "object_format_name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "ObjectFormatName of the underlying git repository",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"sha1\",\n\"sha256\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "private",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Whether the repository is private"
+						}
+					},
+					{
+						"name": "readme",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Readme of the repository to create"
+						}
+					},
+					{
+						"name": "template",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Whether the repository is template"
+						}
+					},
+					{
+						"name": "trust_model",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "TrustModel of the repository",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"default\",\n\"collaborator\",\n\"committer\",\n\"collaboratorcommitter\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "allow_fast_forward_only_merge",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "allow_manual_merge",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "allow_merge_commits",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "allow_rebase",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "allow_rebase_explicit",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "allow_rebase_update",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "allow_squash_merge",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "archived",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "archived_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "autodetect_manual_merge",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "avatar_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "clone_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "created_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "default_allow_maintainer_edit",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "default_delete_branch_after_merge",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "default_merge_style",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "empty",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "external_tracker",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "external_tracker_format",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "External Issue Tracker URL Format. Use the placeholders {user}, {repo} and {index} for the username, repository name and issue index."
+									}
+								},
+								{
+									"name": "external_tracker_regexp_pattern",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "External Issue Tracker issue regular expression"
+									}
+								},
+								{
+									"name": "external_tracker_style",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "External Issue Tracker Number Format, either `numeric`, `alphanumeric`, or `regexp`"
+									}
+								},
+								{
+									"name": "external_tracker_url",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "URL of external issue tracker."
+									}
+								}
+							],
+							"description": "ExternalTracker represents settings for external tracker"
+						}
+					},
+					{
+						"name": "external_wiki",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "external_wiki_url",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "URL of external wiki."
+									}
+								}
+							],
+							"description": "ExternalWiki represents setting for external wiki"
+						}
+					},
+					{
+						"name": "fork",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "forks_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "full_name",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_actions",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_code",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_issues",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_packages",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_projects",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_pull_requests",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_releases",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "has_wiki",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "html_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "id",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "ignore_whitespace_conflicts",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "internal",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "internal_tracker",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "allow_only_contributors_to_track_time",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Let only contributors track time (Built-in issue tracker)"
+									}
+								},
+								{
+									"name": "enable_issue_dependencies",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Enable dependencies for issues and pull requests (Built-in issue tracker)"
+									}
+								},
+								{
+									"name": "enable_time_tracker",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Enable time tracking (Built-in issue tracker)"
+									}
+								}
+							],
+							"description": "InternalTracker represents settings for internal tracker"
+						}
+					},
+					{
+						"name": "language",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "languages_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "licenses",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "link",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "mirror",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "mirror_interval",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "mirror_updated",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "open_issues_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "open_pr_counter",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "original_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "owner",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "active",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Is user active"
+									}
+								},
+								{
+									"name": "avatar_url",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "URL to the user's avatar"
+									}
+								},
+								{
+									"name": "created",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "description",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "the user's description"
+									}
+								},
+								{
+									"name": "email",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "followers_count",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "user counts"
+									}
+								},
+								{
+									"name": "following_count",
+									"int64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "full_name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "the user's full name"
+									}
+								},
+								{
+									"name": "html_url",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "URL to the user's gitea page"
+									}
+								},
+								{
+									"name": "id",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "the user's id"
+									}
+								},
+								{
+									"name": "is_admin",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Is the user an administrator"
+									}
+								},
+								{
+									"name": "language",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "User locale"
+									}
+								},
+								{
+									"name": "last_login",
+									"string": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "location",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "the user's location"
+									}
+								},
+								{
+									"name": "login",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "login of the user, same as `username`"
+									}
+								},
+								{
+									"name": "login_name",
+									"string": {
+										"computed_optional_required": "computed",
+										"default": {
+											"static": "empty"
+										},
+										"description": "identifier of the user, provided by the external authenticator (if configured)"
+									}
+								},
+								{
+									"name": "prohibit_login",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Is user login prohibited"
+									}
+								},
+								{
+									"name": "restricted",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Is user restricted"
+									}
+								},
+								{
+									"name": "source_id",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "The ID of the user's Authentication Source"
+									}
+								},
+								{
+									"name": "starred_repos_count",
+									"int64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "visibility",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "User visibility level option: public, limited, private"
+									}
+								},
+								{
+									"name": "website",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "the user's website"
+									}
+								}
+							],
+							"description": "User represents a user"
+						}
+					},
+					{
+						"name": "permissions",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "admin",
+									"bool": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "pull",
+									"bool": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "push",
+									"bool": {
+										"computed_optional_required": "computed"
+									}
+								}
+							],
+							"description": "Permission represents a set of permissions"
+						}
+					},
+					{
+						"name": "projects_mode",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "release_counter",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "repo_transfer",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "doer",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "active",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is user active"
+												}
+											},
+											{
+												"name": "avatar_url",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "URL to the user's avatar"
+												}
+											},
+											{
+												"name": "created",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "description",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's description"
+												}
+											},
+											{
+												"name": "email",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "followers_count",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "user counts"
+												}
+											},
+											{
+												"name": "following_count",
+												"int64": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "full_name",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's full name"
+												}
+											},
+											{
+												"name": "html_url",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "URL to the user's gitea page"
+												}
+											},
+											{
+												"name": "id",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "the user's id"
+												}
+											},
+											{
+												"name": "is_admin",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is the user an administrator"
+												}
+											},
+											{
+												"name": "language",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "User locale"
+												}
+											},
+											{
+												"name": "last_login",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "location",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's location"
+												}
+											},
+											{
+												"name": "login",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "login of the user, same as `username`"
+												}
+											},
+											{
+												"name": "login_name",
+												"string": {
+													"computed_optional_required": "computed",
+													"default": {
+														"static": "empty"
+													},
+													"description": "identifier of the user, provided by the external authenticator (if configured)"
+												}
+											},
+											{
+												"name": "prohibit_login",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is user login prohibited"
+												}
+											},
+											{
+												"name": "restricted",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is user restricted"
+												}
+											},
+											{
+												"name": "source_id",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "The ID of the user's Authentication Source"
+												}
+											},
+											{
+												"name": "starred_repos_count",
+												"int64": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "visibility",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "User visibility level option: public, limited, private"
+												}
+											},
+											{
+												"name": "website",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's website"
+												}
+											}
+										],
+										"description": "User represents a user"
+									}
+								},
+								{
+									"name": "recipient",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "active",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is user active"
+												}
+											},
+											{
+												"name": "avatar_url",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "URL to the user's avatar"
+												}
+											},
+											{
+												"name": "created",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "description",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's description"
+												}
+											},
+											{
+												"name": "email",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "followers_count",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "user counts"
+												}
+											},
+											{
+												"name": "following_count",
+												"int64": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "full_name",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's full name"
+												}
+											},
+											{
+												"name": "html_url",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "URL to the user's gitea page"
+												}
+											},
+											{
+												"name": "id",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "the user's id"
+												}
+											},
+											{
+												"name": "is_admin",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is the user an administrator"
+												}
+											},
+											{
+												"name": "language",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "User locale"
+												}
+											},
+											{
+												"name": "last_login",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "location",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's location"
+												}
+											},
+											{
+												"name": "login",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "login of the user, same as `username`"
+												}
+											},
+											{
+												"name": "login_name",
+												"string": {
+													"computed_optional_required": "computed",
+													"default": {
+														"static": "empty"
+													},
+													"description": "identifier of the user, provided by the external authenticator (if configured)"
+												}
+											},
+											{
+												"name": "prohibit_login",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is user login prohibited"
+												}
+											},
+											{
+												"name": "restricted",
+												"bool": {
+													"computed_optional_required": "computed",
+													"description": "Is user restricted"
+												}
+											},
+											{
+												"name": "source_id",
+												"int64": {
+													"computed_optional_required": "computed",
+													"description": "The ID of the user's Authentication Source"
+												}
+											},
+											{
+												"name": "starred_repos_count",
+												"int64": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "visibility",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "User visibility level option: public, limited, private"
+												}
+											},
+											{
+												"name": "website",
+												"string": {
+													"computed_optional_required": "computed",
+													"description": "the user's website"
+												}
+											}
+										],
+										"description": "User represents a user"
+									}
+								},
+								{
+									"name": "teams",
+									"list_nested": {
+										"computed_optional_required": "computed",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "can_create_org_repo",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether the team can create repositories in the organization"
+													}
+												},
+												{
+													"name": "description",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "The description of the team"
+													}
+												},
+												{
+													"name": "id",
+													"int64": {
+														"computed_optional_required": "computed",
+														"description": "The unique identifier of the team"
+													}
+												},
+												{
+													"name": "includes_all_repositories",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether the team has access to all repositories in the organization"
+													}
+												},
+												{
+													"name": "name",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "The name of the team"
+													}
+												},
+												{
+													"name": "organization",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"attributes": [
+															{
+																"name": "avatar_url",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The URL of the organization's avatar"
+																}
+															},
+															{
+																"name": "description",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The description of the organization"
+																}
+															},
+															{
+																"name": "email",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The email address of the organization"
+																}
+															},
+															{
+																"name": "full_name",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The full display name of the organization"
+																}
+															},
+															{
+																"name": "id",
+																"int64": {
+																	"computed_optional_required": "computed",
+																	"description": "The unique identifier of the organization"
+																}
+															},
+															{
+																"name": "location",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The location of the organization"
+																}
+															},
+															{
+																"name": "name",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The name of the organization"
+																}
+															},
+															{
+																"name": "repo_admin_change_team_access",
+																"bool": {
+																	"computed_optional_required": "computed",
+																	"description": "Whether repository administrators can change team access"
+																}
+															},
+															{
+																"name": "username",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "username of the organization\ndeprecated"
+																}
+															},
+															{
+																"name": "visibility",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The visibility level of the organization (public, limited, private)"
+																}
+															},
+															{
+																"name": "website",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "The website URL of the organization"
+																}
+															}
+														],
+														"description": "Organization represents an organization"
+													}
+												},
+												{
+													"name": "permission",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												},
+												{
+													"name": "units",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														}
+													}
+												},
+												{
+													"name": "units_map",
+													"map": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														}
+													}
+												}
+											]
+										}
+									}
+								}
+							],
+							"description": "RepoTransfer represents a pending repo transfer"
+						}
+					},
+					{
+						"name": "size",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "ssh_url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "stars_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "topics",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "updated_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "url",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "watchers_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "website",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "repo",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "name of the repo"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "team",
+			"schema": {
+				"attributes": [
+					{
+						"name": "can_create_org_repo",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Whether the team can create repositories in the organization"
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The description of the team"
+						}
+					},
+					{
+						"name": "includes_all_repositories",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Whether the team has access to all repositories in the organization"
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The name of the team"
+						}
+					},
+					{
+						"name": "units",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "units_map",
+						"map": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							}
+						}
+					},
+					{
+						"name": "id",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The unique identifier of the team"
+						}
+					},
+					{
+						"name": "organization",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "avatar_url",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The URL of the organization's avatar"
+									}
+								},
+								{
+									"name": "description",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The description of the organization"
+									}
+								},
+								{
+									"name": "email",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The email address of the organization"
+									}
+								},
+								{
+									"name": "full_name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The full display name of the organization"
+									}
+								},
+								{
+									"name": "id",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "The unique identifier of the organization"
+									}
+								},
+								{
+									"name": "location",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The location of the organization"
+									}
+								},
+								{
+									"name": "name",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The name of the organization"
+									}
+								},
+								{
+									"name": "repo_admin_change_team_access",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Whether repository administrators can change team access"
+									}
+								},
+								{
+									"name": "username",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "username of the organization\ndeprecated"
+									}
+								},
+								{
+									"name": "visibility",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The visibility level of the organization (public, limited, private)"
+									}
+								},
+								{
+									"name": "website",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The website URL of the organization"
+									}
+								}
+							],
+							"description": "Organization represents an organization"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "token",
+			"schema": {
+				"attributes": [
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The name of the access token"
+						}
+					},
+					{
+						"name": "scopes",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "The scopes granted to this access token"
+						}
+					},
+					{
+						"name": "created_at",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The timestamp when the token was created"
+						}
+					},
+					{
+						"name": "id",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "The unique identifier of the access token"
+						}
+					},
+					{
+						"name": "last_used_at",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The timestamp when the token was last used"
+						}
+					},
+					{
+						"name": "sha1",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The SHA1 hash of the access token"
+						}
+					},
+					{
+						"name": "token_last_eight",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The last eight characters of the token"
+						}
+					},
+					{
+						"name": "username",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "username of to user whose access tokens are to be listed"
+						}
+					},
+					{
+						"name": "page",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "page number of results to return (1-based)"
+						}
+					},
+					{
+						"name": "limit",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "page size of results"
+						}
+					}
+				]
+			}
+		},
+		{
+			"name": "user",
+			"schema": {
+				"attributes": [
+					{
+						"name": "created_at",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\"."
+						}
+					},
+					{
+						"name": "email",
+						"string": {
+							"computed_optional_required": "required"
+						}
+					},
+					{
+						"name": "full_name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The full display name of the user"
+						}
+					},
+					{
+						"name": "must_change_password",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Whether the user must change password on first login"
+						}
+					},
+					{
+						"name": "password",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The plain text password for the user"
+						}
+					},
+					{
+						"name": "restricted",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Whether the user has restricted access privileges"
+						}
+					},
+					{
+						"name": "send_notify",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Whether to send welcome notification email to the user"
+						}
+					},
+					{
+						"name": "source_id",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "The authentication source ID to associate with the user"
+						}
+					},
+					{
+						"name": "username",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "username of the user"
+						}
+					},
+					{
+						"name": "visibility",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "User visibility level: public, limited, or private"
+						}
+					},
+					{
+						"name": "active",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Is user active"
+						}
+					},
+					{
+						"name": "avatar_url",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "URL to the user's avatar"
+						}
+					},
+					{
+						"name": "created",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "the user's description"
+						}
+					},
+					{
+						"name": "followers_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "user counts"
+						}
+					},
+					{
+						"name": "following_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "html_url",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "URL to the user's gitea page"
+						}
+					},
+					{
+						"name": "id",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "the user's id"
+						}
+					},
+					{
+						"name": "is_admin",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Is the user an administrator"
+						}
+					},
+					{
+						"name": "language",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "User locale"
+						}
+					},
+					{
+						"name": "last_login",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "location",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "the user's location"
+						}
+					},
+					{
+						"name": "login",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "login of the user, same as `username`"
+						}
+					},
+					{
+						"name": "prohibit_login",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Is user login prohibited"
+						}
+					},
+					{
+						"name": "starred_repos_count",
+						"int64": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "website",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "the user's website"
+						}
+					}
+				]
+			}
+		}
+	],
+	"version": "0.1"
+}

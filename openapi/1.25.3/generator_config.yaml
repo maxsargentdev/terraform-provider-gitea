@@ -1,0 +1,166 @@
+provider:
+  name: gitea
+
+resources:
+  user:
+    create:
+      path: /admin/users
+      method: POST
+    read:
+      path: /users/{username}
+      method: GET
+    update:
+      path: /admin/users/{username}
+      method: PATCH
+    delete:
+      path: /admin/users/{username}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          username: id
+      ignores:
+        - login_name
+  
+  org:
+    create:
+      path: /orgs
+      method: POST
+    read:
+      path: /orgs/{org}
+      method: GET
+    update:
+      path: /orgs/{org}
+      method: PATCH
+    delete:
+      path: /orgs/{org}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          username: id
+
+  repository:
+    create:
+      path: /user/repos
+      method: POST
+    read:
+      path: /repos/{owner}/{repo}
+      method: GET
+    update:
+      path: /repos/{owner}/{repo}
+      method: PATCH
+    delete:
+      path: /repos/{owner}/{repo}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          name: id
+      ignores:
+        - parent
+
+  branch_protection:
+    create:
+      path: /repos/{owner}/{repo}/branch_protections
+      method: POST
+    read:
+      path: /repos/{owner}/{repo}/branch_protections/{name}
+      method: GET
+    update:
+      path: /repos/{owner}/{repo}/branch_protections/{name}
+      method: PATCH
+    delete:
+      path: /repos/{owner}/{repo}/branch_protections/{name}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          branch_name: id
+
+  team:
+    create:
+      path: /orgs/{org}/teams
+      method: POST
+    read:
+      path: /teams/{id}
+      method: GET
+    update:
+      path: /teams/{id}
+      method: PATCH
+    delete:
+      path: /teams/{id}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          id: id
+      ignores:
+        - permission
+
+  token:
+    create:
+      path: /users/{username}/tokens
+      method: POST
+    read:
+      path: /users/{username}/tokens
+      method: GET
+    delete:
+      path: /users/{username}/tokens/{token}
+      method: DELETE
+    schema:
+      attributes:
+        aliases:
+          id: id
+
+data_sources:
+  user:
+    read:
+      path: /users/{username}
+      method: GET
+    schema:
+      attributes:
+        aliases:
+          username: id
+  
+  org:
+    read:
+      path: /orgs/{org}
+      method: GET
+    schema:
+      attributes:
+        aliases:
+          name: id
+
+  repository:
+    read:
+      path: /repos/{owner}/{repo}
+      method: GET
+    schema:
+      attributes:
+        aliases:
+          name: id
+      ignores:
+        - parent
+
+  branch_protection:
+    read:
+      path: /repos/{owner}/{repo}/branch_protections/{name}
+      method: GET
+    schema:
+      attributes:
+        aliases:
+          branch_name: id
+
+  team:
+    read:
+      path: /teams/{id}
+      method: GET
+    schema:
+      attributes:
+        aliases:
+          id: id
+      ignores:
+        - permission
+
+# manually create datamodel & schemas: team_membership
