@@ -24,7 +24,7 @@ type teamMembershipResource struct {
 	client *gitea.Client
 }
 
-type TeamMembershipModel struct {
+type TeamMembershipResourceModel struct {
 	TeamId   types.Int64  `tfsdk:"team_id"`
 	Username types.String `tfsdk:"username"`
 }
@@ -76,7 +76,7 @@ func (r *teamMembershipResource) Configure(_ context.Context, req resource.Confi
 }
 
 func (r *teamMembershipResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan TeamMembershipModel
+	var plan TeamMembershipResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -99,7 +99,7 @@ func (r *teamMembershipResource) Create(ctx context.Context, req resource.Create
 }
 
 func (r *teamMembershipResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state TeamMembershipModel
+	var state TeamMembershipResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -130,7 +130,7 @@ func (r *teamMembershipResource) Update(ctx context.Context, req resource.Update
 }
 
 func (r *teamMembershipResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state TeamMembershipModel
+	var state TeamMembershipResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -168,7 +168,7 @@ func (r *teamMembershipResource) ImportState(ctx context.Context, req resource.I
 		return
 	}
 
-	state := TeamMembershipModel{
+	state := TeamMembershipResourceModel{
 		TeamId:   types.Int64Value(teamID),
 		Username: types.StringValue(username),
 	}

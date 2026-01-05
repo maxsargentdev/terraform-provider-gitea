@@ -25,10 +25,10 @@ type tokenResource struct {
 	client *gitea.Client
 }
 
-// tokenModel wraps the generated model with Set type for scopes
+// tokenResourceModel wraps the generated model with Set type for scopes
 // we do this because the openapi spec for gitea defines it as a list which is order-sensitive
 // we can fix this at the gitea api level by using the custom "format":"set" to the scopes field
-type tokenModel struct {
+type tokenResourceModel struct {
 	CreatedAt      types.String `tfsdk:"created_at"`
 	Id             types.Int64  `tfsdk:"id"`
 	LastUsedAt     types.String `tfsdk:"last_used_at"`
@@ -159,7 +159,7 @@ func (r *tokenResource) Configure(_ context.Context, req resource.ConfigureReque
 }
 
 func (r *tokenResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan tokenModel
+	var plan tokenResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -205,7 +205,7 @@ func (r *tokenResource) Create(ctx context.Context, req resource.CreateRequest, 
 }
 
 func (r *tokenResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state tokenModel
+	var state tokenResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -254,7 +254,7 @@ func (r *tokenResource) Update(ctx context.Context, req resource.UpdateRequest, 
 }
 
 func (r *tokenResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state tokenModel
+	var state tokenResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -310,7 +310,7 @@ func (r *tokenResource) ImportState(ctx context.Context, req resource.ImportStat
 		return
 	}
 
-	var data tokenModel
+	var data tokenResourceModel
 	mapTokenToModel(found, &data)
 
 	// Note: username field won't be populated from import since API doesn't return it
@@ -319,7 +319,7 @@ func (r *tokenResource) ImportState(ctx context.Context, req resource.ImportStat
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func mapTokenToModel(token *gitea.AccessToken, model *tokenModel) {
+func mapTokenToModel(token *gitea.AccessToken, model *tokenResourceModel) {
 	model.Id = types.Int64Value(token.ID)
 	model.Name = types.StringValue(token.Name)
 	model.Sha1 = types.StringValue(token.Token)
@@ -353,7 +353,7 @@ func mapTokenToModel(token *gitea.AccessToken, model *tokenModel) {
 	model.Limit = types.Int64Null()
 }
 
-type TokenModel struct {
+type TokenResourceModel struct {
 	CreatedAt      types.String `tfsdk:"created_at"`
 	Id             types.Int64  `tfsdk:"id"`
 	LastUsedAt     types.String `tfsdk:"last_used_at"`

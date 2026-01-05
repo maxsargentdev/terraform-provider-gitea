@@ -38,14 +38,13 @@ resource "gitea_team" "example" {
 
 - `name` (String) The name of the team
 - `org` (String) The name of the organization to create the team in
+- `units_map` (Map of String) The units this team has access to, and the permission mode granted
 
 ### Optional
 
 - `can_create_org_repo` (Boolean) Whether the team can create repositories in the organization
 - `description` (String) The description of the team
 - `includes_all_repositories` (Boolean) Whether the team has access to all repositories in the organization
-- `units` (List of String)
-- `units_map` (Map of String)
 
 ### Read-Only
 

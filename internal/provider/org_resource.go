@@ -21,7 +21,7 @@ func NewOrgResource() resource.Resource {
 }
 
 // Helper function to map Gitea Organization to Terraform model
-func mapOrgToModel(org *gitea.Organization, model *OrgModel) {
+func mapOrgToModel(org *gitea.Organization, model *OrgResourceModel) {
 	model.Id = types.Int64Value(org.ID)
 	model.Username = types.StringValue(org.UserName)
 	model.Name = types.StringValue(org.UserName)
@@ -144,7 +144,7 @@ func (r *orgResource) Configure(ctx context.Context, req resource.ConfigureReque
 }
 
 func (r *orgResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data OrgModel
+	var data OrgResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -177,7 +177,7 @@ func (r *orgResource) Create(ctx context.Context, req resource.CreateRequest, re
 }
 
 func (r *orgResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data OrgModel
+	var data OrgResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -201,7 +201,7 @@ func (r *orgResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 }
 
 func (r *orgResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data OrgModel
+	var data OrgResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -243,7 +243,7 @@ func (r *orgResource) Update(ctx context.Context, req resource.UpdateRequest, re
 }
 
 func (r *orgResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data OrgModel
+	var data OrgResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -276,13 +276,13 @@ func (r *orgResource) ImportState(ctx context.Context, req resource.ImportStateR
 	}
 
 	// Map to model
-	var data OrgModel
+	var data OrgResourceModel
 	mapOrgToModel(org, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-type OrgModel struct {
+type OrgResourceModel struct {
 	AvatarUrl                 types.String `tfsdk:"avatar_url"`
 	Description               types.String `tfsdk:"description"`
 	Email                     types.String `tfsdk:"email"`

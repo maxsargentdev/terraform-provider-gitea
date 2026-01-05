@@ -232,7 +232,7 @@ func (r *branchProtectionResource) Configure(_ context.Context, req resource.Con
 }
 
 func (r *branchProtectionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan BranchProtectionModel
+	var plan BranchProtectionResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -294,7 +294,7 @@ func (r *branchProtectionResource) Create(ctx context.Context, req resource.Crea
 }
 
 func (r *branchProtectionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state BranchProtectionModel
+	var state BranchProtectionResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -322,8 +322,8 @@ func (r *branchProtectionResource) Read(ctx context.Context, req resource.ReadRe
 }
 
 func (r *branchProtectionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan BranchProtectionModel
-	var state BranchProtectionModel
+	var plan BranchProtectionResourceModel
+	var state BranchProtectionResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -423,7 +423,7 @@ func (r *branchProtectionResource) Update(ctx context.Context, req resource.Upda
 }
 
 func (r *branchProtectionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state BranchProtectionModel
+	var state BranchProtectionResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -484,7 +484,7 @@ func (r *branchProtectionResource) ImportState(ctx context.Context, req resource
 		return
 	}
 
-	var data BranchProtectionModel
+	var data BranchProtectionResourceModel
 	data.Owner = types.StringValue(owner)
 	data.Repo = types.StringValue(repo)
 	mapBranchProtectionToModel(ctx, protection, &data)
@@ -495,7 +495,7 @@ func (r *branchProtectionResource) ImportState(ctx context.Context, req resource
 }
 
 // Helper function to map Gitea BranchProtection to Terraform model
-func mapBranchProtectionToModel(ctx context.Context, protection *gitea.BranchProtection, model *BranchProtectionModel) {
+func mapBranchProtectionToModel(ctx context.Context, protection *gitea.BranchProtection, model *BranchProtectionResourceModel) {
 	// Note: owner, repo, and branch_name need to be preserved from the plan/state (not overwritten from API)
 	model.RuleName = types.StringValue(protection.RuleName)
 	// Note: BranchName from API corresponds to the rule name field in the schema, don't overwrite branch_name
@@ -605,7 +605,7 @@ func mapBranchProtectionToModel(ctx context.Context, protection *gitea.BranchPro
 	model.Priority = types.Int64Null()
 }
 
-type BranchProtectionModel struct {
+type BranchProtectionResourceModel struct {
 	ApprovalsWhitelistTeams       types.List   `tfsdk:"approvals_whitelist_teams"`
 	ApprovalsWhitelistUsername    types.List   `tfsdk:"approvals_whitelist_username"`
 	BlockAdminMergeOverride       types.Bool   `tfsdk:"block_admin_merge_override"`

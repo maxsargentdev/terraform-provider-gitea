@@ -19,7 +19,7 @@ func NewUserResource() resource.Resource {
 }
 
 // Helper function to map Gitea User to Terraform model
-func mapUserToModel(user *gitea.User, model *UserModel) {
+func mapUserToModel(user *gitea.User, model *UserResourceModel) {
 	model.Id = types.Int64Value(user.ID)
 	model.Username = types.StringValue(user.UserName)
 	model.Email = types.StringValue(user.Email)
@@ -208,7 +208,7 @@ func (r *userResource) Configure(ctx context.Context, req resource.ConfigureRequ
 }
 
 func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data UserModel
+	var data UserResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -260,7 +260,7 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 }
 
 func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data UserModel
+	var data UserResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -300,7 +300,7 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 }
 
 func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data UserModel
+	var data UserResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -357,7 +357,7 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *userResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data UserModel
+	var data UserResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -390,13 +390,13 @@ func (r *userResource) ImportState(ctx context.Context, req resource.ImportState
 	}
 
 	// Map to model
-	var data UserModel
+	var data UserResourceModel
 	mapUserToModel(user, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-type UserModel struct {
+type UserResourceModel struct {
 	Active             types.Bool   `tfsdk:"active"`
 	AvatarUrl          types.String `tfsdk:"avatar_url"`
 	Created            types.String `tfsdk:"created"`

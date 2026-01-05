@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strconv"
 
 	"code.gitea.io/sdk/gitea"
@@ -32,8 +31,23 @@ func (r *teamResource) Metadata(_ context.Context, req resource.MetadataRequest,
 }
 
 func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	baseSchema := schema.Schema{
+	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"org": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the organization to create the team in",
+				MarkdownDescription: "The name of the organization to create the team in",
+			},
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the team",
+				MarkdownDescription: "The name of the team",
+			},
+			"units_map": schema.MapAttribute{
+				Required:    true,
+				Description: "The units this team has access to, and the permission mode granted",
+				ElementType: types.StringType,
+			},
 			"can_create_org_repo": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
@@ -46,43 +60,19 @@ func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 				Description:         "The description of the team",
 				MarkdownDescription: "The description of the team",
 			},
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "The unique identifier of the team",
-				MarkdownDescription: "The unique identifier of the team",
-			},
 			"includes_all_repositories": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
 				Description:         "Whether the team has access to all repositories in the organization",
 				MarkdownDescription: "Whether the team has access to all repositories in the organization",
 			},
-			"name": schema.StringAttribute{
-				Required:            true,
-				Description:         "The name of the team",
-				MarkdownDescription: "The name of the team",
-			},
-			"units": schema.ListAttribute{
-				ElementType: types.StringType,
-				Optional:    true,
-				Computed:    true,
-			},
-			"units_map": schema.MapAttribute{
-				ElementType: types.StringType,
-				Optional:    true,
-				Computed:    true,
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The unique identifier of the team",
+				MarkdownDescription: "The unique identifier of the team",
 			},
 		},
 	}
-
-	// Add org as a required string field - this is the input for which org to create the team in
-	baseSchema.Attributes["org"] = schema.StringAttribute{
-		Required:            true,
-		Description:         "The name of the organization to create the team in",
-		MarkdownDescription: "The name of the organization to create the team in",
-	}
-
-	resp.Schema = baseSchema
 }
 
 func (r *teamResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -103,7 +93,7 @@ func (r *teamResource) Configure(_ context.Context, req resource.ConfigureReques
 }
 
 func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan TeamModel
+	var plan TeamResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -112,21 +102,26 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	orgName := plan.Org.ValueString()
 
+	// Validate units_map is provided (required attribute)
+	if plan.UnitsMap.IsNull() || plan.UnitsMap.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Missing Required Attribute",
+			"units_map is required but was not provided",
+		)
+		return
+	}
+
+	// Extract units_map for specifying permissions
+	unitsMap := make(map[string]string)
+	plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
+
 	opts := gitea.CreateTeamOption{
 		Name:                    plan.Name.ValueString(),
 		Description:             plan.Description.ValueString(),
 		CanCreateOrgRepo:        plan.CanCreateOrgRepo.ValueBool(),
 		IncludesAllRepositories: plan.IncludesAllRepositories.ValueBool(),
 		Permission:              gitea.AccessModeNone,
-	}
-
-	// units_map is required for specifying permissions
-	if !plan.UnitsMap.IsNull() && !plan.UnitsMap.IsUnknown() {
-		unitsMap := make(map[string]string)
-		plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
-		if len(unitsMap) > 0 {
-			opts.UnitsMap = unitsMap
-		}
+		UnitsMap:                unitsMap,
 	}
 
 	team, _, err := r.client.CreateTeam(orgName, opts)
@@ -144,7 +139,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 }
 
 func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state TeamModel
+	var state TeamResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -166,8 +161,8 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 }
 
 func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan TeamModel
-	var state TeamModel
+	var plan TeamResourceModel
+	var state TeamResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -189,21 +184,26 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	canCreate := plan.CanCreateOrgRepo.ValueBool()
 	inclAll := plan.IncludesAllRepositories.ValueBool()
 
+	// Validate units_map is provided (required attribute)
+	if plan.UnitsMap.IsNull() || plan.UnitsMap.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Missing Required Attribute",
+			"units_map is required but was not provided",
+		)
+		return
+	}
+
+	// Extract units_map for specifying permissions
+	unitsMap := make(map[string]string)
+	plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
+
 	opts := gitea.EditTeamOption{
 		Name:                    plan.Name.ValueString(),
 		Description:             &desc,
 		CanCreateOrgRepo:        &canCreate,
 		IncludesAllRepositories: &inclAll,
 		Permission:              gitea.AccessModeNone,
-	}
-
-	// units_map is required for specifying permissions
-	if !plan.UnitsMap.IsNull() && !plan.UnitsMap.IsUnknown() {
-		unitsMap := make(map[string]string)
-		plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
-		if len(unitsMap) > 0 {
-			opts.UnitsMap = unitsMap
-		}
+		UnitsMap:                unitsMap,
 	}
 
 	_, err := r.client.EditTeam(teamID, opts)
@@ -231,7 +231,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *teamResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state TeamModel
+	var state TeamResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -269,36 +269,18 @@ func (r *teamResource) ImportState(ctx context.Context, req resource.ImportState
 	}
 
 	// Map to model
-	var state TeamModel
+	var state TeamResourceModel
 	mapTeamToModel(ctx, team, &state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func mapTeamToModel(ctx context.Context, team *gitea.Team, model *TeamModel) {
+func mapTeamToModel(ctx context.Context, team *gitea.Team, model *TeamResourceModel) {
 	model.Id = types.Int64Value(team.ID)
 	model.Name = types.StringValue(team.Name)
 	model.Description = types.StringValue(team.Description)
 	model.CanCreateOrgRepo = types.BoolValue(team.CanCreateOrgRepo)
 	model.IncludesAllRepositories = types.BoolValue(team.IncludesAllRepositories)
-
-	// Map units list
-	if len(team.Units) > 0 {
-		// Sort units for consistent ordering
-		unitStrs := make([]string, len(team.Units))
-		for i, v := range team.Units {
-			unitStrs[i] = string(v)
-		}
-		sort.Strings(unitStrs)
-
-		elements := make([]attr.Value, len(unitStrs))
-		for i, v := range unitStrs {
-			elements[i] = types.StringValue(v)
-		}
-		model.Units, _ = types.ListValue(types.StringType, elements)
-	} else {
-		model.Units = types.ListNull(types.StringType)
-	}
 
 	// Map units_map if present
 	if len(team.UnitsMap) > 0 {
@@ -316,13 +298,12 @@ func mapTeamToModel(ctx context.Context, team *gitea.Team, model *TeamModel) {
 
 }
 
-type TeamModel struct {
+type TeamResourceModel struct {
+	Org                     types.String `tfsdk:"org"`
+	Name                    types.String `tfsdk:"name"`
+	UnitsMap                types.Map    `tfsdk:"units_map"`
 	CanCreateOrgRepo        types.Bool   `tfsdk:"can_create_org_repo"`
 	Description             types.String `tfsdk:"description"`
-	Id                      types.Int64  `tfsdk:"id"`
 	IncludesAllRepositories types.Bool   `tfsdk:"includes_all_repositories"`
-	Name                    types.String `tfsdk:"name"`
-	Units                   types.List   `tfsdk:"units"`
-	UnitsMap                types.Map    `tfsdk:"units_map"`
-	Org                     types.String `tfsdk:"org"`
+	Id                      types.Int64  `tfsdk:"id"`
 }
