@@ -3,10 +3,10 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/maxsargendev/terraform-provider-gitea/internal/resource_user"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -19,7 +19,7 @@ func NewUserResource() resource.Resource {
 }
 
 // Helper function to map Gitea User to Terraform model
-func mapUserToModel(user *gitea.User, model *resource_user.UserModel) {
+func mapUserToModel(user *gitea.User, model *UserModel) {
 	model.Id = types.Int64Value(user.ID)
 	model.Username = types.StringValue(user.UserName)
 	model.Email = types.StringValue(user.Email)
@@ -56,7 +56,7 @@ func (r *userResource) Metadata(ctx context.Context, req resource.MetadataReques
 }
 
 func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_user.UserResourceSchema(ctx)
+	resp.Schema = UserResourceSchema(ctx)
 }
 
 func (r *userResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -77,7 +77,7 @@ func (r *userResource) Configure(ctx context.Context, req resource.ConfigureRequ
 }
 
 func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data resource_user.UserModel
+	var data UserModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -129,7 +129,7 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 }
 
 func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data resource_user.UserModel
+	var data UserModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -169,7 +169,7 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 }
 
 func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data resource_user.UserModel
+	var data UserModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -226,7 +226,7 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *userResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data resource_user.UserModel
+	var data UserModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -259,10 +259,172 @@ func (r *userResource) ImportState(ctx context.Context, req resource.ImportState
 	}
 
 	// Map to model
-	var data resource_user.UserModel
+	var data UserModel
 	mapUserToModel(user, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Removed callGiteaUserResourceAPI - no longer needed
+func UserResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"active": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Is user active",
+				MarkdownDescription: "Is user active",
+			},
+			"avatar_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "URL to the user's avatar",
+				MarkdownDescription: "URL to the user's avatar",
+			},
+			"created": schema.StringAttribute{
+				Computed: true,
+			},
+			"created_at": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\".",
+				MarkdownDescription: "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\".",
+			},
+			"description": schema.StringAttribute{
+				Computed:            true,
+				Description:         "the user's description",
+				MarkdownDescription: "the user's description",
+			},
+			"email": schema.StringAttribute{
+				Required: true,
+			},
+			"followers_count": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "user counts",
+				MarkdownDescription: "user counts",
+			},
+			"following_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"full_name": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The full display name of the user",
+				MarkdownDescription: "The full display name of the user",
+			},
+			"html_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "URL to the user's gitea page",
+				MarkdownDescription: "URL to the user's gitea page",
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "the user's id",
+				MarkdownDescription: "the user's id",
+			},
+			"is_admin": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Is the user an administrator",
+				MarkdownDescription: "Is the user an administrator",
+			},
+			"language": schema.StringAttribute{
+				Computed:            true,
+				Description:         "User locale",
+				MarkdownDescription: "User locale",
+			},
+			"last_login": schema.StringAttribute{
+				Computed: true,
+			},
+			"location": schema.StringAttribute{
+				Computed:            true,
+				Description:         "the user's location",
+				MarkdownDescription: "the user's location",
+			},
+			"login": schema.StringAttribute{
+				Computed:            true,
+				Description:         "login of the user, same as `username`",
+				MarkdownDescription: "login of the user, same as `username`",
+			},
+			"must_change_password": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the user must change password on first login",
+				MarkdownDescription: "Whether the user must change password on first login",
+			},
+			"password": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The plain text password for the user",
+				MarkdownDescription: "The plain text password for the user",
+			},
+			"prohibit_login": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Is user login prohibited",
+				MarkdownDescription: "Is user login prohibited",
+			},
+			"restricted": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the user has restricted access privileges",
+				MarkdownDescription: "Whether the user has restricted access privileges",
+			},
+			"send_notify": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether to send welcome notification email to the user",
+				MarkdownDescription: "Whether to send welcome notification email to the user",
+			},
+			"source_id": schema.Int64Attribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The authentication source ID to associate with the user",
+				MarkdownDescription: "The authentication source ID to associate with the user",
+			},
+			"starred_repos_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"username": schema.StringAttribute{
+				Required:            true,
+				Description:         "username of the user",
+				MarkdownDescription: "username of the user",
+			},
+			"visibility": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "User visibility level: public, limited, or private",
+				MarkdownDescription: "User visibility level: public, limited, or private",
+			},
+			"website": schema.StringAttribute{
+				Computed:            true,
+				Description:         "the user's website",
+				MarkdownDescription: "the user's website",
+			},
+		},
+	}
+}
+
+type UserModel struct {
+	Active             types.Bool   `tfsdk:"active"`
+	AvatarUrl          types.String `tfsdk:"avatar_url"`
+	Created            types.String `tfsdk:"created"`
+	CreatedAt          types.String `tfsdk:"created_at"`
+	Description        types.String `tfsdk:"description"`
+	Email              types.String `tfsdk:"email"`
+	FollowersCount     types.Int64  `tfsdk:"followers_count"`
+	FollowingCount     types.Int64  `tfsdk:"following_count"`
+	FullName           types.String `tfsdk:"full_name"`
+	HtmlUrl            types.String `tfsdk:"html_url"`
+	Id                 types.Int64  `tfsdk:"id"`
+	IsAdmin            types.Bool   `tfsdk:"is_admin"`
+	Language           types.String `tfsdk:"language"`
+	LastLogin          types.String `tfsdk:"last_login"`
+	Location           types.String `tfsdk:"location"`
+	Login              types.String `tfsdk:"login"`
+	MustChangePassword types.Bool   `tfsdk:"must_change_password"`
+	Password           types.String `tfsdk:"password"`
+	ProhibitLogin      types.Bool   `tfsdk:"prohibit_login"`
+	Restricted         types.Bool   `tfsdk:"restricted"`
+	SendNotify         types.Bool   `tfsdk:"send_notify"`
+	SourceId           types.Int64  `tfsdk:"source_id"`
+	StarredReposCount  types.Int64  `tfsdk:"starred_repos_count"`
+	Username           types.String `tfsdk:"username"`
+	Visibility         types.String `tfsdk:"visibility"`
+	Website            types.String `tfsdk:"website"`
+}

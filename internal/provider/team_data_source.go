@@ -102,30 +102,4 @@ func mapTeamToDataSourceModel(ctx context.Context, team *gitea.Team, model *data
 		model.UnitsMap = types.MapNull(types.StringType)
 	}
 
-	// Map organization nested object
-	if team.Organization != nil {
-		orgAttrs := map[string]attr.Value{
-			"id":                            types.Int64Value(team.Organization.ID),
-			"name":                          types.StringValue(team.Organization.UserName),
-			"username":                      types.StringValue(team.Organization.UserName),
-			"full_name":                     types.StringValue(team.Organization.FullName),
-			"avatar_url":                    types.StringValue(team.Organization.AvatarURL),
-			"description":                   types.StringValue(team.Organization.Description),
-			"website":                       types.StringValue(team.Organization.Website),
-			"location":                      types.StringValue(team.Organization.Location),
-			"visibility":                    types.StringValue(team.Organization.Visibility),
-			"email":                         types.StringNull(),
-			"repo_admin_change_team_access": types.BoolNull(),
-		}
-
-		orgValue, diags := datasource_team.NewOrganizationValue(
-			datasource_team.OrganizationValue{}.AttributeTypes(ctx),
-			orgAttrs,
-		)
-		if !diags.HasError() {
-			model.Organization = orgValue
-		}
-	} else {
-		model.Organization = datasource_team.NewOrganizationValueNull()
-	}
 }

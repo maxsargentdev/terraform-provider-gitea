@@ -6,8 +6,6 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/maxsargendev/terraform-provider-gitea/internal/resource_team"
-
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -29,18 +27,12 @@ type teamResource struct {
 	client *gitea.Client
 }
 
-// TeamModel wraps the generated model and adds the org field
-type TeamModel struct {
-	resource_team.TeamModel
-	Org types.String `tfsdk:"org"`
-}
-
 func (r *teamResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_team"
 }
 
 func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	baseSchema := resource_team.TeamResourceSchema(ctx)
+	baseSchema := TeamResourceSchema(ctx)
 
 	// Add org as a required string field - this is the input for which org to create the team in
 	baseSchema.Attributes["org"] = schema.StringAttribute{
@@ -105,7 +97,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	mapTeamToModel(ctx, team, &plan.TeamModel)
+	mapTeamToModel(ctx, team, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -127,7 +119,7 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	mapTeamToModel(ctx, team, &state.TeamModel)
+	mapTeamToModel(ctx, team, &state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -192,7 +184,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	mapTeamToModel(ctx, team, &plan.TeamModel)
+	mapTeamToModel(ctx, team, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -237,12 +229,12 @@ func (r *teamResource) ImportState(ctx context.Context, req resource.ImportState
 
 	// Map to model
 	var state TeamModel
-	mapTeamToModel(ctx, team, &state.TeamModel)
+	mapTeamToModel(ctx, team, &state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func mapTeamToModel(ctx context.Context, team *gitea.Team, model *resource_team.TeamModel) {
+func mapTeamToModel(ctx context.Context, team *gitea.Team, model *TeamModel) {
 	model.Id = types.Int64Value(team.ID)
 	model.Name = types.StringValue(team.Name)
 	model.Description = types.StringValue(team.Description)
@@ -281,30 +273,60 @@ func mapTeamToModel(ctx context.Context, team *gitea.Team, model *resource_team.
 		}
 	}
 
-	// Map organization nested object
-	if team.Organization != nil {
-		orgAttrs := map[string]attr.Value{
-			"id":                            types.Int64Value(team.Organization.ID),
-			"name":                          types.StringValue(team.Organization.UserName),
-			"username":                      types.StringValue(team.Organization.UserName),
-			"full_name":                     types.StringValue(team.Organization.FullName),
-			"avatar_url":                    types.StringValue(team.Organization.AvatarURL),
-			"description":                   types.StringValue(team.Organization.Description),
-			"website":                       types.StringValue(team.Organization.Website),
-			"location":                      types.StringValue(team.Organization.Location),
-			"visibility":                    types.StringValue(team.Organization.Visibility),
-			"email":                         types.StringNull(),
-			"repo_admin_change_team_access": types.BoolNull(),
-		}
+}
 
-		orgValue, diags := resource_team.NewOrganizationValue(
-			resource_team.OrganizationValue{}.AttributeTypes(ctx),
-			orgAttrs,
-		)
-		if !diags.HasError() {
-			model.Organization = orgValue
-		}
-	} else {
-		model.Organization = resource_team.NewOrganizationValueNull()
+func TeamResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"can_create_org_repo": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the team can create repositories in the organization",
+				MarkdownDescription: "Whether the team can create repositories in the organization",
+			},
+			"description": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The description of the team",
+				MarkdownDescription: "The description of the team",
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The unique identifier of the team",
+				MarkdownDescription: "The unique identifier of the team",
+			},
+			"includes_all_repositories": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the team has access to all repositories in the organization",
+				MarkdownDescription: "Whether the team has access to all repositories in the organization",
+			},
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the team",
+				MarkdownDescription: "The name of the team",
+			},
+			"units": schema.ListAttribute{
+				ElementType: types.StringType,
+				Optional:    true,
+				Computed:    true,
+			},
+			"units_map": schema.MapAttribute{
+				ElementType: types.StringType,
+				Optional:    true,
+				Computed:    true,
+			},
+		},
 	}
+}
+
+type TeamModel struct {
+	CanCreateOrgRepo        types.Bool   `tfsdk:"can_create_org_repo"`
+	Description             types.String `tfsdk:"description"`
+	Id                      types.Int64  `tfsdk:"id"`
+	IncludesAllRepositories types.Bool   `tfsdk:"includes_all_repositories"`
+	Name                    types.String `tfsdk:"name"`
+	Units                   types.List   `tfsdk:"units"`
+	UnitsMap                types.Map    `tfsdk:"units_map"`
+	Org                     types.String `tfsdk:"org"`
 }

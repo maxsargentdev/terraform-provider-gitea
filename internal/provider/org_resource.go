@@ -3,10 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/maxsargendev/terraform-provider-gitea/internal/resource_org"
 
 	"code.gitea.io/sdk/gitea"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -19,7 +21,7 @@ func NewOrgResource() resource.Resource {
 }
 
 // Helper function to map Gitea Organization to Terraform model
-func mapOrgToModel(org *gitea.Organization, model *resource_org.OrgModel) {
+func mapOrgToModel(org *gitea.Organization, model *OrgModel) {
 	model.Id = types.Int64Value(org.ID)
 	model.Username = types.StringValue(org.UserName)
 	model.Name = types.StringValue(org.UserName)
@@ -43,7 +45,7 @@ func (r *orgResource) Metadata(ctx context.Context, req resource.MetadataRequest
 }
 
 func (r *orgResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resource_org.OrgResourceSchema(ctx)
+	resp.Schema = OrgResourceSchema(ctx)
 }
 
 func (r *orgResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -64,7 +66,7 @@ func (r *orgResource) Configure(ctx context.Context, req resource.ConfigureReque
 }
 
 func (r *orgResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data resource_org.OrgModel
+	var data OrgModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -97,7 +99,7 @@ func (r *orgResource) Create(ctx context.Context, req resource.CreateRequest, re
 }
 
 func (r *orgResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data resource_org.OrgModel
+	var data OrgModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -121,7 +123,7 @@ func (r *orgResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 }
 
 func (r *orgResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data resource_org.OrgModel
+	var data OrgModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -163,7 +165,7 @@ func (r *orgResource) Update(ctx context.Context, req resource.UpdateRequest, re
 }
 
 func (r *orgResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data resource_org.OrgModel
+	var data OrgModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -196,8 +198,105 @@ func (r *orgResource) ImportState(ctx context.Context, req resource.ImportStateR
 	}
 
 	// Map to model
-	var data resource_org.OrgModel
+	var data OrgModel
 	mapOrgToModel(org, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func OrgResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"avatar_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The URL of the organization's avatar",
+				MarkdownDescription: "The URL of the organization's avatar",
+			},
+			"description": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The description of the organization",
+				MarkdownDescription: "The description of the organization",
+			},
+			"email": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The email address of the organization",
+				MarkdownDescription: "The email address of the organization",
+			},
+			"full_name": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The full display name of the organization",
+				MarkdownDescription: "The full display name of the organization",
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The unique identifier of the organization",
+				MarkdownDescription: "The unique identifier of the organization",
+			},
+			"location": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The location of the organization",
+				MarkdownDescription: "The location of the organization",
+			},
+			"name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The name of the organization",
+				MarkdownDescription: "The name of the organization",
+			},
+			"org": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "name of the organization to get",
+				MarkdownDescription: "name of the organization to get",
+			},
+			"repo_admin_change_team_access": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether repository administrators can change team access",
+				MarkdownDescription: "Whether repository administrators can change team access",
+			},
+			"username": schema.StringAttribute{
+				Required:            true,
+				Description:         "username of the organization",
+				MarkdownDescription: "username of the organization",
+			},
+			"visibility": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "possible values are `public` (default), `limited` or `private`",
+				MarkdownDescription: "possible values are `public` (default), `limited` or `private`",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"public",
+						"limited",
+						"private",
+					),
+				},
+			},
+			"website": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The website URL of the organization",
+				MarkdownDescription: "The website URL of the organization",
+			},
+		},
+	}
+}
+
+type OrgModel struct {
+	AvatarUrl                 types.String `tfsdk:"avatar_url"`
+	Description               types.String `tfsdk:"description"`
+	Email                     types.String `tfsdk:"email"`
+	FullName                  types.String `tfsdk:"full_name"`
+	Id                        types.Int64  `tfsdk:"id"`
+	Location                  types.String `tfsdk:"location"`
+	Name                      types.String `tfsdk:"name"`
+	Org                       types.String `tfsdk:"org"`
+	RepoAdminChangeTeamAccess types.Bool   `tfsdk:"repo_admin_change_team_access"`
+	Username                  types.String `tfsdk:"username"`
+	Visibility                types.String `tfsdk:"visibility"`
+	Website                   types.String `tfsdk:"website"`
 }

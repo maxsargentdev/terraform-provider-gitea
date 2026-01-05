@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/maxsargendev/terraform-provider-gitea/internal/resource_token"
-
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -48,7 +46,7 @@ func (r *tokenResource) Metadata(_ context.Context, req resource.MetadataRequest
 }
 
 func (r *tokenResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	baseSchema := resource_token.TokenResourceSchema(ctx)
+	baseSchema := TokenResourceSchema(ctx)
 
 	// Make username required and force replacement on change
 	baseSchema.Attributes["username"] = schema.StringAttribute{
@@ -297,4 +295,77 @@ func mapTokenToModel(token *gitea.AccessToken, model *tokenModel) {
 	model.Limit = types.Int64Null()
 }
 
-// sortListPlanModifier is a custom plan modifier that sorts a list of strings
+func TokenResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"created_at": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The timestamp when the token was created",
+				MarkdownDescription: "The timestamp when the token was created",
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The unique identifier of the access token",
+				MarkdownDescription: "The unique identifier of the access token",
+			},
+			"last_used_at": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The timestamp when the token was last used",
+				MarkdownDescription: "The timestamp when the token was last used",
+			},
+			"limit": schema.Int64Attribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "page size of results",
+				MarkdownDescription: "page size of results",
+			},
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the access token",
+				MarkdownDescription: "The name of the access token",
+			},
+			"page": schema.Int64Attribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "page number of results to return (1-based)",
+				MarkdownDescription: "page number of results to return (1-based)",
+			},
+			"scopes": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Computed:            true,
+				Description:         "The scopes granted to this access token",
+				MarkdownDescription: "The scopes granted to this access token",
+			},
+			"sha1": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The SHA1 hash of the access token",
+				MarkdownDescription: "The SHA1 hash of the access token",
+			},
+			"token_last_eight": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The last eight characters of the token",
+				MarkdownDescription: "The last eight characters of the token",
+			},
+			"username": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "username of to user whose access tokens are to be listed",
+				MarkdownDescription: "username of to user whose access tokens are to be listed",
+			},
+		},
+	}
+}
+
+type TokenModel struct {
+	CreatedAt      types.String `tfsdk:"created_at"`
+	Id             types.Int64  `tfsdk:"id"`
+	LastUsedAt     types.String `tfsdk:"last_used_at"`
+	Limit          types.Int64  `tfsdk:"limit"`
+	Name           types.String `tfsdk:"name"`
+	Page           types.Int64  `tfsdk:"page"`
+	Scopes         types.List   `tfsdk:"scopes"`
+	Sha1           types.String `tfsdk:"sha1"`
+	TokenLastEight types.String `tfsdk:"token_last_eight"`
+	Username       types.String `tfsdk:"username"`
+}
