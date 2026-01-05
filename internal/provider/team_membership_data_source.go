@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"terraform-provider-gitea/internal/datasource_team_membership"
+	"github.com/maxsargendev/terraform-provider-gitea/internal/datasource_team_membership"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"

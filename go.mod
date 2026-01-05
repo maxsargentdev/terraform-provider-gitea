@@ -1,4 +1,4 @@
-module terraform-provider-gitea
+module github.com/maxsargendev/terraform-provider-gitea
 
 go 1.25.5
 
