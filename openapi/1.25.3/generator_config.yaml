@@ -59,6 +59,12 @@ resources:
           name: id
       ignores:
         - parent
+        - external_tracker
+        - external_wiki
+        - internal_tracker
+        - owner
+        - permissions
+        - repo_transfer
 
   branch_protection:
     create:
@@ -97,6 +103,7 @@ resources:
           id: id
       ignores:
         - permission
+        - organization
 
   token:
     create:
@@ -142,6 +149,13 @@ data_sources:
           name: id
       ignores:
         - parent
+        - external_tracker
+        - external_wiki
+        - internal_tracker
+        - owner
+        - permissions
+        - repo_transfer
+
 
   branch_protection:
     read:
@@ -162,5 +176,6 @@ data_sources:
           id: id
       ignores:
         - permission
+        - organization
 
 # manually create datamodel & schemas: team_membership
