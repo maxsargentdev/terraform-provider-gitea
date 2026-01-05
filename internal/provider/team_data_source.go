@@ -50,7 +50,7 @@ func (d *teamDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 }
 
 func (d *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data TeamModel
+	var data TeamDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -72,7 +72,7 @@ func (d *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func mapTeamToDataSourceModel(ctx context.Context, team *gitea.Team, model *TeamModel) {
+func mapTeamToDataSourceModel(ctx context.Context, team *gitea.Team, model *TeamDataSourceModel) {
 	model.Id = types.Int64Value(team.ID)
 	model.Name = types.StringValue(team.Name)
 	model.Description = types.StringValue(team.Description)
@@ -141,4 +141,14 @@ func TeamDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 		},
 	}
+}
+
+type TeamDataSourceModel struct {
+	CanCreateOrgRepo        types.Bool   `tfsdk:"can_create_org_repo"`
+	Description             types.String `tfsdk:"description"`
+	Id                      types.Int64  `tfsdk:"id"`
+	IncludesAllRepositories types.Bool   `tfsdk:"includes_all_repositories"`
+	Name                    types.String `tfsdk:"name"`
+	Units                   types.List   `tfsdk:"units"`
+	UnitsMap                types.Map    `tfsdk:"units_map"`
 }

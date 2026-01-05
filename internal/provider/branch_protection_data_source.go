@@ -50,7 +50,7 @@ func (d *branchProtectionDataSource) Configure(_ context.Context, req datasource
 }
 
 func (d *branchProtectionDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data BranchProtectionModel
+	var data BranchProtectionDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -76,7 +76,7 @@ func (d *branchProtectionDataSource) Read(ctx context.Context, req datasource.Re
 }
 
 // Helper function to map Gitea BranchProtection to data source model
-func mapBranchProtectionToDataSourceModel(ctx context.Context, protection *gitea.BranchProtection, model *BranchProtectionModel) {
+func mapBranchProtectionToDataSourceModel(ctx context.Context, protection *gitea.BranchProtection, model *BranchProtectionDataSourceModel) {
 	// Note: owner, repo, and branch_name need to be preserved from config (not overwritten from API)
 	model.RuleName = types.StringValue(protection.RuleName)
 	model.Name = types.StringValue(protection.BranchName)
@@ -319,4 +319,43 @@ func BranchProtectionDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 		},
 	}
+}
+
+type BranchProtectionDataSourceModel struct {
+	ApprovalsWhitelistTeams       types.List   `tfsdk:"approvals_whitelist_teams"`
+	ApprovalsWhitelistUsername    types.List   `tfsdk:"approvals_whitelist_username"`
+	BlockAdminMergeOverride       types.Bool   `tfsdk:"block_admin_merge_override"`
+	BlockOnOfficialReviewRequests types.Bool   `tfsdk:"block_on_official_review_requests"`
+	BlockOnOutdatedBranch         types.Bool   `tfsdk:"block_on_outdated_branch"`
+	BlockOnRejectedReviews        types.Bool   `tfsdk:"block_on_rejected_reviews"`
+	BranchName                    types.String `tfsdk:"branch_name"`
+	CreatedAt                     types.String `tfsdk:"created_at"`
+	DismissStaleApprovals         types.Bool   `tfsdk:"dismiss_stale_approvals"`
+	EnableApprovalsWhitelist      types.Bool   `tfsdk:"enable_approvals_whitelist"`
+	EnableForcePush               types.Bool   `tfsdk:"enable_force_push"`
+	EnableForcePushAllowlist      types.Bool   `tfsdk:"enable_force_push_allowlist"`
+	EnableMergeWhitelist          types.Bool   `tfsdk:"enable_merge_whitelist"`
+	EnablePush                    types.Bool   `tfsdk:"enable_push"`
+	EnablePushWhitelist           types.Bool   `tfsdk:"enable_push_whitelist"`
+	EnableStatusCheck             types.Bool   `tfsdk:"enable_status_check"`
+	ForcePushAllowlistDeployKeys  types.Bool   `tfsdk:"force_push_allowlist_deploy_keys"`
+	ForcePushAllowlistTeams       types.List   `tfsdk:"force_push_allowlist_teams"`
+	ForcePushAllowlistUsernames   types.List   `tfsdk:"force_push_allowlist_usernames"`
+	IgnoreStaleApprovals          types.Bool   `tfsdk:"ignore_stale_approvals"`
+	MergeWhitelistTeams           types.List   `tfsdk:"merge_whitelist_teams"`
+	MergeWhitelistUsernames       types.List   `tfsdk:"merge_whitelist_usernames"`
+	Name                          types.String `tfsdk:"name"`
+	Owner                         types.String `tfsdk:"owner"`
+	Priority                      types.Int64  `tfsdk:"priority"`
+	ProtectedFilePatterns         types.String `tfsdk:"protected_file_patterns"`
+	PushWhitelistDeployKeys       types.Bool   `tfsdk:"push_whitelist_deploy_keys"`
+	PushWhitelistTeams            types.List   `tfsdk:"push_whitelist_teams"`
+	PushWhitelistUsernames        types.List   `tfsdk:"push_whitelist_usernames"`
+	Repo                          types.String `tfsdk:"repo"`
+	RequireSignedCommits          types.Bool   `tfsdk:"require_signed_commits"`
+	RequiredApprovals             types.Int64  `tfsdk:"required_approvals"`
+	RuleName                      types.String `tfsdk:"rule_name"`
+	StatusCheckContexts           types.List   `tfsdk:"status_check_contexts"`
+	UnprotectedFilePatterns       types.String `tfsdk:"unprotected_file_patterns"`
+	UpdatedAt                     types.String `tfsdk:"updated_at"`
 }

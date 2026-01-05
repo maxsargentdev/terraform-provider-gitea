@@ -7,6 +7,7 @@ import (
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (
@@ -48,7 +49,7 @@ func (d *teamMembershipDataSource) Configure(_ context.Context, req datasource.C
 }
 
 func (d *teamMembershipDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data TeamMembershipModel
+	var data TeamMembershipDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -90,4 +91,9 @@ func TeamMembershipDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 		},
 	}
+}
+
+type TeamMembershipDataSourceModel struct {
+	TeamId   types.Int64  `tfsdk:"team_id"`
+	Username types.String `tfsdk:"username"`
 }
