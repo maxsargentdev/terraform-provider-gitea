@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strconv"
 
-	"terraform-provider-gitea/internal/resource_team"
+	"github.com/maxsargendev/terraform-provider-gitea/internal/resource_team"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"

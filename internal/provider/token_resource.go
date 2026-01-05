@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"terraform-provider-gitea/internal/resource_token"
+	"github.com/maxsargendev/terraform-provider-gitea/internal/resource_token"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
