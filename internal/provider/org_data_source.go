@@ -3,10 +3,10 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/maxsargendev/terraform-provider-gitea/internal/datasource_org"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -18,7 +18,7 @@ func NewOrgDataSource() datasource.DataSource {
 }
 
 // Helper function to map Gitea Organization to Terraform data source model
-func mapOrgToDataSourceModel(org *gitea.Organization, model *datasource_org.OrgModel) {
+func mapOrgToDataSourceModel(org *gitea.Organization, model *OrgModel) {
 	model.Id = types.Int64Value(org.ID)
 	model.Org = types.StringValue(org.UserName)
 	model.Username = types.StringValue(org.UserName)
@@ -42,7 +42,7 @@ func (d *orgDataSource) Metadata(ctx context.Context, req datasource.MetadataReq
 }
 
 func (d *orgDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_org.OrgDataSourceSchema(ctx)
+	resp.Schema = OrgDataSourceSchema(ctx)
 }
 
 func (d *orgDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -63,7 +63,7 @@ func (d *orgDataSource) Configure(ctx context.Context, req datasource.ConfigureR
 }
 
 func (d *orgDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data datasource_org.OrgModel
+	var data OrgModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -87,4 +87,71 @@ func (d *orgDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	mapOrgToDataSourceModel(org, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func OrgDataSourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"avatar_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The URL of the organization's avatar",
+				MarkdownDescription: "The URL of the organization's avatar",
+			},
+			"description": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The description of the organization",
+				MarkdownDescription: "The description of the organization",
+			},
+			"email": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The email address of the organization",
+				MarkdownDescription: "The email address of the organization",
+			},
+			"full_name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The full display name of the organization",
+				MarkdownDescription: "The full display name of the organization",
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The unique identifier of the organization",
+				MarkdownDescription: "The unique identifier of the organization",
+			},
+			"location": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The location of the organization",
+				MarkdownDescription: "The location of the organization",
+			},
+			"name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The name of the organization",
+				MarkdownDescription: "The name of the organization",
+			},
+			"org": schema.StringAttribute{
+				Required:            true,
+				Description:         "name of the organization to get",
+				MarkdownDescription: "name of the organization to get",
+			},
+			"repo_admin_change_team_access": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether repository administrators can change team access",
+				MarkdownDescription: "Whether repository administrators can change team access",
+			},
+			"username": schema.StringAttribute{
+				Computed:            true,
+				Description:         "username of the organization\ndeprecated",
+				MarkdownDescription: "username of the organization\ndeprecated",
+			},
+			"visibility": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The visibility level of the organization (public, limited, private)",
+				MarkdownDescription: "The visibility level of the organization (public, limited, private)",
+			},
+			"website": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The website URL of the organization",
+				MarkdownDescription: "The website URL of the organization",
+			},
+		},
+	}
 }

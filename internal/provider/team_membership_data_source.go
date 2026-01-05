@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/maxsargendev/terraform-provider-gitea/internal/datasource_team_membership"
-
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 )
 
 var (
@@ -28,7 +27,7 @@ func (d *teamMembershipDataSource) Metadata(_ context.Context, req datasource.Me
 }
 
 func (d *teamMembershipDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_team_membership.TeamMembershipDataSourceSchema(ctx)
+	resp.Schema = TeamMembershipDataSourceSchema(ctx)
 }
 
 func (d *teamMembershipDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -49,7 +48,7 @@ func (d *teamMembershipDataSource) Configure(_ context.Context, req datasource.C
 }
 
 func (d *teamMembershipDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data datasource_team_membership.TeamMembershipModel
+	var data TeamMembershipModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -72,4 +71,23 @@ func (d *teamMembershipDataSource) Read(ctx context.Context, req datasource.Read
 	// If we get here, the membership exists
 	// The data already has the required fields from the config
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func TeamMembershipDataSourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Description:         "Get information about a team membership (checks if a user is a member of a team)",
+		MarkdownDescription: "Get information about a team membership (checks if a user is a member of a team)",
+		Attributes: map[string]schema.Attribute{
+			"team_id": schema.Int64Attribute{
+				Required:            true,
+				Description:         "The ID of the team",
+				MarkdownDescription: "The ID of the team",
+			},
+			"username": schema.StringAttribute{
+				Required:            true,
+				Description:         "The username of the team member",
+				MarkdownDescription: "The username of the team member",
+			},
+		},
+	}
 }

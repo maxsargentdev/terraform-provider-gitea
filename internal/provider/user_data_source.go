@@ -3,10 +3,10 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/maxsargendev/terraform-provider-gitea/internal/datasource_user"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -18,7 +18,7 @@ func NewUserDataSource() datasource.DataSource {
 }
 
 // Helper function to map Gitea User to Terraform data source model
-func mapUserToDataSourceModel(user *gitea.User, model *datasource_user.UserModel) {
+func mapUserToDataSourceModel(user *gitea.User, model *UserDataSourceModel) {
 	model.Id = types.StringValue(user.UserName)
 	model.Login = types.StringValue(user.UserName)
 	model.Email = types.StringValue(user.Email)
@@ -56,7 +56,7 @@ func (d *userDataSource) Metadata(ctx context.Context, req datasource.MetadataRe
 }
 
 func (d *userDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_user.UserDataSourceSchema(ctx)
+	resp.Schema = UserDataSourceSchema(ctx)
 }
 
 func (d *userDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -77,7 +77,7 @@ func (d *userDataSource) Configure(ctx context.Context, req datasource.Configure
 }
 
 func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data datasource_user.UserModel
+	var data UserDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -101,4 +101,136 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	mapUserToDataSourceModel(user, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func UserDataSourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"active": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Is user active",
+				MarkdownDescription: "Is user active",
+			},
+			"avatar_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "URL to the user's avatar",
+				MarkdownDescription: "URL to the user's avatar",
+			},
+			"created": schema.StringAttribute{
+				Computed: true,
+			},
+			"description": schema.StringAttribute{
+				Computed:            true,
+				Description:         "the user's description",
+				MarkdownDescription: "the user's description",
+			},
+			"email": schema.StringAttribute{
+				Computed: true,
+			},
+			"followers_count": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "user counts",
+				MarkdownDescription: "user counts",
+			},
+			"following_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"full_name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "the user's full name",
+				MarkdownDescription: "the user's full name",
+			},
+			"html_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "URL to the user's gitea page",
+				MarkdownDescription: "URL to the user's gitea page",
+			},
+			"id": schema.StringAttribute{
+				Required:            true,
+				Description:         "username of the user whose data is to be listed",
+				MarkdownDescription: "username of the user whose data is to be listed",
+			},
+			"is_admin": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Is the user an administrator",
+				MarkdownDescription: "Is the user an administrator",
+			},
+			"language": schema.StringAttribute{
+				Computed:            true,
+				Description:         "User locale",
+				MarkdownDescription: "User locale",
+			},
+			"last_login": schema.StringAttribute{
+				Computed: true,
+			},
+			"location": schema.StringAttribute{
+				Computed:            true,
+				Description:         "the user's location",
+				MarkdownDescription: "the user's location",
+			},
+			"login": schema.StringAttribute{
+				Computed:            true,
+				Description:         "login of the user, same as `username`",
+				MarkdownDescription: "login of the user, same as `username`",
+			},
+			"login_name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "identifier of the user, provided by the external authenticator (if configured)",
+				MarkdownDescription: "identifier of the user, provided by the external authenticator (if configured)",
+			},
+			"prohibit_login": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Is user login prohibited",
+				MarkdownDescription: "Is user login prohibited",
+			},
+			"restricted": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Is user restricted",
+				MarkdownDescription: "Is user restricted",
+			},
+			"source_id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The ID of the user's Authentication Source",
+				MarkdownDescription: "The ID of the user's Authentication Source",
+			},
+			"starred_repos_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"visibility": schema.StringAttribute{
+				Computed:            true,
+				Description:         "User visibility level option: public, limited, private",
+				MarkdownDescription: "User visibility level option: public, limited, private",
+			},
+			"website": schema.StringAttribute{
+				Computed:            true,
+				Description:         "the user's website",
+				MarkdownDescription: "the user's website",
+			},
+		},
+	}
+}
+
+type UserDataSourceModel struct {
+	Active            types.Bool   `tfsdk:"active"`
+	AvatarUrl         types.String `tfsdk:"avatar_url"`
+	Created           types.String `tfsdk:"created"`
+	Description       types.String `tfsdk:"description"`
+	Email             types.String `tfsdk:"email"`
+	FollowersCount    types.Int64  `tfsdk:"followers_count"`
+	FollowingCount    types.Int64  `tfsdk:"following_count"`
+	FullName          types.String `tfsdk:"full_name"`
+	HtmlUrl           types.String `tfsdk:"html_url"`
+	Id                types.String `tfsdk:"id"`
+	IsAdmin           types.Bool   `tfsdk:"is_admin"`
+	Language          types.String `tfsdk:"language"`
+	LastLogin         types.String `tfsdk:"last_login"`
+	Location          types.String `tfsdk:"location"`
+	Login             types.String `tfsdk:"login"`
+	LoginName         types.String `tfsdk:"login_name"`
+	ProhibitLogin     types.Bool   `tfsdk:"prohibit_login"`
+	Restricted        types.Bool   `tfsdk:"restricted"`
+	SourceId          types.Int64  `tfsdk:"source_id"`
+	StarredReposCount types.Int64  `tfsdk:"starred_repos_count"`
+	Visibility        types.String `tfsdk:"visibility"`
+	Website           types.String `tfsdk:"website"`
 }
