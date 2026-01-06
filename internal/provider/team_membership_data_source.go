@@ -24,7 +24,8 @@ type teamMembershipDataSource struct {
 }
 
 type teamMembershipDataSourceModel struct {
-	TeamId   types.Int64  `tfsdk:"team_id"`
+	Org      types.String `tfsdk:"org"`
+	TeamName types.String `tfsdk:"team_name"`
 	Username types.String `tfsdk:"username"`
 }
 
@@ -37,10 +38,17 @@ func (d *teamMembershipDataSource) Schema(ctx context.Context, _ datasource.Sche
 		Description:         "Get information about a team membership (checks if a user is a member of a team)",
 		MarkdownDescription: "Get information about a team membership (checks if a user is a member of a team)",
 		Attributes: map[string]schema.Attribute{
-			"team_id": schema.Int64Attribute{
+
+			// required - these are fundamental configuration options
+			"org": schema.StringAttribute{
 				Required:            true,
-				Description:         "The ID of the team",
-				MarkdownDescription: "The ID of the team",
+				Description:         "The name of the organization",
+				MarkdownDescription: "The name of the organization",
+			},
+			"team_name": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the team",
+				MarkdownDescription: "The name of the team",
 			},
 			"username": schema.StringAttribute{
 				Required:            true,
@@ -76,15 +84,42 @@ func (d *teamMembershipDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	teamID := data.TeamId.ValueInt64()
+	org := data.Org.ValueString()
+	teamName := data.TeamName.ValueString()
 	username := data.Username.ValueString()
 
+	// Get team ID from name
+	teams, _, err := d.client.ListOrgTeams(org, gitea.ListTeamsOptions{})
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Listing Teams",
+			fmt.Sprintf("Could not list teams for organization '%s': %s", org, err.Error()),
+		)
+		return
+	}
+
+	var teamID int64
+	for _, team := range teams {
+		if team.Name == teamName {
+			teamID = team.ID
+			break
+		}
+	}
+
+	if teamID == 0 {
+		resp.Diagnostics.AddError(
+			"Team Not Found",
+			fmt.Sprintf("Could not find team '%s' in organization '%s'", teamName, org),
+		)
+		return
+	}
+
 	// Check if the user is a member of the team
-	_, _, err := d.client.GetTeamMember(teamID, username)
+	_, _, err = d.client.GetTeamMember(teamID, username)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Team Membership",
-			fmt.Sprintf("Could not verify team membership for user %s in team %d: %s", username, teamID, err.Error()),
+			fmt.Sprintf("Could not verify team membership for user %s in team %s: %s", username, teamName, err.Error()),
 		)
 		return
 	}

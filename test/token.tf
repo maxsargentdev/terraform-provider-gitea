@@ -1,7 +1,10 @@
 resource "gitea_token" "test_token" {
-  username = gitea_user.test_user.username
   name     = "test-token"
   scopes   = ["read:user", "read:repository"]
+}
+resource "gitea_token" "test_token_2" {
+  name     = "test-token-2"
+  scopes   = ["write:package"]
 }
 
 output "token_id" {

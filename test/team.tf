@@ -16,7 +16,7 @@ resource "gitea_team" "test_team" {
   description = "A  test team with all attributes configured"
 
   # Optional boolean attributes
-  can_create_org_repo       = false
+  can_create_org_repo       = true
   includes_all_repositories = false
 
   # Optional units_map - fine-grained permissions for each repository unit
@@ -36,5 +36,18 @@ resource "gitea_team" "test_team" {
 resource "gitea_team_repository" "test_team_repo_association" {
   org             = gitea_org.test_org.username
   team_name       = "test-team"
+  repository_name = gitea_repository.test_repo_3.name
+}
+resource "gitea_team_repository" "test_team_repo_association_2" {
+  org             = gitea_org.test_org.username
+  team_name       = "test-team"
   repository_name = gitea_repository.test_repo_2.name
+}
+
+
+data "gitea_team" "test_team" {
+  org  = gitea_org.test_org.username
+  name = gitea_team.test_team.name
+
+  depends_on = [gitea_team.test_team]
 }

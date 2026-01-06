@@ -19,7 +19,7 @@ func NewUserDataSource() datasource.DataSource {
 
 // Helper function to map Gitea User to Terraform data source model
 func mapUserToDataSourceModel(user *gitea.User, model *userDataSourceModel) {
-	model.Id = types.StringValue(user.UserName)
+	model.Username = types.StringValue(user.UserName)
 	model.Login = types.StringValue(user.UserName)
 	model.Email = types.StringValue(user.Email)
 	model.FullName = types.StringValue(user.FullName)
@@ -61,7 +61,7 @@ type userDataSourceModel struct {
 	FollowingCount    types.Int64  `tfsdk:"following_count"`
 	FullName          types.String `tfsdk:"full_name"`
 	HtmlUrl           types.String `tfsdk:"html_url"`
-	Id                types.String `tfsdk:"id"`
+	Username          types.String `tfsdk:"username"`
 	IsAdmin           types.Bool   `tfsdk:"is_admin"`
 	Language          types.String `tfsdk:"language"`
 	LastLogin         types.String `tfsdk:"last_login"`
@@ -83,10 +83,19 @@ func (d *userDataSource) Metadata(ctx context.Context, req datasource.MetadataRe
 func (d *userDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+
+			// required - these are fundamental configuration options
+			"username": schema.StringAttribute{
+				Required:            true,
+				Description:         "Username of the user whose data is to be listed",
+				MarkdownDescription: "Username of the user whose data is to be listed",
+			},
+
+			// computed - these are available to read back after creation but are really just metadata
 			"active": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Is user active",
-				MarkdownDescription: "Is user active",
+				Description:         "Is the user active?",
+				MarkdownDescription: "Is the user active?",
 			},
 			"avatar_url": schema.StringAttribute{
 				Computed:            true,
@@ -121,11 +130,6 @@ func (d *userDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 				Computed:            true,
 				Description:         "URL to the user's gitea page",
 				MarkdownDescription: "URL to the user's gitea page",
-			},
-			"id": schema.StringAttribute{
-				Required:            true,
-				Description:         "username of the user whose data is to be listed",
-				MarkdownDescription: "username of the user whose data is to be listed",
 			},
 			"is_admin": schema.BoolAttribute{
 				Computed:            true,
@@ -212,8 +216,7 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	// The schema uses "id" field as the username to query
-	username := data.Id.ValueString()
+	var username = data.Username.ValueString()
 
 	// Get user from Gitea API
 	user, _, err := d.client.GetUserInfo(username)

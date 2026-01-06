@@ -5,7 +5,7 @@ resource "gitea_user" "test_user" {
 }
 
 data "gitea_user" "test_user" {
-  id = gitea_user.test_user.username
+  username = gitea_user.test_user.username
 }
 
 output "user" {

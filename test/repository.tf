@@ -19,3 +19,10 @@ resource "gitea_repository" "test_repo_2" {
   description = "A test repository created with Terraform"
   private     = true
 }
+
+resource "gitea_repository" "test_repo_3" {
+  owner       = "testorg"
+  name        = "test-repo-3"
+  description = "A test repository created with Terraform"
+  private     = true
+}

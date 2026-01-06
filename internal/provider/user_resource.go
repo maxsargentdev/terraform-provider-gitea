@@ -87,12 +87,76 @@ func (r *userResource) Metadata(ctx context.Context, req resource.MetadataReques
 func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+
+			// required - these are fundamental configuration options
+			"email": schema.StringAttribute{
+				Required:            true,
+				Description:         "The email of the user to create.",
+				MarkdownDescription: "The email address of the user to create.",
+			},
+			"username": schema.StringAttribute{
+				Required:            true,
+				Description:         "Username of the user",
+				MarkdownDescription: "Username of the user",
+			},
+			"password": schema.StringAttribute{
+				Required:            true,
+				Sensitive:           true,
+				Description:         "The plain text password for the user. This is write-only and cannot be read back.",
+				MarkdownDescription: "The plain text password for the user. This is write-only and cannot be read back.",
+			},
+
+			// optional - these tweak the created resource away from its defaults
 			"active": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
 				Description:         "Is user active (can login)",
 				MarkdownDescription: "Is user active (can login)",
 			},
+			"created_at": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\".",
+				MarkdownDescription: "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\".",
+			},
+			"full_name": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The full display name of the user",
+				MarkdownDescription: "The full display name of the user",
+			},
+			"must_change_password": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the user must change password on first login",
+				MarkdownDescription: "Whether the user must change password on first login",
+			},
+			"restricted": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the user has restricted access privileges",
+				MarkdownDescription: "Whether the user has restricted access privileges",
+			},
+			"send_notify": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether to send welcome notification email to the user",
+				MarkdownDescription: "Whether to send welcome notification email to the user",
+			},
+			"source_id": schema.Int64Attribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The authentication source ID to associate with the user",
+				MarkdownDescription: "The authentication source ID to associate with the user",
+			},
+			"visibility": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "User visibility level: public, limited, or private",
+				MarkdownDescription: "User visibility level: public, limited, or private",
+			},
+
+			// computed - these are available to read back after creation but are really just metadata
 			"avatar_url": schema.StringAttribute{
 				Computed:            true,
 				Description:         "URL to the user's avatar",
@@ -101,19 +165,10 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"created": schema.StringAttribute{
 				Computed: true,
 			},
-			"created_at": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\".",
-				MarkdownDescription: "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\".",
-			},
 			"description": schema.StringAttribute{
 				Computed:            true,
 				Description:         "the user's description",
 				MarkdownDescription: "the user's description",
-			},
-			"email": schema.StringAttribute{
-				Required: true,
 			},
 			"followers_count": schema.Int64Attribute{
 				Computed:            true,
@@ -122,12 +177,6 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 			"following_count": schema.Int64Attribute{
 				Computed: true,
-			},
-			"full_name": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The full display name of the user",
-				MarkdownDescription: "The full display name of the user",
 			},
 			"html_url": schema.StringAttribute{
 				Computed:            true,
@@ -162,55 +211,13 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Description:         "login of the user, same as `username`",
 				MarkdownDescription: "login of the user, same as `username`",
 			},
-			"must_change_password": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the user must change password on first login",
-				MarkdownDescription: "Whether the user must change password on first login",
-			},
-			"password": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Sensitive:           true,
-				Description:         "The plain text password for the user. This is write-only and cannot be read back.",
-				MarkdownDescription: "The plain text password for the user. This is write-only and cannot be read back.",
-			},
 			"prohibit_login": schema.BoolAttribute{
 				Computed:            true,
 				Description:         "Is user login prohibited",
 				MarkdownDescription: "Is user login prohibited",
 			},
-			"restricted": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the user has restricted access privileges",
-				MarkdownDescription: "Whether the user has restricted access privileges",
-			},
-			"send_notify": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether to send welcome notification email to the user",
-				MarkdownDescription: "Whether to send welcome notification email to the user",
-			},
-			"source_id": schema.Int64Attribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The authentication source ID to associate with the user",
-				MarkdownDescription: "The authentication source ID to associate with the user",
-			},
 			"starred_repos_count": schema.Int64Attribute{
 				Computed: true,
-			},
-			"username": schema.StringAttribute{
-				Required:            true,
-				Description:         "username of the user",
-				MarkdownDescription: "username of the user",
-			},
-			"visibility": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "User visibility level: public, limited, or private",
-				MarkdownDescription: "User visibility level: public, limited, or private",
 			},
 			"website": schema.StringAttribute{
 				Computed:            true,

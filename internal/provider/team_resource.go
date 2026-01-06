@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -43,6 +45,8 @@ func (r *teamResource) Metadata(_ context.Context, req resource.MetadataRequest,
 func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+
+			// required - these are fundamental configuration options
 			"org": schema.StringAttribute{
 				Required:            true,
 				Description:         "The name of the organization to create the team in",
@@ -58,6 +62,8 @@ func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 				Description: "The units this team has access to, and the permission mode granted",
 				ElementType: types.StringType,
 			},
+
+			// optional - these tweak the created resource away from its defaults
 			"can_create_org_repo": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
@@ -76,10 +82,17 @@ func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 				Description:         "Whether the team has access to all repositories in the organization",
 				MarkdownDescription: "Whether the team has access to all repositories in the organization",
 			},
+
+			// computed - these are available to read back after creation but are really just metadata
 			"id": schema.Int64Attribute{
 				Computed:            true,
 				Description:         "The unique identifier of the team",
 				MarkdownDescription: "The unique identifier of the team",
+
+				// ID doesnt change once set, only computed once so refer to state
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}

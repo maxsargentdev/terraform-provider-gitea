@@ -40,6 +40,8 @@ func (r *TeamRepositoryResource) Schema(ctx context.Context, req resource.Schema
 	resp.Schema = schema.Schema{
 		Description: "Manages a team repository association in Gitea.",
 		Attributes: map[string]schema.Attribute{
+
+			// required - these are fundamental configuration options
 			"org": schema.StringAttribute{
 				Required:            true,
 				Description:         "The name of the organization.",
@@ -64,10 +66,15 @@ func (r *TeamRepositoryResource) Schema(ctx context.Context, req resource.Schema
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
+
+			// computed - these are available to read back after creation but are really just metadata
 			"id": schema.StringAttribute{
 				Computed:            true,
 				Description:         "The ID of the team repository association.",
 				MarkdownDescription: "The ID of the team repository association.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
