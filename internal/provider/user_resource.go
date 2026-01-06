@@ -244,9 +244,13 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	// Preserve plan values for fields not returned by API
+	// Preserve plan values for fields not returned by API or set during creation
 	sendNotify := data.SendNotify
 	mustChangePassword := data.MustChangePassword
+	restricted := data.Restricted
+	visibility := data.Visibility
+	sourceId := data.SourceId
+	createdAt := data.CreatedAt
 
 	// Create user via Gitea API
 	createOpts := gitea.CreateUserOption{
@@ -255,6 +259,8 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		Password:           data.Password.ValueString(),
 		MustChangePassword: data.MustChangePassword.ValueBoolPointer(),
 		SendNotify:         data.SendNotify.ValueBool(),
+		Visibility:         (*gitea.VisibleType)(data.Visibility.ValueStringPointer()),
+		SourceID:           data.SourceId.ValueInt64(),
 	}
 
 	if !data.FullName.IsNull() && !data.FullName.IsUnknown() {
@@ -270,10 +276,37 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
+	// If restricted was set in the plan, we need to update the user after creation
+	// because CreateUserOption doesn't support the restricted field
+	if !restricted.IsNull() && !restricted.IsUnknown() {
+		editOpts := gitea.EditUserOption{
+			LoginName:  data.Username.ValueString(),
+			Restricted: restricted.ValueBoolPointer(),
+		}
+		_, err := r.client.AdminEditUser(data.Username.ValueString(), editOpts)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Setting User Restricted Status",
+				"User was created but could not set restricted status: "+err.Error(),
+			)
+			return
+		}
+
+		// Re-read the user to get updated values
+		user, _, err = r.client.GetUserInfo(data.Username.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading User After Setting Restricted",
+				"Could not read user "+data.Username.ValueString()+": "+err.Error(),
+			)
+			return
+		}
+	}
+
 	// Map response to model
 	mapUserToModel(user, &data)
 
-	// Restore plan values for fields not returned by API, but only if they were specified
+	// Restore plan values for fields not returned by API or that we want to preserve
 	if !sendNotify.IsUnknown() {
 		data.SendNotify = sendNotify
 	} else {
@@ -283,6 +316,15 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		data.MustChangePassword = mustChangePassword
 	} else {
 		data.MustChangePassword = types.BoolNull()
+	}
+	if !visibility.IsUnknown() && !visibility.IsNull() {
+		data.Visibility = visibility
+	}
+	if !sourceId.IsUnknown() && !sourceId.IsNull() {
+		data.SourceId = sourceId
+	}
+	if !createdAt.IsUnknown() && !createdAt.IsNull() {
+		data.CreatedAt = createdAt
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -299,6 +341,10 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	// Preserve state values for fields not returned by API
 	sendNotify := data.SendNotify
 	mustChangePassword := data.MustChangePassword
+	restricted := data.Restricted
+	visibility := data.Visibility
+	sourceId := data.SourceId
+	createdAt := data.CreatedAt
 
 	// Get user from Gitea API
 	user, _, err := r.client.GetUserInfo(data.Username.ValueString())
@@ -324,6 +370,18 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	} else {
 		data.MustChangePassword = types.BoolNull()
 	}
+	if !restricted.IsUnknown() && !restricted.IsNull() {
+		data.Restricted = restricted
+	}
+	if !visibility.IsUnknown() && !visibility.IsNull() {
+		data.Visibility = visibility
+	}
+	if !sourceId.IsUnknown() && !sourceId.IsNull() {
+		data.SourceId = sourceId
+	}
+	if !createdAt.IsUnknown() && !createdAt.IsNull() {
+		data.CreatedAt = createdAt
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -339,13 +397,20 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	// Preserve plan values for fields not returned by API
 	sendNotify := data.SendNotify
 	mustChangePassword := data.MustChangePassword
+	restricted := data.Restricted
+	visibility := data.Visibility
+	sourceId := data.SourceId
+	createdAt := data.CreatedAt
 
 	// Update user via Gitea API
 	editOpts := gitea.EditUserOption{
-		Email:     data.Email.ValueStringPointer(),
-		FullName:  data.FullName.ValueStringPointer(),
-		Active:    data.Active.ValueBoolPointer(),
-		LoginName: data.Username.ValueString(),
+		Email:      data.Email.ValueStringPointer(),
+		FullName:   data.FullName.ValueStringPointer(),
+		Active:     data.Active.ValueBoolPointer(),
+		LoginName:  data.Username.ValueString(),
+		Restricted: data.Restricted.ValueBoolPointer(),
+		Visibility: (*gitea.VisibleType)(data.Visibility.ValueStringPointer()),
+		SourceID:   data.SourceId.ValueInt64(),
 	}
 
 	_, err := r.client.AdminEditUser(data.Username.ValueString(), editOpts)
@@ -380,6 +445,18 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		data.MustChangePassword = mustChangePassword
 	} else {
 		data.MustChangePassword = types.BoolNull()
+	}
+	if !restricted.IsUnknown() && !restricted.IsNull() {
+		data.Restricted = restricted
+	}
+	if !visibility.IsUnknown() && !visibility.IsNull() {
+		data.Visibility = visibility
+	}
+	if !sourceId.IsUnknown() && !sourceId.IsNull() {
+		data.SourceId = sourceId
+	}
+	if !createdAt.IsUnknown() && !createdAt.IsNull() {
+		data.CreatedAt = createdAt
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
