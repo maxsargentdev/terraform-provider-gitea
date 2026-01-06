@@ -20,31 +20,31 @@ func NewUserResource() resource.Resource {
 
 // Helper function to map Gitea User to Terraform model
 func mapUserToModel(user *gitea.User, model *userResourceModel) {
-	model.Id = types.Int64Value(user.ID)
-	model.Username = types.StringValue(user.UserName)
-	model.Email = types.StringValue(user.Email)
-	model.FullName = types.StringValue(user.FullName)
-	model.AvatarUrl = types.StringValue(user.AvatarURL)
-	model.IsAdmin = types.BoolValue(user.IsAdmin)
 	model.Active = types.BoolValue(user.IsActive)
-	model.Description = types.StringValue(user.Description)
-	model.Location = types.StringValue(user.Location)
-	model.Website = types.StringValue(user.Website)
-	model.Language = types.StringValue(user.Language)
-	model.Visibility = types.StringValue(string(user.Visibility))
+	model.AvatarUrl = types.StringValue(user.AvatarURL)
 	model.Created = types.StringValue(user.Created.String())
-	model.LastLogin = types.StringValue(user.LastLogin.String())
-	model.ProhibitLogin = types.BoolValue(user.ProhibitLogin)
-	model.Restricted = types.BoolValue(user.Restricted)
-	model.HtmlUrl = types.StringValue("")
-	model.Login = types.StringValue(user.UserName)
-	model.SourceId = types.Int64Value(user.SourceID)
+	model.CreatedAt = types.StringNull()
+	model.Description = types.StringValue(user.Description)
+	model.Email = types.StringValue(user.Email)
 	model.FollowersCount = types.Int64Null()
 	model.FollowingCount = types.Int64Null()
-	model.StarredReposCount = types.Int64Null()
-	model.SendNotify = types.BoolNull()
+	model.FullName = types.StringValue(user.FullName)
+	model.HtmlUrl = types.StringValue("")
+	model.Id = types.Int64Value(user.ID)
+	model.IsAdmin = types.BoolValue(user.IsAdmin)
+	model.Language = types.StringValue(user.Language)
+	model.LastLogin = types.StringValue(user.LastLogin.String())
+	model.Location = types.StringValue(user.Location)
+	model.Login = types.StringValue(user.UserName)
 	model.MustChangePassword = types.BoolNull()
-	model.CreatedAt = types.StringNull()
+	model.ProhibitLogin = types.BoolValue(user.ProhibitLogin)
+	model.Restricted = types.BoolValue(user.Restricted)
+	model.SendNotify = types.BoolNull()
+	model.SourceId = types.Int64Value(user.SourceID)
+	model.StarredReposCount = types.Int64Null()
+	model.Username = types.StringValue(user.UserName)
+	model.Visibility = types.StringValue(string(user.Visibility))
+	model.Website = types.StringValue(user.Website)
 }
 
 type userResource struct {
@@ -88,9 +88,10 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"active": schema.BoolAttribute{
+				Optional:            true,
 				Computed:            true,
-				Description:         "Is user active",
-				MarkdownDescription: "Is user active",
+				Description:         "Is user active (can login)",
+				MarkdownDescription: "Is user active (can login)",
 			},
 			"avatar_url": schema.StringAttribute{
 				Computed:            true,
@@ -170,8 +171,9 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"password": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The plain text password for the user",
-				MarkdownDescription: "The plain text password for the user",
+				Sensitive:           true,
+				Description:         "The plain text password for the user. This is write-only and cannot be read back.",
+				MarkdownDescription: "The plain text password for the user. This is write-only and cannot be read back.",
 			},
 			"prohibit_login": schema.BoolAttribute{
 				Computed:            true,
@@ -404,13 +406,19 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	// Update user via Gitea API
 	editOpts := gitea.EditUserOption{
-		Email:      data.Email.ValueStringPointer(),
-		FullName:   data.FullName.ValueStringPointer(),
-		Active:     data.Active.ValueBoolPointer(),
-		LoginName:  data.Username.ValueString(),
-		Restricted: data.Restricted.ValueBoolPointer(),
-		Visibility: (*gitea.VisibleType)(data.Visibility.ValueStringPointer()),
-		SourceID:   data.SourceId.ValueInt64(),
+		Email:              data.Email.ValueStringPointer(),
+		FullName:           data.FullName.ValueStringPointer(),
+		LoginName:          data.Username.ValueString(),
+		Restricted:         data.Restricted.ValueBoolPointer(),
+		Visibility:         (*gitea.VisibleType)(data.Visibility.ValueStringPointer()),
+		SourceID:           data.SourceId.ValueInt64(),
+		Password:           data.Password.ValueString(),
+		MustChangePassword: data.MustChangePassword.ValueBoolPointer(),
+	}
+
+	// Only set Active if explicitly provided (not null/unknown)
+	if !data.Active.IsNull() && !data.Active.IsUnknown() {
+		editOpts.Active = data.Active.ValueBoolPointer()
 	}
 
 	_, err := r.client.AdminEditUser(data.Username.ValueString(), editOpts)

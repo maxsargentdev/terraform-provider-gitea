@@ -125,6 +125,20 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 	unitsMap := make(map[string]string)
 	plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
 
+	// Validate permission values - only "none", "read", "write" are allowed
+	validPermissions := map[string]bool{"none": true, "read": true, "write": true}
+	for unit, permission := range unitsMap {
+		if !validPermissions[permission] {
+			resp.Diagnostics.AddError(
+				"Invalid Permission Value",
+				fmt.Sprintf("Unit '%s' has invalid permission '%s'. Valid values are: 'none', 'read', 'write'", unit, permission),
+			)
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	opts := gitea.CreateTeamOption{
 		Name:                    plan.Name.ValueString(),
 		Description:             plan.Description.ValueString(),
@@ -206,6 +220,20 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	// Extract units_map for specifying permissions
 	unitsMap := make(map[string]string)
 	plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
+
+	// Validate permission values - only "none", "read", "write" are allowed
+	validPermissions := map[string]bool{"none": true, "read": true, "write": true}
+	for unit, permission := range unitsMap {
+		if !validPermissions[permission] {
+			resp.Diagnostics.AddError(
+				"Invalid Permission Value",
+				fmt.Sprintf("Unit '%s' has invalid permission '%s'. Valid values are: 'none', 'read', 'write'", unit, permission),
+			)
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	opts := gitea.EditTeamOption{
 		Name:                    plan.Name.ValueString(),
