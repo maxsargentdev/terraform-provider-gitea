@@ -1,3 +1,5 @@
+//TODO: We need to verify the user running the provider has admin
+
 package provider
 
 import (
@@ -141,6 +143,7 @@ func (p *giteaProvider) Resources(ctx context.Context) []func() resource.Resourc
 		NewRepositoryResource,
 		NewBranchProtectionResource,
 		NewTeamResource,
+		NewTeamRepositoryResource,
 		NewTokenResource,
 		NewTeamMembershipResource,
 	}

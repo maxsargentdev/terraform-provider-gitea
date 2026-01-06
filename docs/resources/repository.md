@@ -26,6 +26,7 @@ resource "gitea_repository" "example" {
 ### Required
 
 - `name` (String) Name of the repository to create
+- `owner` (String) The owner of the repository (username or organization name)
 
 ### Optional
 

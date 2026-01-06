@@ -26,6 +26,75 @@ type repositoryResource struct {
 	client *gitea.Client
 }
 
+type RepositoryResourceModel struct {
+	Owner                         types.String `tfsdk:"owner"`
+	AllowFastForwardOnlyMerge     types.Bool   `tfsdk:"allow_fast_forward_only_merge"`
+	AllowManualMerge              types.Bool   `tfsdk:"allow_manual_merge"`
+	AllowMergeCommits             types.Bool   `tfsdk:"allow_merge_commits"`
+	AllowRebase                   types.Bool   `tfsdk:"allow_rebase"`
+	AllowRebaseExplicit           types.Bool   `tfsdk:"allow_rebase_explicit"`
+	AllowRebaseUpdate             types.Bool   `tfsdk:"allow_rebase_update"`
+	AllowSquashMerge              types.Bool   `tfsdk:"allow_squash_merge"`
+	Archived                      types.Bool   `tfsdk:"archived"`
+	ArchivedAt                    types.String `tfsdk:"archived_at"`
+	AutoInit                      types.Bool   `tfsdk:"auto_init"`
+	AutodetectManualMerge         types.Bool   `tfsdk:"autodetect_manual_merge"`
+	AvatarUrl                     types.String `tfsdk:"avatar_url"`
+	CloneUrl                      types.String `tfsdk:"clone_url"`
+	CreatedAt                     types.String `tfsdk:"created_at"`
+	DefaultAllowMaintainerEdit    types.Bool   `tfsdk:"default_allow_maintainer_edit"`
+	DefaultBranch                 types.String `tfsdk:"default_branch"`
+	DefaultDeleteBranchAfterMerge types.Bool   `tfsdk:"default_delete_branch_after_merge"`
+	DefaultMergeStyle             types.String `tfsdk:"default_merge_style"`
+	Description                   types.String `tfsdk:"description"`
+	Empty                         types.Bool   `tfsdk:"empty"`
+	Fork                          types.Bool   `tfsdk:"fork"`
+	ForksCount                    types.Int64  `tfsdk:"forks_count"`
+	FullName                      types.String `tfsdk:"full_name"`
+	Gitignores                    types.String `tfsdk:"gitignores"`
+	HasActions                    types.Bool   `tfsdk:"has_actions"`
+	HasCode                       types.Bool   `tfsdk:"has_code"`
+	HasIssues                     types.Bool   `tfsdk:"has_issues"`
+	HasPackages                   types.Bool   `tfsdk:"has_packages"`
+	HasProjects                   types.Bool   `tfsdk:"has_projects"`
+	HasPullRequests               types.Bool   `tfsdk:"has_pull_requests"`
+	HasReleases                   types.Bool   `tfsdk:"has_releases"`
+	HasWiki                       types.Bool   `tfsdk:"has_wiki"`
+	HtmlUrl                       types.String `tfsdk:"html_url"`
+	Id                            types.Int64  `tfsdk:"id"`
+	IgnoreWhitespaceConflicts     types.Bool   `tfsdk:"ignore_whitespace_conflicts"`
+	Internal                      types.Bool   `tfsdk:"internal"`
+	IssueLabels                   types.String `tfsdk:"issue_labels"`
+	Language                      types.String `tfsdk:"language"`
+	LanguagesUrl                  types.String `tfsdk:"languages_url"`
+	License                       types.String `tfsdk:"license"`
+	Licenses                      types.List   `tfsdk:"licenses"`
+	Link                          types.String `tfsdk:"link"`
+	Mirror                        types.Bool   `tfsdk:"mirror"`
+	MirrorInterval                types.String `tfsdk:"mirror_interval"`
+	MirrorUpdated                 types.String `tfsdk:"mirror_updated"`
+	Name                          types.String `tfsdk:"name"`
+	ObjectFormatName              types.String `tfsdk:"object_format_name"`
+	OpenIssuesCount               types.Int64  `tfsdk:"open_issues_count"`
+	OpenPrCounter                 types.Int64  `tfsdk:"open_pr_counter"`
+	OriginalUrl                   types.String `tfsdk:"original_url"`
+	Private                       types.Bool   `tfsdk:"private"`
+	ProjectsMode                  types.String `tfsdk:"projects_mode"`
+	Readme                        types.String `tfsdk:"readme"`
+	ReleaseCounter                types.Int64  `tfsdk:"release_counter"`
+	Repo                          types.String `tfsdk:"repo"`
+	Size                          types.Int64  `tfsdk:"size"`
+	SshUrl                        types.String `tfsdk:"ssh_url"`
+	StarsCount                    types.Int64  `tfsdk:"stars_count"`
+	Template                      types.Bool   `tfsdk:"template"`
+	Topics                        types.List   `tfsdk:"topics"`
+	TrustModel                    types.String `tfsdk:"trust_model"`
+	UpdatedAt                     types.String `tfsdk:"updated_at"`
+	Url                           types.String `tfsdk:"url"`
+	WatchersCount                 types.Int64  `tfsdk:"watchers_count"`
+	Website                       types.String `tfsdk:"website"`
+}
+
 func (r *repositoryResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_repository"
 }
@@ -33,6 +102,11 @@ func (r *repositoryResource) Metadata(_ context.Context, req resource.MetadataRe
 func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"owner": schema.StringAttribute{
+				Required:            true,
+				Description:         "The owner of the repository (username or organization name)",
+				MarkdownDescription: "The owner of the repository (username or organization name)",
+			},
 			"allow_fast_forward_only_merge": schema.BoolAttribute{
 				Computed: true,
 			},
@@ -382,7 +456,9 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// Create repository using /user/repos endpoint
+	// Create repository
+	owner := plan.Owner.ValueString()
+
 	createOpts := gitea.CreateRepoOption{
 		Name:        plan.Name.ValueString(),
 		Description: plan.Description.ValueString(),
@@ -393,7 +469,19 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 		createOpts.DefaultBranch = plan.DefaultBranch.ValueString()
 	}
 
-	repo, _, err := r.client.CreateRepo(createOpts)
+	// Check if owner is an org or user and use appropriate API
+	var repo *gitea.Repository
+	var err error
+
+	// Try to get org first to determine if it's an org
+	org, _, orgErr := r.client.GetOrg(owner)
+	if orgErr == nil && org != nil {
+		// Owner is an organization
+		repo, _, err = r.client.CreateOrgRepo(owner, createOpts)
+	} else {
+		// Owner is a user (or we'll let it fail with proper error)
+		repo, _, err = r.client.CreateRepo(createOpts)
+	}
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating repository",
@@ -404,6 +492,7 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// Map response to state
 	mapRepositoryToModel(repo, &plan)
+	plan.Owner = types.StringValue(owner)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -416,37 +505,10 @@ func (r *repositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	// Parse owner/repo from full_name if available, otherwise use authenticated user
-	owner := ""
+	owner := state.Owner.ValueString()
 	repoName := state.Name.ValueString()
 
-	if !state.FullName.IsNull() && state.FullName.ValueString() != "" {
-		// Parse owner/repo from full_name
-		fullName := state.FullName.ValueString()
-		// Simple split - in production you'd want more robust parsing
-		for i, c := range fullName {
-			if c == '/' {
-				owner = fullName[:i]
-				repoName = fullName[i+1:]
-				break
-			}
-		}
-	}
-
-	var repo *gitea.Repository
-	var err error
-
-	if owner == "" {
-		// Get current user to construct owner/repo path
-		user, _, err := r.client.GetMyUserInfo()
-		if err != nil {
-			resp.Diagnostics.AddError("Error getting user info", err.Error())
-			return
-		}
-		owner = user.UserName
-	}
-
-	repo, _, err = r.client.GetRepo(owner, repoName)
+	repo, _, err := r.client.GetRepo(owner, repoName)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Repository",
@@ -457,6 +519,8 @@ func (r *repositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	// Map response to state
 	mapRepositoryToModel(repo, &state)
+	// Preserve owner from state since it's not in the API response
+	state.Owner = types.StringValue(owner)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -469,35 +533,14 @@ func (r *repositoryResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	// Parse owner/repo from state
 	var state RepositoryResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	owner := ""
+	owner := state.Owner.ValueString()
 	repoName := state.Name.ValueString()
-
-	if !state.FullName.IsNull() && state.FullName.ValueString() != "" {
-		fullName := state.FullName.ValueString()
-		for i, c := range fullName {
-			if c == '/' {
-				owner = fullName[:i]
-				repoName = fullName[i+1:]
-				break
-			}
-		}
-	}
-
-	if owner == "" {
-		user, _, err := r.client.GetMyUserInfo()
-		if err != nil {
-			resp.Diagnostics.AddError("Error getting user info", err.Error())
-			return
-		}
-		owner = user.UserName
-	}
 
 	editOpts := gitea.EditRepoOption{
 		Description: plan.Description.ValueStringPointer(),
@@ -519,6 +562,7 @@ func (r *repositoryResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Map response to state
 	mapRepositoryToModel(repo, &plan)
+	plan.Owner = types.StringValue(owner)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -531,28 +575,8 @@ func (r *repositoryResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	owner := ""
+	owner := state.Owner.ValueString()
 	repoName := state.Name.ValueString()
-
-	if !state.FullName.IsNull() && state.FullName.ValueString() != "" {
-		fullName := state.FullName.ValueString()
-		for i, c := range fullName {
-			if c == '/' {
-				owner = fullName[:i]
-				repoName = fullName[i+1:]
-				break
-			}
-		}
-	}
-
-	if owner == "" {
-		user, _, err := r.client.GetMyUserInfo()
-		if err != nil {
-			resp.Diagnostics.AddError("Error getting user info", err.Error())
-			return
-		}
-		owner = user.UserName
-	}
 
 	_, err := r.client.DeleteRepo(owner, repoName)
 	if err != nil {
@@ -598,74 +622,7 @@ func (r *repositoryResource) ImportState(ctx context.Context, req resource.Impor
 
 	var data RepositoryResourceModel
 	mapRepositoryToModel(repository, &data)
+	data.Owner = types.StringValue(owner)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-type RepositoryResourceModel struct {
-	AllowFastForwardOnlyMerge     types.Bool   `tfsdk:"allow_fast_forward_only_merge"`
-	AllowManualMerge              types.Bool   `tfsdk:"allow_manual_merge"`
-	AllowMergeCommits             types.Bool   `tfsdk:"allow_merge_commits"`
-	AllowRebase                   types.Bool   `tfsdk:"allow_rebase"`
-	AllowRebaseExplicit           types.Bool   `tfsdk:"allow_rebase_explicit"`
-	AllowRebaseUpdate             types.Bool   `tfsdk:"allow_rebase_update"`
-	AllowSquashMerge              types.Bool   `tfsdk:"allow_squash_merge"`
-	Archived                      types.Bool   `tfsdk:"archived"`
-	ArchivedAt                    types.String `tfsdk:"archived_at"`
-	AutoInit                      types.Bool   `tfsdk:"auto_init"`
-	AutodetectManualMerge         types.Bool   `tfsdk:"autodetect_manual_merge"`
-	AvatarUrl                     types.String `tfsdk:"avatar_url"`
-	CloneUrl                      types.String `tfsdk:"clone_url"`
-	CreatedAt                     types.String `tfsdk:"created_at"`
-	DefaultAllowMaintainerEdit    types.Bool   `tfsdk:"default_allow_maintainer_edit"`
-	DefaultBranch                 types.String `tfsdk:"default_branch"`
-	DefaultDeleteBranchAfterMerge types.Bool   `tfsdk:"default_delete_branch_after_merge"`
-	DefaultMergeStyle             types.String `tfsdk:"default_merge_style"`
-	Description                   types.String `tfsdk:"description"`
-	Empty                         types.Bool   `tfsdk:"empty"`
-	Fork                          types.Bool   `tfsdk:"fork"`
-	ForksCount                    types.Int64  `tfsdk:"forks_count"`
-	FullName                      types.String `tfsdk:"full_name"`
-	Gitignores                    types.String `tfsdk:"gitignores"`
-	HasActions                    types.Bool   `tfsdk:"has_actions"`
-	HasCode                       types.Bool   `tfsdk:"has_code"`
-	HasIssues                     types.Bool   `tfsdk:"has_issues"`
-	HasPackages                   types.Bool   `tfsdk:"has_packages"`
-	HasProjects                   types.Bool   `tfsdk:"has_projects"`
-	HasPullRequests               types.Bool   `tfsdk:"has_pull_requests"`
-	HasReleases                   types.Bool   `tfsdk:"has_releases"`
-	HasWiki                       types.Bool   `tfsdk:"has_wiki"`
-	HtmlUrl                       types.String `tfsdk:"html_url"`
-	Id                            types.Int64  `tfsdk:"id"`
-	IgnoreWhitespaceConflicts     types.Bool   `tfsdk:"ignore_whitespace_conflicts"`
-	Internal                      types.Bool   `tfsdk:"internal"`
-	IssueLabels                   types.String `tfsdk:"issue_labels"`
-	Language                      types.String `tfsdk:"language"`
-	LanguagesUrl                  types.String `tfsdk:"languages_url"`
-	License                       types.String `tfsdk:"license"`
-	Licenses                      types.List   `tfsdk:"licenses"`
-	Link                          types.String `tfsdk:"link"`
-	Mirror                        types.Bool   `tfsdk:"mirror"`
-	MirrorInterval                types.String `tfsdk:"mirror_interval"`
-	MirrorUpdated                 types.String `tfsdk:"mirror_updated"`
-	Name                          types.String `tfsdk:"name"`
-	ObjectFormatName              types.String `tfsdk:"object_format_name"`
-	OpenIssuesCount               types.Int64  `tfsdk:"open_issues_count"`
-	OpenPrCounter                 types.Int64  `tfsdk:"open_pr_counter"`
-	OriginalUrl                   types.String `tfsdk:"original_url"`
-	Private                       types.Bool   `tfsdk:"private"`
-	ProjectsMode                  types.String `tfsdk:"projects_mode"`
-	Readme                        types.String `tfsdk:"readme"`
-	ReleaseCounter                types.Int64  `tfsdk:"release_counter"`
-	Repo                          types.String `tfsdk:"repo"`
-	Size                          types.Int64  `tfsdk:"size"`
-	SshUrl                        types.String `tfsdk:"ssh_url"`
-	StarsCount                    types.Int64  `tfsdk:"stars_count"`
-	Template                      types.Bool   `tfsdk:"template"`
-	Topics                        types.List   `tfsdk:"topics"`
-	TrustModel                    types.String `tfsdk:"trust_model"`
-	UpdatedAt                     types.String `tfsdk:"updated_at"`
-	Url                           types.String `tfsdk:"url"`
-	WatchersCount                 types.Int64  `tfsdk:"watchers_count"`
-	Website                       types.String `tfsdk:"website"`
 }

@@ -1,0 +1,28 @@
+---
+page_title: "{{.Type}} {{.Name}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+~> **Warning:** Do not use this resource if the team has `includes_all_repositories = true`. When a team includes all repositories, Gitea automatically grants access to all repositories in the organization, making explicit repository associations unnecessary and potentially confusing. Set `includes_all_repositories = false` on the team to manage repository access explicitly using this resource.
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{ tffile .ExampleFile }}
+{{- end }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import is supported using the following syntax:
+
+{{ codefile "shell" .ImportFile }}
+{{- end }}
