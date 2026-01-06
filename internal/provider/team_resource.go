@@ -26,6 +26,16 @@ type teamResource struct {
 	client *gitea.Client
 }
 
+type teamResourceModel struct {
+	Org                     types.String `tfsdk:"org"`
+	Name                    types.String `tfsdk:"name"`
+	UnitsMap                types.Map    `tfsdk:"units_map"`
+	CanCreateOrgRepo        types.Bool   `tfsdk:"can_create_org_repo"`
+	Description             types.String `tfsdk:"description"`
+	IncludesAllRepositories types.Bool   `tfsdk:"includes_all_repositories"`
+	Id                      types.Int64  `tfsdk:"id"`
+}
+
 func (r *teamResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_team"
 }
@@ -93,7 +103,7 @@ func (r *teamResource) Configure(_ context.Context, req resource.ConfigureReques
 }
 
 func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan TeamResourceModel
+	var plan teamResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -139,7 +149,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 }
 
 func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state TeamResourceModel
+	var state teamResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -161,8 +171,8 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 }
 
 func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan TeamResourceModel
-	var state TeamResourceModel
+	var plan teamResourceModel
+	var state teamResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -231,7 +241,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *teamResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state TeamResourceModel
+	var state teamResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -269,13 +279,13 @@ func (r *teamResource) ImportState(ctx context.Context, req resource.ImportState
 	}
 
 	// Map to model
-	var state TeamResourceModel
+	var state teamResourceModel
 	mapTeamToModel(ctx, team, &state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func mapTeamToModel(ctx context.Context, team *gitea.Team, model *TeamResourceModel) {
+func mapTeamToModel(ctx context.Context, team *gitea.Team, model *teamResourceModel) {
 	model.Id = types.Int64Value(team.ID)
 	model.Name = types.StringValue(team.Name)
 	model.Description = types.StringValue(team.Description)
@@ -296,14 +306,4 @@ func mapTeamToModel(ctx context.Context, team *gitea.Team, model *TeamResourceMo
 		}
 	}
 
-}
-
-type TeamResourceModel struct {
-	Org                     types.String `tfsdk:"org"`
-	Name                    types.String `tfsdk:"name"`
-	UnitsMap                types.Map    `tfsdk:"units_map"`
-	CanCreateOrgRepo        types.Bool   `tfsdk:"can_create_org_repo"`
-	Description             types.String `tfsdk:"description"`
-	IncludesAllRepositories types.Bool   `tfsdk:"includes_all_repositories"`
-	Id                      types.Int64  `tfsdk:"id"`
 }

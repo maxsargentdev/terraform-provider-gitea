@@ -18,7 +18,7 @@ func NewUserDataSource() datasource.DataSource {
 }
 
 // Helper function to map Gitea User to Terraform data source model
-func mapUserToDataSourceModel(user *gitea.User, model *UserDataSourceModel) {
+func mapUserToDataSourceModel(user *gitea.User, model *userDataSourceModel) {
 	model.Id = types.StringValue(user.UserName)
 	model.Login = types.StringValue(user.UserName)
 	model.Email = types.StringValue(user.Email)
@@ -49,6 +49,31 @@ func mapUserToDataSourceModel(user *gitea.User, model *UserDataSourceModel) {
 
 type userDataSource struct {
 	client *gitea.Client
+}
+
+type userDataSourceModel struct {
+	Active            types.Bool   `tfsdk:"active"`
+	AvatarUrl         types.String `tfsdk:"avatar_url"`
+	Created           types.String `tfsdk:"created"`
+	Description       types.String `tfsdk:"description"`
+	Email             types.String `tfsdk:"email"`
+	FollowersCount    types.Int64  `tfsdk:"followers_count"`
+	FollowingCount    types.Int64  `tfsdk:"following_count"`
+	FullName          types.String `tfsdk:"full_name"`
+	HtmlUrl           types.String `tfsdk:"html_url"`
+	Id                types.String `tfsdk:"id"`
+	IsAdmin           types.Bool   `tfsdk:"is_admin"`
+	Language          types.String `tfsdk:"language"`
+	LastLogin         types.String `tfsdk:"last_login"`
+	Location          types.String `tfsdk:"location"`
+	Login             types.String `tfsdk:"login"`
+	LoginName         types.String `tfsdk:"login_name"`
+	ProhibitLogin     types.Bool   `tfsdk:"prohibit_login"`
+	Restricted        types.Bool   `tfsdk:"restricted"`
+	SourceId          types.Int64  `tfsdk:"source_id"`
+	StarredReposCount types.Int64  `tfsdk:"starred_repos_count"`
+	Visibility        types.String `tfsdk:"visibility"`
+	Website           types.String `tfsdk:"website"`
 }
 
 func (d *userDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -180,7 +205,7 @@ func (d *userDataSource) Configure(ctx context.Context, req datasource.Configure
 }
 
 func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data UserDataSourceModel
+	var data userDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -204,29 +229,4 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	mapUserToDataSourceModel(user, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-type UserDataSourceModel struct {
-	Active            types.Bool   `tfsdk:"active"`
-	AvatarUrl         types.String `tfsdk:"avatar_url"`
-	Created           types.String `tfsdk:"created"`
-	Description       types.String `tfsdk:"description"`
-	Email             types.String `tfsdk:"email"`
-	FollowersCount    types.Int64  `tfsdk:"followers_count"`
-	FollowingCount    types.Int64  `tfsdk:"following_count"`
-	FullName          types.String `tfsdk:"full_name"`
-	HtmlUrl           types.String `tfsdk:"html_url"`
-	Id                types.String `tfsdk:"id"`
-	IsAdmin           types.Bool   `tfsdk:"is_admin"`
-	Language          types.String `tfsdk:"language"`
-	LastLogin         types.String `tfsdk:"last_login"`
-	Location          types.String `tfsdk:"location"`
-	Login             types.String `tfsdk:"login"`
-	LoginName         types.String `tfsdk:"login_name"`
-	ProhibitLogin     types.Bool   `tfsdk:"prohibit_login"`
-	Restricted        types.Bool   `tfsdk:"restricted"`
-	SourceId          types.Int64  `tfsdk:"source_id"`
-	StarredReposCount types.Int64  `tfsdk:"starred_repos_count"`
-	Visibility        types.String `tfsdk:"visibility"`
-	Website           types.String `tfsdk:"website"`
 }

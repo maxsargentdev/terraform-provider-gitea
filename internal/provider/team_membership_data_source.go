@@ -23,6 +23,11 @@ type teamMembershipDataSource struct {
 	client *gitea.Client
 }
 
+type teamMembershipDataSourceModel struct {
+	TeamId   types.Int64  `tfsdk:"team_id"`
+	Username types.String `tfsdk:"username"`
+}
+
 func (d *teamMembershipDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_team_membership"
 }
@@ -64,7 +69,7 @@ func (d *teamMembershipDataSource) Configure(_ context.Context, req datasource.C
 }
 
 func (d *teamMembershipDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data TeamMembershipDataSourceModel
+	var data teamMembershipDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -87,9 +92,4 @@ func (d *teamMembershipDataSource) Read(ctx context.Context, req datasource.Read
 	// If we get here, the membership exists
 	// The data already has the required fields from the config
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-type TeamMembershipDataSourceModel struct {
-	TeamId   types.Int64  `tfsdk:"team_id"`
-	Username types.String `tfsdk:"username"`
 }

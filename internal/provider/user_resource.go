@@ -19,7 +19,7 @@ func NewUserResource() resource.Resource {
 }
 
 // Helper function to map Gitea User to Terraform model
-func mapUserToModel(user *gitea.User, model *UserResourceModel) {
+func mapUserToModel(user *gitea.User, model *userResourceModel) {
 	model.Id = types.Int64Value(user.ID)
 	model.Username = types.StringValue(user.UserName)
 	model.Email = types.StringValue(user.Email)
@@ -49,6 +49,35 @@ func mapUserToModel(user *gitea.User, model *UserResourceModel) {
 
 type userResource struct {
 	client *gitea.Client
+}
+
+type userResourceModel struct {
+	Active             types.Bool   `tfsdk:"active"`
+	AvatarUrl          types.String `tfsdk:"avatar_url"`
+	Created            types.String `tfsdk:"created"`
+	CreatedAt          types.String `tfsdk:"created_at"`
+	Description        types.String `tfsdk:"description"`
+	Email              types.String `tfsdk:"email"`
+	FollowersCount     types.Int64  `tfsdk:"followers_count"`
+	FollowingCount     types.Int64  `tfsdk:"following_count"`
+	FullName           types.String `tfsdk:"full_name"`
+	HtmlUrl            types.String `tfsdk:"html_url"`
+	Id                 types.Int64  `tfsdk:"id"`
+	IsAdmin            types.Bool   `tfsdk:"is_admin"`
+	Language           types.String `tfsdk:"language"`
+	LastLogin          types.String `tfsdk:"last_login"`
+	Location           types.String `tfsdk:"location"`
+	Login              types.String `tfsdk:"login"`
+	MustChangePassword types.Bool   `tfsdk:"must_change_password"`
+	Password           types.String `tfsdk:"password"`
+	ProhibitLogin      types.Bool   `tfsdk:"prohibit_login"`
+	Restricted         types.Bool   `tfsdk:"restricted"`
+	SendNotify         types.Bool   `tfsdk:"send_notify"`
+	SourceId           types.Int64  `tfsdk:"source_id"`
+	StarredReposCount  types.Int64  `tfsdk:"starred_repos_count"`
+	Username           types.String `tfsdk:"username"`
+	Visibility         types.String `tfsdk:"visibility"`
+	Website            types.String `tfsdk:"website"`
 }
 
 func (r *userResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -208,7 +237,7 @@ func (r *userResource) Configure(ctx context.Context, req resource.ConfigureRequ
 }
 
 func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data UserResourceModel
+	var data userResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -260,7 +289,7 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 }
 
 func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data UserResourceModel
+	var data userResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -300,7 +329,7 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 }
 
 func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data UserResourceModel
+	var data userResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -357,7 +386,7 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *userResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data UserResourceModel
+	var data userResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -390,37 +419,8 @@ func (r *userResource) ImportState(ctx context.Context, req resource.ImportState
 	}
 
 	// Map to model
-	var data UserResourceModel
+	var data userResourceModel
 	mapUserToModel(user, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-type UserResourceModel struct {
-	Active             types.Bool   `tfsdk:"active"`
-	AvatarUrl          types.String `tfsdk:"avatar_url"`
-	Created            types.String `tfsdk:"created"`
-	CreatedAt          types.String `tfsdk:"created_at"`
-	Description        types.String `tfsdk:"description"`
-	Email              types.String `tfsdk:"email"`
-	FollowersCount     types.Int64  `tfsdk:"followers_count"`
-	FollowingCount     types.Int64  `tfsdk:"following_count"`
-	FullName           types.String `tfsdk:"full_name"`
-	HtmlUrl            types.String `tfsdk:"html_url"`
-	Id                 types.Int64  `tfsdk:"id"`
-	IsAdmin            types.Bool   `tfsdk:"is_admin"`
-	Language           types.String `tfsdk:"language"`
-	LastLogin          types.String `tfsdk:"last_login"`
-	Location           types.String `tfsdk:"location"`
-	Login              types.String `tfsdk:"login"`
-	MustChangePassword types.Bool   `tfsdk:"must_change_password"`
-	Password           types.String `tfsdk:"password"`
-	ProhibitLogin      types.Bool   `tfsdk:"prohibit_login"`
-	Restricted         types.Bool   `tfsdk:"restricted"`
-	SendNotify         types.Bool   `tfsdk:"send_notify"`
-	SourceId           types.Int64  `tfsdk:"source_id"`
-	StarredReposCount  types.Int64  `tfsdk:"starred_repos_count"`
-	Username           types.String `tfsdk:"username"`
-	Visibility         types.String `tfsdk:"visibility"`
-	Website            types.String `tfsdk:"website"`
 }

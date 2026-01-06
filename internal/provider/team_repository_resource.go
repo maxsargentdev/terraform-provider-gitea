@@ -25,7 +25,7 @@ type TeamRepositoryResource struct {
 	client *gitea.Client
 }
 
-type TeamRepositoryResourceModel struct {
+type teamRepositoryResourceModel struct {
 	ID             types.String `tfsdk:"id"`
 	Org            types.String `tfsdk:"org"`
 	TeamName       types.String `tfsdk:"team_name"`
@@ -91,7 +91,7 @@ func (r *TeamRepositoryResource) Configure(ctx context.Context, req resource.Con
 }
 
 func (r *TeamRepositoryResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan TeamRepositoryResourceModel
+	var plan teamRepositoryResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -144,7 +144,7 @@ func (r *TeamRepositoryResource) Create(ctx context.Context, req resource.Create
 }
 
 func (r *TeamRepositoryResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state TeamRepositoryResourceModel
+	var state teamRepositoryResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -211,7 +211,7 @@ func (r *TeamRepositoryResource) Read(ctx context.Context, req resource.ReadRequ
 func (r *TeamRepositoryResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	// Update is a no-op because all attributes have RequiresReplace
 	// Any change will trigger a delete + create cycle
-	var plan TeamRepositoryResourceModel
+	var plan teamRepositoryResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -223,7 +223,7 @@ func (r *TeamRepositoryResource) Update(ctx context.Context, req resource.Update
 }
 
 func (r *TeamRepositoryResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state TeamRepositoryResourceModel
+	var state teamRepositoryResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

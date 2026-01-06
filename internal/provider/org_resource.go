@@ -21,7 +21,7 @@ func NewOrgResource() resource.Resource {
 }
 
 // Helper function to map Gitea Organization to Terraform model
-func mapOrgToModel(org *gitea.Organization, model *OrgResourceModel) {
+func mapOrgToModel(org *gitea.Organization, model *orgResourceModel) {
 	model.Id = types.Int64Value(org.ID)
 	model.Username = types.StringValue(org.UserName)
 	model.Name = types.StringValue(org.UserName)
@@ -38,6 +38,21 @@ func mapOrgToModel(org *gitea.Organization, model *OrgResourceModel) {
 
 type orgResource struct {
 	client *gitea.Client
+}
+
+type orgResourceModel struct {
+	AvatarUrl                 types.String `tfsdk:"avatar_url"`
+	Description               types.String `tfsdk:"description"`
+	Email                     types.String `tfsdk:"email"`
+	FullName                  types.String `tfsdk:"full_name"`
+	Id                        types.Int64  `tfsdk:"id"`
+	Location                  types.String `tfsdk:"location"`
+	Name                      types.String `tfsdk:"name"`
+	Org                       types.String `tfsdk:"org"`
+	RepoAdminChangeTeamAccess types.Bool   `tfsdk:"repo_admin_change_team_access"`
+	Username                  types.String `tfsdk:"username"`
+	Visibility                types.String `tfsdk:"visibility"`
+	Website                   types.String `tfsdk:"website"`
 }
 
 func (r *orgResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -144,7 +159,7 @@ func (r *orgResource) Configure(ctx context.Context, req resource.ConfigureReque
 }
 
 func (r *orgResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data OrgResourceModel
+	var data orgResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -177,7 +192,7 @@ func (r *orgResource) Create(ctx context.Context, req resource.CreateRequest, re
 }
 
 func (r *orgResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data OrgResourceModel
+	var data orgResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -201,7 +216,7 @@ func (r *orgResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 }
 
 func (r *orgResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data OrgResourceModel
+	var data orgResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -243,7 +258,7 @@ func (r *orgResource) Update(ctx context.Context, req resource.UpdateRequest, re
 }
 
 func (r *orgResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data OrgResourceModel
+	var data orgResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -276,23 +291,8 @@ func (r *orgResource) ImportState(ctx context.Context, req resource.ImportStateR
 	}
 
 	// Map to model
-	var data OrgResourceModel
+	var data orgResourceModel
 	mapOrgToModel(org, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-type OrgResourceModel struct {
-	AvatarUrl                 types.String `tfsdk:"avatar_url"`
-	Description               types.String `tfsdk:"description"`
-	Email                     types.String `tfsdk:"email"`
-	FullName                  types.String `tfsdk:"full_name"`
-	Id                        types.Int64  `tfsdk:"id"`
-	Location                  types.String `tfsdk:"location"`
-	Name                      types.String `tfsdk:"name"`
-	Org                       types.String `tfsdk:"org"`
-	RepoAdminChangeTeamAccess types.Bool   `tfsdk:"repo_admin_change_team_access"`
-	Username                  types.String `tfsdk:"username"`
-	Visibility                types.String `tfsdk:"visibility"`
-	Website                   types.String `tfsdk:"website"`
 }

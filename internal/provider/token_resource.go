@@ -25,9 +25,6 @@ type tokenResource struct {
 	client *gitea.Client
 }
 
-// tokenResourceModel wraps the generated model with Set type for scopes
-// we do this because the openapi spec for gitea defines it as a list which is order-sensitive
-// we can fix this at the gitea api level by using the custom "format":"set" to the scopes field
 type tokenResourceModel struct {
 	CreatedAt      types.String `tfsdk:"created_at"`
 	Id             types.Int64  `tfsdk:"id"`
@@ -351,17 +348,4 @@ func mapTokenToModel(token *gitea.AccessToken, model *tokenResourceModel) {
 	// Set pagination fields to null (not used in resource)
 	model.Page = types.Int64Null()
 	model.Limit = types.Int64Null()
-}
-
-type TokenResourceModel struct {
-	CreatedAt      types.String `tfsdk:"created_at"`
-	Id             types.Int64  `tfsdk:"id"`
-	LastUsedAt     types.String `tfsdk:"last_used_at"`
-	Limit          types.Int64  `tfsdk:"limit"`
-	Name           types.String `tfsdk:"name"`
-	Page           types.Int64  `tfsdk:"page"`
-	Scopes         types.List   `tfsdk:"scopes"`
-	Sha1           types.String `tfsdk:"sha1"`
-	TokenLastEight types.String `tfsdk:"token_last_eight"`
-	Username       types.String `tfsdk:"username"`
 }

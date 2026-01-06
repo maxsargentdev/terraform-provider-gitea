@@ -26,7 +26,7 @@ type repositoryResource struct {
 	client *gitea.Client
 }
 
-type RepositoryResourceModel struct {
+type repositoryResourceModel struct {
 	Owner                         types.String `tfsdk:"owner"`
 	AllowFastForwardOnlyMerge     types.Bool   `tfsdk:"allow_fast_forward_only_merge"`
 	AllowManualMerge              types.Bool   `tfsdk:"allow_manual_merge"`
@@ -361,7 +361,7 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 }
 
 // Helper function to map Gitea Repository to Terraform model
-func mapRepositoryToModel(repo *gitea.Repository, model *RepositoryResourceModel) {
+func mapRepositoryToModel(repo *gitea.Repository, model *repositoryResourceModel) {
 	model.Id = types.Int64Value(repo.ID)
 	model.Name = types.StringValue(repo.Name)
 	model.FullName = types.StringValue(repo.FullName)
@@ -449,7 +449,7 @@ func (r *repositoryResource) Configure(_ context.Context, req resource.Configure
 }
 
 func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan RepositoryResourceModel
+	var plan repositoryResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -498,7 +498,7 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 }
 
 func (r *repositoryResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state RepositoryResourceModel
+	var state repositoryResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -526,14 +526,14 @@ func (r *repositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 }
 
 func (r *repositoryResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan RepositoryResourceModel
+	var plan repositoryResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var state RepositoryResourceModel
+	var state repositoryResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -568,7 +568,7 @@ func (r *repositoryResource) Update(ctx context.Context, req resource.UpdateRequ
 }
 
 func (r *repositoryResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state RepositoryResourceModel
+	var state repositoryResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -620,7 +620,7 @@ func (r *repositoryResource) ImportState(ctx context.Context, req resource.Impor
 		return
 	}
 
-	var data RepositoryResourceModel
+	var data repositoryResourceModel
 	mapRepositoryToModel(repository, &data)
 	data.Owner = types.StringValue(owner)
 

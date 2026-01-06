@@ -20,7 +20,7 @@ func NewRepositoryDataSource() datasource.DataSource {
 }
 
 // Helper function to map Gitea Repository to Terraform data source model
-func mapRepositoryToDataSourceModel(repo *gitea.Repository, model *RepositoryDataSourceModel) {
+func mapRepositoryToDataSourceModel(repo *gitea.Repository, model *repositoryDataSourceModel) {
 	model.Id = types.Int64Value(repo.ID)
 	model.Name = types.StringValue(repo.Name)
 	model.FullName = types.StringValue(repo.FullName)
@@ -47,6 +47,68 @@ func mapRepositoryToDataSourceModel(repo *gitea.Repository, model *RepositoryDat
 
 type repositoryDataSource struct {
 	client *gitea.Client
+}
+
+type repositoryDataSourceModel struct {
+	AllowFastForwardOnlyMerge     types.Bool   `tfsdk:"allow_fast_forward_only_merge"`
+	AllowManualMerge              types.Bool   `tfsdk:"allow_manual_merge"`
+	AllowMergeCommits             types.Bool   `tfsdk:"allow_merge_commits"`
+	AllowRebase                   types.Bool   `tfsdk:"allow_rebase"`
+	AllowRebaseExplicit           types.Bool   `tfsdk:"allow_rebase_explicit"`
+	AllowRebaseUpdate             types.Bool   `tfsdk:"allow_rebase_update"`
+	AllowSquashMerge              types.Bool   `tfsdk:"allow_squash_merge"`
+	Archived                      types.Bool   `tfsdk:"archived"`
+	ArchivedAt                    types.String `tfsdk:"archived_at"`
+	AutodetectManualMerge         types.Bool   `tfsdk:"autodetect_manual_merge"`
+	AvatarUrl                     types.String `tfsdk:"avatar_url"`
+	CloneUrl                      types.String `tfsdk:"clone_url"`
+	CreatedAt                     types.String `tfsdk:"created_at"`
+	DefaultAllowMaintainerEdit    types.Bool   `tfsdk:"default_allow_maintainer_edit"`
+	DefaultBranch                 types.String `tfsdk:"default_branch"`
+	DefaultDeleteBranchAfterMerge types.Bool   `tfsdk:"default_delete_branch_after_merge"`
+	DefaultMergeStyle             types.String `tfsdk:"default_merge_style"`
+	Description                   types.String `tfsdk:"description"`
+	Empty                         types.Bool   `tfsdk:"empty"`
+	Fork                          types.Bool   `tfsdk:"fork"`
+	ForksCount                    types.Int64  `tfsdk:"forks_count"`
+	FullName                      types.String `tfsdk:"full_name"`
+	HasActions                    types.Bool   `tfsdk:"has_actions"`
+	HasCode                       types.Bool   `tfsdk:"has_code"`
+	HasIssues                     types.Bool   `tfsdk:"has_issues"`
+	HasPackages                   types.Bool   `tfsdk:"has_packages"`
+	HasProjects                   types.Bool   `tfsdk:"has_projects"`
+	HasPullRequests               types.Bool   `tfsdk:"has_pull_requests"`
+	HasReleases                   types.Bool   `tfsdk:"has_releases"`
+	HasWiki                       types.Bool   `tfsdk:"has_wiki"`
+	HtmlUrl                       types.String `tfsdk:"html_url"`
+	Id                            types.Int64  `tfsdk:"id"`
+	IgnoreWhitespaceConflicts     types.Bool   `tfsdk:"ignore_whitespace_conflicts"`
+	Internal                      types.Bool   `tfsdk:"internal"`
+	Language                      types.String `tfsdk:"language"`
+	LanguagesUrl                  types.String `tfsdk:"languages_url"`
+	Licenses                      types.List   `tfsdk:"licenses"`
+	Link                          types.String `tfsdk:"link"`
+	Mirror                        types.Bool   `tfsdk:"mirror"`
+	MirrorInterval                types.String `tfsdk:"mirror_interval"`
+	MirrorUpdated                 types.String `tfsdk:"mirror_updated"`
+	Name                          types.String `tfsdk:"name"`
+	ObjectFormatName              types.String `tfsdk:"object_format_name"`
+	OpenIssuesCount               types.Int64  `tfsdk:"open_issues_count"`
+	OpenPrCounter                 types.Int64  `tfsdk:"open_pr_counter"`
+	OriginalUrl                   types.String `tfsdk:"original_url"`
+	Private                       types.Bool   `tfsdk:"private"`
+	ProjectsMode                  types.String `tfsdk:"projects_mode"`
+	ReleaseCounter                types.Int64  `tfsdk:"release_counter"`
+	Repo                          types.String `tfsdk:"repo"`
+	Size                          types.Int64  `tfsdk:"size"`
+	SshUrl                        types.String `tfsdk:"ssh_url"`
+	StarsCount                    types.Int64  `tfsdk:"stars_count"`
+	Template                      types.Bool   `tfsdk:"template"`
+	Topics                        types.List   `tfsdk:"topics"`
+	UpdatedAt                     types.String `tfsdk:"updated_at"`
+	Url                           types.String `tfsdk:"url"`
+	WatchersCount                 types.Int64  `tfsdk:"watchers_count"`
+	Website                       types.String `tfsdk:"website"`
 }
 
 func (d *repositoryDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -261,7 +323,7 @@ func (d *repositoryDataSource) Configure(_ context.Context, req datasource.Confi
 }
 
 func (d *repositoryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data RepositoryDataSourceModel
+	var data repositoryDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -305,66 +367,4 @@ func (d *repositoryDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	mapRepositoryToDataSourceModel(repo, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-type RepositoryDataSourceModel struct {
-	AllowFastForwardOnlyMerge     types.Bool   `tfsdk:"allow_fast_forward_only_merge"`
-	AllowManualMerge              types.Bool   `tfsdk:"allow_manual_merge"`
-	AllowMergeCommits             types.Bool   `tfsdk:"allow_merge_commits"`
-	AllowRebase                   types.Bool   `tfsdk:"allow_rebase"`
-	AllowRebaseExplicit           types.Bool   `tfsdk:"allow_rebase_explicit"`
-	AllowRebaseUpdate             types.Bool   `tfsdk:"allow_rebase_update"`
-	AllowSquashMerge              types.Bool   `tfsdk:"allow_squash_merge"`
-	Archived                      types.Bool   `tfsdk:"archived"`
-	ArchivedAt                    types.String `tfsdk:"archived_at"`
-	AutodetectManualMerge         types.Bool   `tfsdk:"autodetect_manual_merge"`
-	AvatarUrl                     types.String `tfsdk:"avatar_url"`
-	CloneUrl                      types.String `tfsdk:"clone_url"`
-	CreatedAt                     types.String `tfsdk:"created_at"`
-	DefaultAllowMaintainerEdit    types.Bool   `tfsdk:"default_allow_maintainer_edit"`
-	DefaultBranch                 types.String `tfsdk:"default_branch"`
-	DefaultDeleteBranchAfterMerge types.Bool   `tfsdk:"default_delete_branch_after_merge"`
-	DefaultMergeStyle             types.String `tfsdk:"default_merge_style"`
-	Description                   types.String `tfsdk:"description"`
-	Empty                         types.Bool   `tfsdk:"empty"`
-	Fork                          types.Bool   `tfsdk:"fork"`
-	ForksCount                    types.Int64  `tfsdk:"forks_count"`
-	FullName                      types.String `tfsdk:"full_name"`
-	HasActions                    types.Bool   `tfsdk:"has_actions"`
-	HasCode                       types.Bool   `tfsdk:"has_code"`
-	HasIssues                     types.Bool   `tfsdk:"has_issues"`
-	HasPackages                   types.Bool   `tfsdk:"has_packages"`
-	HasProjects                   types.Bool   `tfsdk:"has_projects"`
-	HasPullRequests               types.Bool   `tfsdk:"has_pull_requests"`
-	HasReleases                   types.Bool   `tfsdk:"has_releases"`
-	HasWiki                       types.Bool   `tfsdk:"has_wiki"`
-	HtmlUrl                       types.String `tfsdk:"html_url"`
-	Id                            types.Int64  `tfsdk:"id"`
-	IgnoreWhitespaceConflicts     types.Bool   `tfsdk:"ignore_whitespace_conflicts"`
-	Internal                      types.Bool   `tfsdk:"internal"`
-	Language                      types.String `tfsdk:"language"`
-	LanguagesUrl                  types.String `tfsdk:"languages_url"`
-	Licenses                      types.List   `tfsdk:"licenses"`
-	Link                          types.String `tfsdk:"link"`
-	Mirror                        types.Bool   `tfsdk:"mirror"`
-	MirrorInterval                types.String `tfsdk:"mirror_interval"`
-	MirrorUpdated                 types.String `tfsdk:"mirror_updated"`
-	Name                          types.String `tfsdk:"name"`
-	ObjectFormatName              types.String `tfsdk:"object_format_name"`
-	OpenIssuesCount               types.Int64  `tfsdk:"open_issues_count"`
-	OpenPrCounter                 types.Int64  `tfsdk:"open_pr_counter"`
-	OriginalUrl                   types.String `tfsdk:"original_url"`
-	Private                       types.Bool   `tfsdk:"private"`
-	ProjectsMode                  types.String `tfsdk:"projects_mode"`
-	ReleaseCounter                types.Int64  `tfsdk:"release_counter"`
-	Repo                          types.String `tfsdk:"repo"`
-	Size                          types.Int64  `tfsdk:"size"`
-	SshUrl                        types.String `tfsdk:"ssh_url"`
-	StarsCount                    types.Int64  `tfsdk:"stars_count"`
-	Template                      types.Bool   `tfsdk:"template"`
-	Topics                        types.List   `tfsdk:"topics"`
-	UpdatedAt                     types.String `tfsdk:"updated_at"`
-	Url                           types.String `tfsdk:"url"`
-	WatchersCount                 types.Int64  `tfsdk:"watchers_count"`
-	Website                       types.String `tfsdk:"website"`
 }

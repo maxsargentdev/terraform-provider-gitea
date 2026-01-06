@@ -18,7 +18,7 @@ func NewOrgDataSource() datasource.DataSource {
 }
 
 // Helper function to map Gitea Organization to Terraform data source model
-func mapOrgToDataSourceModel(org *gitea.Organization, model *OrgDataSourceModel) {
+func mapOrgToDataSourceModel(org *gitea.Organization, model *orgDataSourceModel) {
 	model.Id = types.Int64Value(org.ID)
 	model.Org = types.StringValue(org.UserName)
 	model.Username = types.StringValue(org.UserName)
@@ -35,6 +35,21 @@ func mapOrgToDataSourceModel(org *gitea.Organization, model *OrgDataSourceModel)
 
 type orgDataSource struct {
 	client *gitea.Client
+}
+
+type orgDataSourceModel struct {
+	AvatarUrl                 types.String `tfsdk:"avatar_url"`
+	Description               types.String `tfsdk:"description"`
+	Email                     types.String `tfsdk:"email"`
+	FullName                  types.String `tfsdk:"full_name"`
+	Id                        types.Int64  `tfsdk:"id"`
+	Location                  types.String `tfsdk:"location"`
+	Name                      types.String `tfsdk:"name"`
+	Org                       types.String `tfsdk:"org"`
+	RepoAdminChangeTeamAccess types.Bool   `tfsdk:"repo_admin_change_team_access"`
+	Username                  types.String `tfsdk:"username"`
+	Visibility                types.String `tfsdk:"visibility"`
+	Website                   types.String `tfsdk:"website"`
 }
 
 func (d *orgDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -126,7 +141,7 @@ func (d *orgDataSource) Configure(ctx context.Context, req datasource.ConfigureR
 }
 
 func (d *orgDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data OrgDataSourceModel
+	var data orgDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -150,19 +165,4 @@ func (d *orgDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	mapOrgToDataSourceModel(org, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-type OrgDataSourceModel struct {
-	AvatarUrl                 types.String `tfsdk:"avatar_url"`
-	Description               types.String `tfsdk:"description"`
-	Email                     types.String `tfsdk:"email"`
-	FullName                  types.String `tfsdk:"full_name"`
-	Id                        types.Int64  `tfsdk:"id"`
-	Location                  types.String `tfsdk:"location"`
-	Name                      types.String `tfsdk:"name"`
-	Org                       types.String `tfsdk:"org"`
-	RepoAdminChangeTeamAccess types.Bool   `tfsdk:"repo_admin_change_team_access"`
-	Username                  types.String `tfsdk:"username"`
-	Visibility                types.String `tfsdk:"visibility"`
-	Website                   types.String `tfsdk:"website"`
 }
