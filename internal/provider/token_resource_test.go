@@ -16,15 +16,15 @@ func TestAccTokenResource(t *testing.T) {
 			{
 				Config: testAccTokenResourceConfig("test-token", "testuser"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("gitea_token.test", "name", "test-token"),
-					resource.TestCheckResourceAttr("gitea_token.test", "username", "testuser"),
-					resource.TestCheckResourceAttrSet("gitea_token.test", "id"),
-					resource.TestCheckResourceAttrSet("gitea_token.test", "sha1"),
+					resource.TestCheckResourceAttr("icegitea_token.test", "name", "test-token"),
+					resource.TestCheckResourceAttr("icegitea_token.test", "username", "testuser"),
+					resource.TestCheckResourceAttrSet("icegitea_token.test", "id"),
+					resource.TestCheckResourceAttrSet("icegitea_token.test", "sha1"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:            "gitea_token.test",
+				ResourceName:            "icegitea_token.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"sha1", "username", "scopes", "created_at", "last_used_at"},
@@ -37,16 +37,16 @@ func TestAccTokenResource(t *testing.T) {
 
 func testAccTokenResourceConfig(name, username string) string {
 	return providerConfig() + fmt.Sprintf(`
-resource "gitea_user" "test" {
+resource "icegitea_user" "test" {
   username  = %[2]q
   email     = "%[2]s@example.com"
   password  = "testpass123"
   full_name = "Test User"
 }
 
-resource "gitea_token" "test" {
+resource "icegitea_token" "test" {
   name     = %[1]q
-  username = gitea_user.test.username
+  username = icegitea_user.test.username
   scopes   = ["read:user"]
 }
 `, name, username)

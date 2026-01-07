@@ -1,5 +1,5 @@
 # Import an existing user by username
 import {
-  to = gitea_user.example
+  to = icegitea_user.example
   id = "testuser"
 }

@@ -122,7 +122,7 @@ func (p *giteaProvider) Configure(ctx context.Context, req provider.ConfigureReq
 }
 
 func (p *giteaProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "gitea"
+	resp.TypeName = "icegitea"
 }
 
 func (p *giteaProvider) DataSources(ctx context.Context) []func() datasource.DataSource {

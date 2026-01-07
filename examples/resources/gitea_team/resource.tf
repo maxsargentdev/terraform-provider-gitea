@@ -1,4 +1,4 @@
-resource "gitea_team" "test_team" {
+resource "icegitea_team" "test_team" {
   org  = "testorg"
   name = "test-team"
 

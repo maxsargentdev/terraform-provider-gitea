@@ -17,16 +17,16 @@ func TestAccRepositoryResource(t *testing.T) {
 			{
 				Config: testAccRepositoryResourceConfig("test-repo-1", "Test repository", true),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-1"),
-					resource.TestCheckResourceAttr("gitea_repository.test", "description", "Test repository"),
-					resource.TestCheckResourceAttr("gitea_repository.test", "private", "true"),
-					resource.TestCheckResourceAttrSet("gitea_repository.test", "id"),
-					resource.TestCheckResourceAttrSet("gitea_repository.test", "full_name"),
+					resource.TestCheckResourceAttr("icegitea_repository.test", "name", "test-repo-1"),
+					resource.TestCheckResourceAttr("icegitea_repository.test", "description", "Test repository"),
+					resource.TestCheckResourceAttr("icegitea_repository.test", "private", "true"),
+					resource.TestCheckResourceAttrSet("icegitea_repository.test", "id"),
+					resource.TestCheckResourceAttrSet("icegitea_repository.test", "full_name"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:      "gitea_repository.test",
+				ResourceName:      "icegitea_repository.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
@@ -37,8 +37,8 @@ func TestAccRepositoryResource(t *testing.T) {
 			{
 				Config: testAccRepositoryResourceConfig("test-repo-1", "Updated repository", false),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("gitea_repository.test", "description", "Updated repository"),
-					resource.TestCheckResourceAttr("gitea_repository.test", "private", "false"),
+					resource.TestCheckResourceAttr("icegitea_repository.test", "description", "Updated repository"),
+					resource.TestCheckResourceAttr("icegitea_repository.test", "private", "false"),
 				),
 			},
 		},
@@ -47,7 +47,7 @@ func TestAccRepositoryResource(t *testing.T) {
 
 func testAccRepositoryResourceConfig(name, description string, private bool) string {
 	return providerConfig() + fmt.Sprintf(`
-resource "gitea_repository" "test" {
+resource "icegitea_repository" "test" {
   name        = %[1]q
   description = %[2]q
   private     = %[3]t
