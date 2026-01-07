@@ -43,9 +43,11 @@ resource "gitea_team" "test_team" {
 # Create a user
 resource "gitea_user" "test_user" {
   username  = "testuser"
+  login_name  = "login_name"
   email     = "testuser@gitea.local"
   password  = "testpassword123"
   full_name = "Test User"
+  active   = true
 }
 
 # Create a repository owned by root user
@@ -101,6 +103,9 @@ resource "gitea_repository_branch_protection" "test_protection" {
 # Create a token for the authenticated user
 resource "gitea_token" "test_token" {
   name = "terraform-test-token"
+  scopes = [
+    "read:issue",
+  ]
 }
 
 # Output the token (sensitive)
