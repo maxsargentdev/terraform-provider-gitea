@@ -2,12 +2,24 @@
 page_title: "Resource gitea_team_repository - gitea"
 subcategory: ""
 description: |-
-  Manages a team repository association in Gitea, assigning a repository to a team.
+  Manages a team repository association in Gitea. This resource assigns a repository to a team, granting team members access to the repository based on the team's permission level.
+  Import
+  Team repository associations can be imported using the format org/team_name/repository_name:
+  
+  terraform import gitea_team_repository.example myorg/developers/myrepo
 ---
 
 # gitea_team_repository (Resource)
 
-Manages a team repository association in Gitea, assigning a repository to a team.
+Manages a team repository association in Gitea. This resource assigns a repository to a team, granting team members access to the repository based on the team's permission level.
+
+## Import
+
+Team repository associations can be imported using the format `org/team_name/repository_name`:
+
+```shell
+terraform import gitea_team_repository.example myorg/developers/myrepo
+```
 
 ~> **Warning:** Do not use this resource if the team has `includes_all_repositories = true`. When a team includes all repositories, Gitea automatically grants access to all repositories in the organization, making explicit repository associations unnecessary and potentially confusing. Set `includes_all_repositories = false` on the team to manage repository access explicitly using this resource.
 
@@ -26,12 +38,12 @@ resource "gitea_team_repository" "test_team_repo_association" {
 
 ### Required
 
-- `org` (String) The name of the organization.
-- `repository_name` (String) The name of the repository.
-- `team_name` (String) The name of the team.
+- `org` (String) The name of the organization that owns both the team and the repository.
+- `repository_name` (String) The name of the repository to assign to the team. The repository must exist within the specified organization.
+- `team_name` (String) The name of the team to assign the repository to. The team must exist within the specified organization.
 
 ### Read-Only
 
-- `id` (String) The ID of the team repository association.
+- `id` (String) The ID of the team repository association, in the format `org/team_name/repository_name`.
 
 

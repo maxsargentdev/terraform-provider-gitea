@@ -143,7 +143,7 @@ func (p *giteaProvider) Resources(ctx context.Context) []func() resource.Resourc
 		NewUserResource,
 		NewOrgResource,
 		NewRepositoryResource,
-		NewBranchProtectionResource,
+		NewRepositoryBranchProtectionResource,
 		NewTeamResource,
 		NewTeamRepositoryResource,
 		NewTokenResource,

@@ -382,8 +382,8 @@ func (d *repositoryDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	data.WatchersCount = types.Int64Value(int64(repo.Watchers))
 	data.ForksCount = types.Int64Value(int64(repo.Forks))
 	data.OpenIssuesCount = types.Int64Value(int64(repo.OpenIssues))
-	data.OpenPrCounter = types.Int64Value(int64(repo.OpenPRCount))
-	data.ReleaseCounter = types.Int64Value(int64(repo.ReleaseCount))
+	data.OpenPrCounter = types.Int64Value(int64(repo.OpenPulls))
+	data.ReleaseCounter = types.Int64Value(int64(repo.Releases))
 	data.AvatarUrl = types.StringValue(repo.AvatarURL)
 	data.ObjectFormatName = types.StringValue(repo.ObjectFormatName)
 	data.HasIssues = types.BoolValue(repo.HasIssues)
@@ -397,14 +397,14 @@ func (d *repositoryDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	data.AllowMergeCommits = types.BoolValue(repo.AllowMerge)
 	data.AllowRebase = types.BoolValue(repo.AllowRebase)
 	data.AllowRebaseExplicit = types.BoolValue(repo.AllowRebaseMerge)
-	data.AllowRebaseUpdate = types.BoolValue(repo.AllowRebaseUpdate)
+	data.AllowRebaseUpdate = types.BoolValue(false)             // Field not available in SDK
 	data.AllowSquashMerge = types.BoolValue(repo.AllowSquash)
-	data.AllowFastForwardOnlyMerge = types.BoolValue(repo.AllowFastForwardOnly)
-	data.AllowManualMerge = types.BoolValue(repo.AllowManualMerge)
-	data.AutodetectManualMerge = types.BoolValue(repo.AutodetectManualMerge)
+	data.AllowFastForwardOnlyMerge = types.BoolValue(repo.AllowFastForwardOnlyMerge)
+	data.AllowManualMerge = types.BoolValue(false)             // Field not available in SDK
+	data.AutodetectManualMerge = types.BoolValue(false)        // Field not available in SDK
 	data.DefaultDeleteBranchAfterMerge = types.BoolValue(repo.DefaultDeleteBranchAfterMerge)
 	data.DefaultMergeStyle = types.StringValue(string(repo.DefaultMergeStyle))
-	data.DefaultAllowMaintainerEdit = types.BoolValue(repo.DefaultAllowMaintainerEdit)
+	data.DefaultAllowMaintainerEdit = types.BoolValue(false)   // Field not available in SDK
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

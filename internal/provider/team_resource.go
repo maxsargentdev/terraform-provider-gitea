@@ -60,7 +60,7 @@ func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 				MarkdownDescription: "The name of the team. Must be unique within the organization.",
 			},
 			"units_map": schema.MapAttribute{
-				Required: true,
+				Required:    true,
 				Description: "A map of repository units to their permission levels. Keys are unit names (e.g., 'repo.code', 'repo.issues', 'repo.pulls', 'repo.releases', 'repo.wiki', 'repo.ext_wiki', 'repo.ext_issues', 'repo.projects', 'repo.packages', 'repo.actions'). Values must be one of: 'none' (no access), 'read' (read-only access), 'write' (read and write access), 'admin' (full administrative access).",
 				MarkdownDescription: `A map of repository units to their permission levels.
 
@@ -79,8 +79,7 @@ func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 **Permission values:**
 - ` + "`none`" + ` - No access
 - ` + "`read`" + ` - Read-only access
-- ` + "`write`" + ` - Read and write access
-- ` + "`admin`" + ` - Full administrative access`,
+- ` + "`write`" + ` - Read and write access`,
 				ElementType: types.StringType,
 			},
 
@@ -160,7 +159,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 	plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
 
 	// Validate permission values - only "none", "read", "write", "admin" are allowed
-	validPermissions := map[string]bool{"none": true, "read": true, "write": true, "admin": true}
+	validPermissions := map[string]bool{"none": true, "read": true, "write": true}
 	for unit, permission := range unitsMap {
 		if !validPermissions[permission] {
 			resp.Diagnostics.AddError(

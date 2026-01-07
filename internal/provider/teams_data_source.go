@@ -137,7 +137,7 @@ func (d *teamsDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 			Description:             types.StringValue(team.Description),
 			Permission:              types.StringValue(string(team.Permission)),
 			CanCreateOrgRepo:        types.BoolValue(team.CanCreateOrgRepo),
-			IncludesAllRepositories: types.BoolValue(team.IncludesAllRepos),
+			IncludesAllRepositories: types.BoolValue(team.IncludesAllRepositories),
 		}
 	}
 

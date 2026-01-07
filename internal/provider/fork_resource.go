@@ -6,18 +6,18 @@ import (
 	"strings"
 
 	"code.gitea.io/sdk/gitea"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-var _ resource.Resource = (*forkResource)(nil)
-var _ resource.ResourceWithConfigure = (*forkResource)(nil)
-var _ resource.ResourceWithImportState = (*forkResource)(nil)
+var (
+	_ resource.Resource                = &forkResource{}
+	_ resource.ResourceWithConfigure   = &forkResource{}
+	_ resource.ResourceWithImportState = &forkResource{}
+)
 
 func NewForkResource() resource.Resource {
 	return &forkResource{}
@@ -30,84 +30,66 @@ type forkResource struct {
 type forkResourceModel struct {
 	// Required
 	Owner types.String `tfsdk:"owner"`
-	Repo  types.String `tfsdk:"repository"`
+	Repo  types.String `tfsdk:"repo"`
 
 	// Optional
 	Organization types.String `tfsdk:"organization"`
-	Name         types.String `tfsdk:"name"`
 
 	// Computed
-	Id       types.Int64  `tfsdk:"id"`
-	FullName types.String `tfsdk:"full_name"`
-	HtmlUrl  types.String `tfsdk:"html_url"`
-	SshUrl   types.String `tfsdk:"ssh_url"`
-	CloneUrl types.String `tfsdk:"clone_url"`
+	Id types.String `tfsdk:"id"`
 }
 
-func (r *forkResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *forkResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_fork"
 }
 
-func (r *forkResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *forkResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Forks a repository",
+		Description:         "Forks a repository.",
+		MarkdownDescription: "Forks a repository in Gitea.",
 		Attributes: map[string]schema.Attribute{
+			// Required
 			"owner": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "Owner of the source repository",
+				Description:         "The owner or owning organization of the repository to fork.",
+				MarkdownDescription: "The owner or owning organization of the repository to fork.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"repository": schema.StringAttribute{
+			"repo": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "Name of the source repository",
+				Description:         "The name of the repository to fork.",
+				MarkdownDescription: "The name of the repository to fork.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
+
+			// Optional
 			"organization": schema.StringAttribute{
 				Optional:            true,
-				MarkdownDescription: "Organization name to fork into (if forking into an organization)",
+				Description:         "The organization that owns the forked repo.",
+				MarkdownDescription: "The organization that owns the forked repo.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"name": schema.StringAttribute{
-				Optional:            true,
-				MarkdownDescription: "Name of the forked repository (defaults to source repository name)",
+
+			// Computed
+			"id": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The ID of this resource.",
+				MarkdownDescription: "The ID of this resource.",
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				MarkdownDescription: "The ID of the forked repository",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
-				},
-			},
-			"full_name": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "Full name of the forked repository (owner/name)",
-			},
-			"html_url": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "HTML URL of the forked repository",
-			},
-			"ssh_url": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "SSH URL of the forked repository",
-			},
-			"clone_url": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "Clone URL of the forked repository",
 			},
 		},
 	}
 }
 
-func (r *forkResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *forkResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -125,70 +107,78 @@ func (r *forkResource) Configure(ctx context.Context, req resource.ConfigureRequ
 }
 
 func (r *forkResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data forkResourceModel
+	var plan forkResourceModel
 
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	opt := gitea.CreateForkOption{}
-	if !data.Organization.IsNull() && !data.Organization.IsUnknown() {
-		org := data.Organization.ValueString()
+	if !plan.Organization.IsNull() && !plan.Organization.IsUnknown() {
+		org := plan.Organization.ValueString()
 		opt.Organization = &org
 	}
-	if !data.Name.IsNull() && !data.Name.IsUnknown() {
-		name := data.Name.ValueString()
-		opt.Name = &name
-	}
 
-	fork, _, err := r.client.CreateFork(data.Owner.ValueString(), data.Repo.ValueString(), opt)
+	fork, _, err := r.client.CreateFork(plan.Owner.ValueString(), plan.Repo.ValueString(), opt)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create fork, got error: %s", err))
+		resp.Diagnostics.AddError(
+			"Error Creating Fork",
+			fmt.Sprintf("Could not fork repository %s/%s: %s", plan.Owner.ValueString(), plan.Repo.ValueString(), err.Error()),
+		)
 		return
 	}
 
-	data.Id = types.Int64Value(fork.ID)
-	data.FullName = types.StringValue(fork.FullName)
-	data.HtmlUrl = types.StringValue(fork.HTMLURL)
-	data.SshUrl = types.StringValue(fork.SSHURL)
-	data.CloneUrl = types.StringValue(fork.CloneURL)
+	plan.Id = types.StringValue(fmt.Sprintf("%d", fork.ID))
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 func (r *forkResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data forkResourceModel
+	var state forkResourceModel
 
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Parse the full_name to get owner and repo
-	parts := strings.Split(data.FullName.ValueString(), "/")
-	if len(parts) != 2 {
-		resp.Diagnostics.AddError("Invalid State", "Full name is not in the format owner/repo")
-		return
+	// Determine the fork owner (either organization or current user)
+	var forkOwner string
+	if !state.Organization.IsNull() && !state.Organization.IsUnknown() {
+		forkOwner = state.Organization.ValueString()
+	} else {
+		// Get current user
+		user, _, err := r.client.GetMyUserInfo()
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Fork",
+				fmt.Sprintf("Could not get current user: %s", err.Error()),
+			)
+			return
+		}
+		forkOwner = user.UserName
 	}
 
-	repo, httpResp, err := r.client.GetRepo(parts[0], parts[1])
+	// The fork name defaults to the source repo name
+	repoName := state.Repo.ValueString()
+
+	repo, httpResp, err := r.client.GetRepo(forkOwner, repoName)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == 404 {
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read fork, got error: %s", err))
+		resp.Diagnostics.AddError(
+			"Error Reading Fork",
+			fmt.Sprintf("Could not read fork %s/%s: %s", forkOwner, repoName, err.Error()),
+		)
 		return
 	}
 
-	data.Id = types.Int64Value(repo.ID)
-	data.FullName = types.StringValue(repo.FullName)
-	data.HtmlUrl = types.StringValue(repo.HTMLURL)
-	data.SshUrl = types.StringValue(repo.SSHURL)
-	data.CloneUrl = types.StringValue(repo.CloneURL)
+	// Update computed fields
+	state.Id = types.StringValue(fmt.Sprintf("%d", repo.ID))
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *forkResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -200,23 +190,39 @@ func (r *forkResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *forkResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data forkResourceModel
+	var state forkResourceModel
 
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Parse the full_name to get owner and repo
-	parts := strings.Split(data.FullName.ValueString(), "/")
-	if len(parts) != 2 {
-		resp.Diagnostics.AddError("Invalid State", "Full name is not in the format owner/repo")
-		return
+	// Determine the fork owner (either organization or current user)
+	var forkOwner string
+	if !state.Organization.IsNull() && !state.Organization.IsUnknown() {
+		forkOwner = state.Organization.ValueString()
+	} else {
+		// Get current user
+		user, _, err := r.client.GetMyUserInfo()
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Deleting Fork",
+				fmt.Sprintf("Could not get current user: %s", err.Error()),
+			)
+			return
+		}
+		forkOwner = user.UserName
 	}
 
-	_, err := r.client.DeleteRepo(parts[0], parts[1])
+	// The fork name defaults to the source repo name
+	repoName := state.Repo.ValueString()
+
+	_, err := r.client.DeleteRepo(forkOwner, repoName)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete fork, got error: %s", err))
+		resp.Diagnostics.AddError(
+			"Error Deleting Fork",
+			fmt.Sprintf("Could not delete fork %s/%s: %s", forkOwner, repoName, err.Error()),
+		)
 		return
 	}
 }
@@ -226,11 +232,59 @@ func (r *forkResource) ImportState(ctx context.Context, req resource.ImportState
 	parts := strings.Split(req.ID, "/")
 	if len(parts) != 2 {
 		resp.Diagnostics.AddError(
-			"Invalid ID format",
+			"Invalid ID Format",
 			fmt.Sprintf("Expected format: owner/repository, got: %s", req.ID),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("full_name"), req.ID)...)
+	forkOwner := parts[0]
+	forkRepo := parts[1]
+
+	// Fetch the repository to get full details
+	repo, httpResp, err := r.client.GetRepo(forkOwner, forkRepo)
+	if err != nil {
+		if httpResp != nil && httpResp.StatusCode == 404 {
+			resp.Diagnostics.AddError(
+				"Repository Not Found",
+				fmt.Sprintf("Repository %s does not exist or is not accessible", req.ID),
+			)
+			return
+		}
+		resp.Diagnostics.AddError(
+			"Error Importing Fork",
+			fmt.Sprintf("Could not import fork %s: %s", req.ID, err.Error()),
+		)
+		return
+	}
+
+	// Verify this is actually a fork
+	if !repo.Fork || repo.Parent == nil {
+		resp.Diagnostics.AddError(
+			"Not a Fork",
+			fmt.Sprintf("Repository %s is not a fork", req.ID),
+		)
+		return
+	}
+
+	var data forkResourceModel
+	data.Id = types.StringValue(fmt.Sprintf("%d", repo.ID))
+	data.Repo = types.StringValue(repo.Parent.Name)
+
+	// Set source owner from parent
+	if repo.Parent.Owner != nil {
+		data.Owner = types.StringValue(repo.Parent.Owner.UserName)
+	}
+
+	// Check if fork owner is an organization or the current user
+	user, _, _ := r.client.GetMyUserInfo()
+	if user != nil && user.UserName == forkOwner {
+		// Fork is owned by current user, no organization specified
+		data.Organization = types.StringNull()
+	} else {
+		// Fork is owned by an organization
+		data.Organization = types.StringValue(forkOwner)
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

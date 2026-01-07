@@ -3,18 +3,23 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-var _ resource.Resource = &teamMembershipResource{}
-var _ resource.ResourceWithImportState = &teamMembershipResource{}
+var (
+	_ resource.Resource                = &teamMembershipResource{}
+	_ resource.ResourceWithConfigure   = &teamMembershipResource{}
+	_ resource.ResourceWithImportState = &teamMembershipResource{}
+)
 
 func NewTeamMembershipResource() resource.Resource {
 	return &teamMembershipResource{}
@@ -25,51 +30,48 @@ type teamMembershipResource struct {
 }
 
 type teamMembershipResourceModel struct {
-	Id       types.String `tfsdk:"id"`
-	Org      types.String `tfsdk:"org"`
-	TeamName types.String `tfsdk:"team_name"`
+	// Required
+	TeamId   types.Int64  `tfsdk:"team_id"`
 	Username types.String `tfsdk:"username"`
+
+	// Computed
+	Id types.String `tfsdk:"id"`
 }
 
 func (r *teamMembershipResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_team_membership"
 }
 
-func (r *teamMembershipResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *teamMembershipResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description:         "Manages a team membership, assigning a user to a team within an organization.",
-		MarkdownDescription: "Manages a team membership, assigning a user to a team within an organization.\n\nThis resource adds or removes a user from a Gitea team. When destroyed, the user is removed from the team but the user account itself is not affected.",
+		Description:         "Manages a team membership in Gitea.",
+		MarkdownDescription: "Manages a team membership in Gitea. This resource adds or removes a user from a Gitea team.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The unique identifier for the team membership in the format 'org/team_name/username'.",
-				MarkdownDescription: "The unique identifier for the team membership in the format `org/team_name/username`.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"org": schema.StringAttribute{
+			// Required
+			"team_id": schema.Int64Attribute{
 				Required:            true,
-				Description:         "The name of the organization that owns the team.",
-				MarkdownDescription: "The name of the organization that owns the team.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"team_name": schema.StringAttribute{
-				Required:            true,
-				Description:         "The name of the team to add the user to.",
-				MarkdownDescription: "The name of the team to add the user to.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+				Description:         "The ID of the team.",
+				MarkdownDescription: "The ID of the team.",
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
 				},
 			},
 			"username": schema.StringAttribute{
 				Required:            true,
-				Description:         "The username of the user to add to the team.",
-				MarkdownDescription: "The username of the user to add to the team.",
+				Description:         "The username of the team member.",
+				MarkdownDescription: "The username of the team member.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+			},
+
+			// Computed
+			"id": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The ID of this resource.",
+				MarkdownDescription: "The ID of this resource.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
@@ -93,35 +95,6 @@ func (r *teamMembershipResource) Configure(_ context.Context, req resource.Confi
 	r.client = client
 }
 
-// getTeamByName finds a team by name within an organization.
-// Uses pagination to handle large organizations with many teams.
-// Returns the team ID, a boolean indicating if the team was found, and any error encountered.
-func (r *teamMembershipResource) getTeamByName(org, teamName string) (int64, bool, error) {
-	teams, httpResp, err := r.client.ListOrgTeams(org, gitea.ListTeamsOptions{
-		ListOptions: gitea.ListOptions{Page: -1}, // Get all teams with pagination
-	})
-	if err != nil {
-		// Check for 404 - organization doesn't exist
-		if httpResp != nil && httpResp.StatusCode == 404 {
-			return 0, false, fmt.Errorf("organization '%s' not found", org)
-		}
-		return 0, false, err
-	}
-
-	for _, team := range teams {
-		if team.Name == teamName {
-			return team.ID, true, nil
-		}
-	}
-
-	return 0, false, nil
-}
-
-// computeId generates the resource ID from org, team_name, and username.
-func computeId(org, teamName, username string) string {
-	return fmt.Sprintf("%s/%s/%s", org, teamName, username)
-}
-
 func (r *teamMembershipResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan teamMembershipResourceModel
 
@@ -130,39 +103,20 @@ func (r *teamMembershipResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	org := plan.Org.ValueString()
-	teamName := plan.TeamName.ValueString()
+	teamID := plan.TeamId.ValueInt64()
 	username := plan.Username.ValueString()
 
-	// Get team ID from name using helper function with pagination
-	teamID, found, err := r.getTeamByName(org, teamName)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Looking Up Team",
-			fmt.Sprintf("Could not look up team '%s' in organization '%s': %s", teamName, org, err.Error()),
-		)
-		return
-	}
-
-	if !found {
-		resp.Diagnostics.AddError(
-			"Team Not Found",
-			fmt.Sprintf("Could not find team '%s' in organization '%s'. Please verify the team exists.", teamName, org),
-		)
-		return
-	}
-
-	_, err = r.client.AddTeamMember(teamID, username)
+	_, err := r.client.AddTeamMember(teamID, username)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Adding Team Member",
-			fmt.Sprintf("Could not add user '%s' to team '%s': %s", username, teamName, err.Error()),
+			fmt.Sprintf("Could not add user '%s' to team %d: %s", username, teamID, err.Error()),
 		)
 		return
 	}
 
 	// Set computed ID
-	plan.Id = types.StringValue(computeId(org, teamName, username))
+	plan.Id = types.StringValue(fmt.Sprintf("%d/%s", teamID, username))
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -175,30 +129,8 @@ func (r *teamMembershipResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	org := state.Org.ValueString()
-	teamName := state.TeamName.ValueString()
+	teamID := state.TeamId.ValueInt64()
 	username := state.Username.ValueString()
-
-	// Get team ID from name using helper function with pagination
-	teamID, found, err := r.getTeamByName(org, teamName)
-	if err != nil {
-		// If the org doesn't exist, remove from state
-		if strings.Contains(err.Error(), "not found") {
-			resp.State.RemoveResource(ctx)
-			return
-		}
-		resp.Diagnostics.AddError(
-			"Error Looking Up Team",
-			fmt.Sprintf("Could not look up team '%s' in organization '%s': %s", teamName, org, err.Error()),
-		)
-		return
-	}
-
-	if !found {
-		// Team no longer exists, remove from state
-		resp.State.RemoveResource(ctx)
-		return
-	}
 
 	// Check if the user is still a member of the team
 	_, httpResp, err := r.client.GetTeamMember(teamID, username)
@@ -210,13 +142,13 @@ func (r *teamMembershipResource) Read(ctx context.Context, req resource.ReadRequ
 		}
 		resp.Diagnostics.AddError(
 			"Error Reading Team Membership",
-			fmt.Sprintf("Could not read team membership for user '%s' in team '%s': %s", username, teamName, err.Error()),
+			fmt.Sprintf("Could not read team membership for user '%s' in team %d: %s", username, teamID, err.Error()),
 		)
 		return
 	}
 
 	// Ensure ID is set (handles imports and upgrades from old state)
-	state.Id = types.StringValue(computeId(org, teamName, username))
+	state.Id = types.StringValue(fmt.Sprintf("%d/%s", teamID, username))
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -238,28 +170,8 @@ func (r *teamMembershipResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	org := state.Org.ValueString()
-	teamName := state.TeamName.ValueString()
+	teamID := state.TeamId.ValueInt64()
 	username := state.Username.ValueString()
-
-	// Get team ID from name using helper function with pagination
-	teamID, found, err := r.getTeamByName(org, teamName)
-	if err != nil {
-		// If the org doesn't exist, consider deletion successful
-		if strings.Contains(err.Error(), "not found") {
-			return
-		}
-		resp.Diagnostics.AddError(
-			"Error Looking Up Team",
-			fmt.Sprintf("Could not look up team '%s' in organization '%s': %s", teamName, org, err.Error()),
-		)
-		return
-	}
-
-	if !found {
-		// Team no longer exists, nothing to delete
-		return
-	}
 
 	httpResp, err := r.client.RemoveTeamMember(teamID, username)
 	if err != nil {
@@ -269,54 +181,43 @@ func (r *teamMembershipResource) Delete(ctx context.Context, req resource.Delete
 		}
 		resp.Diagnostics.AddError(
 			"Error Removing Team Member",
-			fmt.Sprintf("Could not remove user '%s' from team '%s': %s", username, teamName, err.Error()),
+			fmt.Sprintf("Could not remove user '%s' from team %d: %s", username, teamID, err.Error()),
 		)
 		return
 	}
 }
 
-// ImportState allows importing existing team memberships
 func (r *teamMembershipResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	// Import format: "org/team_name/username"
+	// Import format: "team_id/username"
 	id := req.ID
 
 	// Parse the import ID
 	parts := strings.Split(id, "/")
-	if len(parts) != 3 {
+	if len(parts) != 2 {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
-			fmt.Sprintf("Import ID must be in format 'org/team_name/username', got: %s", id),
+			fmt.Sprintf("Import ID must be in format 'team_id/username', got: %s", id),
 		)
 		return
 	}
 
-	org := parts[0]
-	teamName := parts[1]
-	username := parts[2]
+	teamIDStr := parts[0]
+	username := parts[1]
 
-	// Validate inputs
-	if org == "" || teamName == "" || username == "" {
-		resp.Diagnostics.AddError(
-			"Invalid Import ID",
-			"Import ID components cannot be empty. Format: 'org/team_name/username'",
-		)
-		return
-	}
-
-	// Get team ID from name using helper function with pagination
-	teamID, found, err := r.getTeamByName(org, teamName)
+	teamID, err := strconv.ParseInt(teamIDStr, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Looking Up Team",
-			fmt.Sprintf("Could not look up team '%s' in organization '%s': %s", teamName, org, err.Error()),
+			"Invalid Import ID",
+			fmt.Sprintf("team_id must be a valid number, got: %s", teamIDStr),
 		)
 		return
 	}
 
-	if !found {
+	// Validate inputs
+	if teamID == 0 || username == "" {
 		resp.Diagnostics.AddError(
-			"Team Not Found",
-			fmt.Sprintf("Could not find team '%s' in organization '%s'. Please verify the team exists.", teamName, org),
+			"Invalid Import ID",
+			"Import ID components cannot be empty. Format: 'team_id/username'",
 		)
 		return
 	}
@@ -327,21 +228,20 @@ func (r *teamMembershipResource) ImportState(ctx context.Context, req resource.I
 		if httpResp != nil && httpResp.StatusCode == 404 {
 			resp.Diagnostics.AddError(
 				"Team Membership Not Found",
-				fmt.Sprintf("User '%s' is not a member of team '%s' in organization '%s'.", username, teamName, org),
+				fmt.Sprintf("User '%s' is not a member of team %d.", username, teamID),
 			)
 			return
 		}
 		resp.Diagnostics.AddError(
 			"Error Verifying Team Membership",
-			fmt.Sprintf("Could not verify team membership for user '%s' in team '%s': %s", username, teamName, err.Error()),
+			fmt.Sprintf("Could not verify team membership for user '%s' in team %d: %s", username, teamID, err.Error()),
 		)
 		return
 	}
 
 	state := teamMembershipResourceModel{
-		Id:       types.StringValue(computeId(org, teamName, username)),
-		Org:      types.StringValue(org),
-		TeamName: types.StringValue(teamName),
+		Id:       types.StringValue(fmt.Sprintf("%d/%s", teamID, username)),
+		TeamId:   types.Int64Value(teamID),
 		Username: types.StringValue(username),
 	}
 

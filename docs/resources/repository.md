@@ -3,12 +3,12 @@
 page_title: "gitea_repository Resource - gitea"
 subcategory: ""
 description: |-
-  Manages a Gitea repository.
+  Manages a Gitea repository. This resource allows you to create, update, and delete repositories in Gitea.
 ---
 
 # gitea_repository (Resource)
 
-Manages a Gitea repository.
+Manages a Gitea repository. This resource allows you to create, update, and delete repositories in Gitea.
 
 ## Example Usage
 
@@ -33,29 +33,59 @@ resource "gitea_repository" "test_repo_for_org" {
 
 ### Required
 
-- `name` (String) Name of the repository to create.
-- `owner` (String) The owner of the repository (username or organization name).
+- `name` (String) The name of the repository.
+- `username` (String) The owner of the repository.
 
 ### Optional
 
-- `auto_init` (Boolean) Whether the repository should be auto-initialized?
-- `default_branch` (String) DefaultBranch of the repository, used when initializes and in template.
-- `description` (String) Description of the repository to create.
-- `gitignores` (String) Gitignores to use.
-- `issue_labels` (String) Issue Label set to use.
-- `license` (String) License to use.
-- `object_format_name` (String) ObjectFormatName of the underlying git repository (sha1 or sha256).
+- `allow_manual_merge` (Boolean) Whether to allow manual merge.
+- `allow_merge_commits` (Boolean) Whether to allow merge commits.
+- `allow_rebase` (Boolean) Whether to allow rebase merges.
+- `allow_rebase_explicit` (Boolean) Whether to allow explicit rebase merges.
+- `allow_squash_merge` (Boolean) Whether to allow squash merges.
+- `archive_on_destroy` (Boolean) Set to `true` to archive the repository instead of deleting on destroy.
+- `archived` (Boolean) Whether the repository is archived.
+- `auto_init` (Boolean) Flag if the repository should be initiated with the configured values.
+- `autodetect_manual_merge` (Boolean) Whether to autodetect manual merge.
+- `default_branch` (String) Default branch of the repository.
+- `description` (String) Description of the repository.
+- `gitignores` (String) A specific gitignore that should be committed to the repository on creation if `auto_init` is set to `true`.
+- `has_issues` (Boolean) Whether the repository has issues enabled.
+- `has_projects` (Boolean) Whether the repository has projects enabled.
+- `has_pull_requests` (Boolean) Whether the repository allows pull requests.
+- `has_wiki` (Boolean) Whether the repository has wiki enabled.
+- `ignore_whitespace_conflicts` (Boolean) Whether to ignore whitespace conflicts.
+- `issue_labels` (String) Issue label set to use when initializing the repository.
+- `license` (String) License to use when initializing the repository.
+- `migration_clone_address` (String) The URL to clone the repository from during migration.
+- `migration_clone_addresse` (String, Deprecated) **Deprecated:** use `migration_clone_address` instead.
+- `migration_issue_labels` (Boolean) Whether to migrate issue labels.
+- `migration_lfs` (Boolean) Whether to migrate LFS objects.
+- `migration_lfs_endpoint` (String) The LFS endpoint URL for migration.
+- `migration_milestones` (Boolean) Whether to migrate milestones.
+- `migration_mirror_interval` (String) The mirror interval for auto-sync (e.g., `8h0m0s`). Set to `0` to disable.
+- `migration_releases` (Boolean) Whether to migrate releases.
+- `migration_service` (String) The service type for migration (`git`, `github`, `gitlab`, `gitea`, `gogs`).
+- `migration_service_auth_password` (String, Sensitive) The password for authentication during migration.
+- `migration_service_auth_token` (String, Sensitive) The token for authentication during migration.
+- `migration_service_auth_username` (String) The username for authentication during migration.
+- `mirror` (Boolean) Whether the repository is a mirror.
 - `private` (Boolean) Whether the repository is private.
-- `readme` (String) Readme of the repository to create.
-- `template` (Boolean) Whether the repository is template.
-- `trust_model` (String) TrustModel of the repository.
+- `readme` (String) Readme template to use when initializing the repository.
+- `repo_template` (Boolean) Whether the repository is a template repository.
+- `website` (String) A URL with more information about the repository.
 
 ### Read-Only
 
-- `clone_url` (String) The HTTPS URL to clone the repository.
-- `html_url` (String) The URL to the repository in the web UI.
-- `id` (Number) The ID of the repository.
-- `ssh_url` (String) The SSH URL to clone the repository.
+- `clone_url` (String) The HTTPS clone URL of the repository.
+- `created` (String) Timestamp when the repository was created.
+- `html_url` (String) The URL to view the repository in the web UI.
+- `id` (String) The ID of the repository.
+- `permission_admin` (Boolean) Whether the current user has admin permission.
+- `permission_pull` (Boolean) Whether the current user has pull permission.
+- `permission_push` (Boolean) Whether the current user has push permission.
+- `ssh_url` (String) The SSH clone URL of the repository.
+- `updated` (String) Timestamp when the repository was last updated.
 
 ## Import
 

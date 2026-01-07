@@ -7,13 +7,12 @@ import (
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -33,111 +32,69 @@ type repositoryResource struct {
 	client *gitea.Client
 }
 
-// internalTrackerModel represents the internal issue tracker settings
-type internalTrackerModel struct {
-	EnableTimeTracker                types.Bool `tfsdk:"enable_time_tracker"`
-	AllowOnlyContributorsToTrackTime types.Bool `tfsdk:"allow_only_contributors_to_track_time"`
-	EnableIssueDependencies          types.Bool `tfsdk:"enable_issue_dependencies"`
-}
-
-// externalTrackerModel represents the external issue tracker settings
-type externalTrackerModel struct {
-	ExternalTrackerURL    types.String `tfsdk:"external_tracker_url"`
-	ExternalTrackerFormat types.String `tfsdk:"external_tracker_format"`
-	ExternalTrackerStyle  types.String `tfsdk:"external_tracker_style"`
-}
-
-// externalWikiModel represents the external wiki settings
-type externalWikiModel struct {
-	ExternalWikiURL types.String `tfsdk:"external_wiki_url"`
-}
-
 type repositoryResourceModel struct {
 	// Required
-	Owner types.String `tfsdk:"owner"`
-	Name  types.String `tfsdk:"name"`
+	Username types.String `tfsdk:"username"`
+	Name     types.String `tfsdk:"name"`
 
-	// Optional - from CreateRepoOption (creation-only fields)
-	IssueLabels types.String `tfsdk:"issue_labels"`
+	// Optional - Basic settings
+	Description   types.String `tfsdk:"description"`
+	Private       types.Bool   `tfsdk:"private"`
+	DefaultBranch types.String `tfsdk:"default_branch"`
+	Website       types.String `tfsdk:"website"`
+	Archived      types.Bool   `tfsdk:"archived"`
+
+	// Optional - Creation only settings
 	AutoInit    types.Bool   `tfsdk:"auto_init"`
 	Gitignores  types.String `tfsdk:"gitignores"`
+	IssueLabels types.String `tfsdk:"issue_labels"`
 	License     types.String `tfsdk:"license"`
 	Readme      types.String `tfsdk:"readme"`
-	TrustModel  types.String `tfsdk:"trust_model"`
+	RepoTemplate types.Bool   `tfsdk:"repo_template"`
 
-	// Optional - from both Create and Edit
-	Description      types.String `tfsdk:"description"`
-	Private          types.Bool   `tfsdk:"private"`
-	Template         types.Bool   `tfsdk:"template"`
-	DefaultBranch    types.String `tfsdk:"default_branch"`
-	ObjectFormatName types.String `tfsdk:"object_format_name"`
+	// Optional - Feature flags
+	HasIssues       types.Bool `tfsdk:"has_issues"`
+	HasWiki         types.Bool `tfsdk:"has_wiki"`
+	HasPullRequests types.Bool `tfsdk:"has_pull_requests"`
+	HasProjects     types.Bool `tfsdk:"has_projects"`
 
-	// Optional - from EditRepoOption only (can be set after creation)
-	Website                       types.String `tfsdk:"website"`
-	HasIssues                     types.Bool   `tfsdk:"has_issues"`
-	HasWiki                       types.Bool   `tfsdk:"has_wiki"`
-	HasPullRequests               types.Bool   `tfsdk:"has_pull_requests"`
-	HasProjects                   types.Bool   `tfsdk:"has_projects"`
-	HasReleases                   types.Bool   `tfsdk:"has_releases"`
-	HasPackages                   types.Bool   `tfsdk:"has_packages"`
-	HasActions                    types.Bool   `tfsdk:"has_actions"`
-	IgnoreWhitespaceConflicts     types.Bool   `tfsdk:"ignore_whitespace_conflicts"`
-	AllowMergeCommits             types.Bool   `tfsdk:"allow_merge_commits"`
-	AllowRebase                   types.Bool   `tfsdk:"allow_rebase"`
-	AllowRebaseExplicit           types.Bool   `tfsdk:"allow_rebase_explicit"`
-	AllowSquashMerge              types.Bool   `tfsdk:"allow_squash_merge"`
-	AllowFastForwardOnlyMerge     types.Bool   `tfsdk:"allow_fast_forward_only_merge"`
-	Archived                      types.Bool   `tfsdk:"archived"`
-	DefaultMergeStyle             types.String `tfsdk:"default_merge_style"`
-	DefaultDeleteBranchAfterMerge types.Bool   `tfsdk:"default_delete_branch_after_merge"`
-	MirrorInterval                types.String `tfsdk:"mirror_interval"`
-	AllowManualMerge              types.Bool   `tfsdk:"allow_manual_merge"`
-	AutodetectManualMerge         types.Bool   `tfsdk:"autodetect_manual_merge"`
-	ProjectsMode                  types.String `tfsdk:"projects_mode"`
+	// Optional - Merge settings
+	AllowMergeCommits         types.Bool `tfsdk:"allow_merge_commits"`
+	AllowRebase               types.Bool `tfsdk:"allow_rebase"`
+	AllowRebaseExplicit       types.Bool `tfsdk:"allow_rebase_explicit"`
+	AllowSquashMerge          types.Bool `tfsdk:"allow_squash_merge"`
+	AllowManualMerge          types.Bool `tfsdk:"allow_manual_merge"`
+	AutodetectManualMerge     types.Bool `tfsdk:"autodetect_manual_merge"`
+	IgnoreWhitespaceConflicts types.Bool `tfsdk:"ignore_whitespace_conflicts"`
 
-	// Nested objects
-	InternalTracker types.Object `tfsdk:"internal_tracker"`
-	ExternalTracker types.Object `tfsdk:"external_tracker"`
-	ExternalWiki    types.Object `tfsdk:"external_wiki"`
+	// Optional - Migration settings
+	MigrationCloneAddress         types.String `tfsdk:"migration_clone_address"`
+	MigrationCloneAddresse        types.String `tfsdk:"migration_clone_addresse"` // Deprecated
+	MigrationService              types.String `tfsdk:"migration_service"`
+	MigrationServiceAuthUsername  types.String `tfsdk:"migration_service_auth_username"`
+	MigrationServiceAuthPassword  types.String `tfsdk:"migration_service_auth_password"`
+	MigrationServiceAuthToken     types.String `tfsdk:"migration_service_auth_token"`
+	MigrationIssueLabels          types.Bool   `tfsdk:"migration_issue_labels"`
+	MigrationLfs                  types.Bool   `tfsdk:"migration_lfs"`
+	MigrationLfsEndpoint          types.String `tfsdk:"migration_lfs_endpoint"`
+	MigrationMilestones           types.Bool   `tfsdk:"migration_milestones"`
+	MigrationMirrorInterval       types.String `tfsdk:"migration_mirror_interval"`
+	MigrationReleases             types.Bool   `tfsdk:"migration_releases"`
+	Mirror                        types.Bool   `tfsdk:"mirror"`
 
-	// Computed - from Repository response
-	Id              types.Int64  `tfsdk:"id"`
-	FullName        types.String `tfsdk:"full_name"`
-	HtmlUrl         types.String `tfsdk:"html_url"`
-	SshUrl          types.String `tfsdk:"ssh_url"`
+	// Optional - Destroy behavior
+	ArchiveOnDestroy types.Bool `tfsdk:"archive_on_destroy"`
+
+	// Computed
+	Id              types.String `tfsdk:"id"`
 	CloneUrl        types.String `tfsdk:"clone_url"`
-	OriginalUrl     types.String `tfsdk:"original_url"`
-	Empty           types.Bool   `tfsdk:"empty"`
-	Fork            types.Bool   `tfsdk:"fork"`
-	Mirror          types.Bool   `tfsdk:"mirror"`
-	Size            types.Int64  `tfsdk:"size"`
-	StarsCount      types.Int64  `tfsdk:"stars_count"`
-	ForksCount      types.Int64  `tfsdk:"forks_count"`
-	WatchersCount   types.Int64  `tfsdk:"watchers_count"`
-	OpenIssuesCount types.Int64  `tfsdk:"open_issues_count"`
-	OpenPrCounter   types.Int64  `tfsdk:"open_pr_counter"`
-	ReleaseCounter  types.Int64  `tfsdk:"release_counter"`
-	CreatedAt       types.String `tfsdk:"created_at"`
-	UpdatedAt       types.String `tfsdk:"updated_at"`
-	AvatarUrl       types.String `tfsdk:"avatar_url"`
-	Internal        types.Bool   `tfsdk:"internal"`
-}
-
-// Attribute types for nested objects
-var internalTrackerAttrTypes = map[string]attr.Type{
-	"enable_time_tracker":                   types.BoolType,
-	"allow_only_contributors_to_track_time": types.BoolType,
-	"enable_issue_dependencies":             types.BoolType,
-}
-
-var externalTrackerAttrTypes = map[string]attr.Type{
-	"external_tracker_url":    types.StringType,
-	"external_tracker_format": types.StringType,
-	"external_tracker_style":  types.StringType,
-}
-
-var externalWikiAttrTypes = map[string]attr.Type{
-	"external_wiki_url": types.StringType,
+	Created         types.String `tfsdk:"created"`
+	HtmlUrl         types.String `tfsdk:"html_url"`
+	PermissionAdmin types.Bool   `tfsdk:"permission_admin"`
+	PermissionPull  types.Bool   `tfsdk:"permission_pull"`
+	PermissionPush  types.Bool   `tfsdk:"permission_push"`
+	SshUrl          types.String `tfsdk:"ssh_url"`
+	Updated         types.String `tfsdk:"updated"`
 }
 
 func (r *repositoryResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -150,93 +107,21 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 		MarkdownDescription: "Manages a Gitea repository. This resource allows you to create, update, and delete repositories in Gitea.",
 		Attributes: map[string]schema.Attribute{
 			// ==================== REQUIRED ====================
-			"owner": schema.StringAttribute{
+			"username": schema.StringAttribute{
 				Required:            true,
-				Description:         "The owner of the repository (username or organization name).",
-				MarkdownDescription: "The owner of the repository (username or organization name).",
+				Description:         "The owner of the repository.",
+				MarkdownDescription: "The owner of the repository.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "Name of the repository to create. Must be unique within the owner's namespace.",
-				MarkdownDescription: "Name of the repository to create. Must be unique within the owner's namespace.",
+				Description:         "The name of the repository.",
+				MarkdownDescription: "The name of the repository.",
 			},
 
-			// ==================== OPTIONAL - Creation Only ====================
-			"issue_labels": schema.StringAttribute{
-				Optional:            true,
-				Description:         "Issue label set to use when initializing the repository. Only used during creation.",
-				MarkdownDescription: "Issue label set to use when initializing the repository. Only used during creation.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"auto_init": schema.BoolAttribute{
-				Optional:            true,
-				Description:         "Whether the repository should be auto-initialized with a README. Only used during creation.",
-				MarkdownDescription: "Whether the repository should be auto-initialized with a README. Only used during creation.",
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.RequiresReplace(),
-				},
-			},
-			"gitignores": schema.StringAttribute{
-				Optional:            true,
-				Description:         "Gitignore templates to use when initializing the repository. Comma-separated list. Only used during creation.",
-				MarkdownDescription: "Gitignore templates to use when initializing the repository. Comma-separated list. Only used during creation.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"license": schema.StringAttribute{
-				Optional:            true,
-				Description:         "License template to use when initializing the repository. Only used during creation.",
-				MarkdownDescription: "License template to use when initializing the repository. Only used during creation.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"readme": schema.StringAttribute{
-				Optional:            true,
-				Description:         "Readme template to use when initializing the repository. Only used during creation.",
-				MarkdownDescription: "Readme template to use when initializing the repository. Only used during creation.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"trust_model": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Trust model for verifying commits. Valid values: default, collaborator, committer, collaboratorcommitter.",
-				MarkdownDescription: "Trust model for verifying commits. Valid values: `default`, `collaborator`, `committer`, `collaboratorcommitter`.",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"default",
-						"collaborator",
-						"committer",
-						"collaboratorcommitter",
-					),
-				},
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"object_format_name": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Object format name of the underlying git repository (sha1 or sha256). Only used during creation. Requires Gitea 1.22.0+.",
-				MarkdownDescription: "Object format name of the underlying git repository (`sha1` or `sha256`). Only used during creation. Requires Gitea 1.22.0+.",
-				Validators: []validator.String{
-					stringvalidator.OneOf("sha1", "sha256"),
-				},
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-
-			// ==================== OPTIONAL - Create and Edit ====================
+			// ==================== OPTIONAL - Basic ====================
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
@@ -249,44 +134,90 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 				Description:         "Whether the repository is private.",
 				MarkdownDescription: "Whether the repository is private.",
 			},
-			"template": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the repository is a template repository.",
-				MarkdownDescription: "Whether the repository is a template repository.",
-			},
 			"default_branch": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
+				Default:             stringdefault.StaticString("main"),
 				Description:         "Default branch of the repository.",
 				MarkdownDescription: "Default branch of the repository.",
 			},
-
-			// ==================== OPTIONAL - Edit Only ====================
 			"website": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
 				Description:         "A URL with more information about the repository.",
 				MarkdownDescription: "A URL with more information about the repository.",
 			},
+			"archived": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the repository is archived.",
+				MarkdownDescription: "Whether the repository is archived.",
+			},
+
+			// ==================== OPTIONAL - Creation Only ====================
+			"auto_init": schema.BoolAttribute{
+				Optional:            true,
+				Description:         "Flag if the repository should be initiated with the configured values.",
+				MarkdownDescription: "Flag if the repository should be initiated with the configured values.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
+				},
+			},
+			"gitignores": schema.StringAttribute{
+				Optional:            true,
+				Description:         "A specific gitignore that should be committed to the repository on creation if `auto_init` is set to `true`.",
+				MarkdownDescription: "A specific gitignore that should be committed to the repository on creation if `auto_init` is set to `true`.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"issue_labels": schema.StringAttribute{
+				Optional:            true,
+				Description:         "Issue label set to use when initializing the repository.",
+				MarkdownDescription: "Issue label set to use when initializing the repository.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"license": schema.StringAttribute{
+				Optional:            true,
+				Description:         "License to use when initializing the repository.",
+				MarkdownDescription: "License to use when initializing the repository.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"readme": schema.StringAttribute{
+				Optional:            true,
+				Description:         "Readme template to use when initializing the repository.",
+				MarkdownDescription: "Readme template to use when initializing the repository.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"repo_template": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the repository is a template repository.",
+				MarkdownDescription: "Whether the repository is a template repository.",
+			},
+
+			// ==================== OPTIONAL - Feature Flags ====================
 			"has_issues": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Default:             booldefault.StaticBool(true),
 				Description:         "Whether the repository has issues enabled.",
 				MarkdownDescription: "Whether the repository has issues enabled.",
 			},
 			"has_wiki": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Default:             booldefault.StaticBool(true),
 				Description:         "Whether the repository has wiki enabled.",
 				MarkdownDescription: "Whether the repository has wiki enabled.",
 			},
 			"has_pull_requests": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Default:             booldefault.StaticBool(true),
 				Description:         "Whether the repository allows pull requests.",
 				MarkdownDescription: "Whether the repository allows pull requests.",
 			},
@@ -296,283 +227,219 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 				Description:         "Whether the repository has projects enabled.",
 				MarkdownDescription: "Whether the repository has projects enabled.",
 			},
-			"has_releases": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the repository has releases enabled.",
-				MarkdownDescription: "Whether the repository has releases enabled.",
-			},
-			"has_packages": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the repository has packages enabled.",
-				MarkdownDescription: "Whether the repository has packages enabled.",
-			},
-			"has_actions": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the repository has actions enabled.",
-				MarkdownDescription: "Whether the repository has actions enabled.",
-			},
-			"ignore_whitespace_conflicts": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether to ignore whitespace for conflicts. Requires has_pull_requests to be true.",
-				MarkdownDescription: "Whether to ignore whitespace for conflicts. Requires `has_pull_requests` to be `true`.",
-			},
+
+			// ==================== OPTIONAL - Merge Settings ====================
 			"allow_merge_commits": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether to allow merging pull requests with a merge commit. Requires has_pull_requests to be true.",
-				MarkdownDescription: "Whether to allow merging pull requests with a merge commit. Requires `has_pull_requests` to be `true`.",
+				Description:         "Whether to allow merge commits.",
+				MarkdownDescription: "Whether to allow merge commits.",
 			},
 			"allow_rebase": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether to allow rebase-merging pull requests. Requires has_pull_requests to be true.",
-				MarkdownDescription: "Whether to allow rebase-merging pull requests. Requires `has_pull_requests` to be `true`.",
+				Description:         "Whether to allow rebase merges.",
+				MarkdownDescription: "Whether to allow rebase merges.",
 			},
 			"allow_rebase_explicit": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether to allow rebase with explicit merge commits (--no-ff). Requires has_pull_requests to be true.",
-				MarkdownDescription: "Whether to allow rebase with explicit merge commits (`--no-ff`). Requires `has_pull_requests` to be `true`.",
+				Description:         "Whether to allow explicit rebase merges.",
+				MarkdownDescription: "Whether to allow explicit rebase merges.",
 			},
 			"allow_squash_merge": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether to allow squash-merging pull requests. Requires has_pull_requests to be true.",
-				MarkdownDescription: "Whether to allow squash-merging pull requests. Requires `has_pull_requests` to be `true`.",
-			},
-			"allow_fast_forward_only_merge": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether to allow fast-forward only merging pull requests. Requires has_pull_requests to be true.",
-				MarkdownDescription: "Whether to allow fast-forward only merging pull requests. Requires `has_pull_requests` to be `true`.",
-			},
-			"archived": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the repository is archived.",
-				MarkdownDescription: "Whether the repository is archived.",
-			},
-			"default_merge_style": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Default merge style for pull requests. Valid values: merge, rebase, rebase-merge, squash. Requires has_pull_requests to be true.",
-				MarkdownDescription: "Default merge style for pull requests. Valid values: `merge`, `rebase`, `rebase-merge`, `squash`. Requires `has_pull_requests` to be `true`.",
-				Validators: []validator.String{
-					stringvalidator.OneOf("merge", "rebase", "rebase-merge", "squash"),
-				},
-			},
-			"default_delete_branch_after_merge": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether to delete the branch after merging a pull request. Requires has_pull_requests to be true.",
-				MarkdownDescription: "Whether to delete the branch after merging a pull request. Requires `has_pull_requests` to be `true`.",
-			},
-			"mirror_interval": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Mirror interval for mirror repositories (e.g., '8h30m0s'). Only applicable for mirror repositories.",
-				MarkdownDescription: "Mirror interval for mirror repositories (e.g., `8h30m0s`). Only applicable for mirror repositories.",
+				Description:         "Whether to allow squash merges.",
+				MarkdownDescription: "Whether to allow squash merges.",
 			},
 			"allow_manual_merge": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether to allow marking pull requests as merged manually. Requires has_pull_requests to be true.",
-				MarkdownDescription: "Whether to allow marking pull requests as merged manually. Requires `has_pull_requests` to be `true`.",
+				Description:         "Whether to allow manual merge.",
+				MarkdownDescription: "Whether to allow manual merge.",
 			},
 			"autodetect_manual_merge": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether to enable autodetection of manual merge. Requires has_pull_requests to be true. Note: May cause misjudgments in some cases.",
-				MarkdownDescription: "Whether to enable autodetection of manual merge. Requires `has_pull_requests` to be `true`. Note: May cause misjudgments in some cases.",
+				Description:         "Whether to autodetect manual merge.",
+				MarkdownDescription: "Whether to autodetect manual merge.",
 			},
-			"projects_mode": schema.StringAttribute{
+			"ignore_whitespace_conflicts": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Projects mode for the repository. Valid values: repo, owner, all. Requires has_projects to be true.",
-				MarkdownDescription: "Projects mode for the repository. Valid values: `repo`, `owner`, `all`. Requires `has_projects` to be `true`.",
+				Description:         "Whether to ignore whitespace conflicts.",
+				MarkdownDescription: "Whether to ignore whitespace conflicts.",
+			},
+
+			// ==================== OPTIONAL - Migration Settings ====================
+			"migration_clone_address": schema.StringAttribute{
+				Optional:            true,
+				Description:         "The URL to clone the repository from during migration.",
+				MarkdownDescription: "The URL to clone the repository from during migration.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"migration_clone_addresse": schema.StringAttribute{
+				Optional:            true,
+				Description:         "Deprecated: use migration_clone_address instead.",
+				MarkdownDescription: "**Deprecated:** use `migration_clone_address` instead.",
+				DeprecationMessage:  "Use migration_clone_address instead.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"migration_service": schema.StringAttribute{
+				Optional:            true,
+				Description:         "The service type for migration (git, github, gitlab, gitea, gogs).",
+				MarkdownDescription: "The service type for migration (`git`, `github`, `gitlab`, `gitea`, `gogs`).",
 				Validators: []validator.String{
-					stringvalidator.OneOf("repo", "owner", "all"),
+					stringvalidator.OneOf("git", "github", "gitlab", "gitea", "gogs"),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"migration_service_auth_username": schema.StringAttribute{
+				Optional:            true,
+				Description:         "The username for authentication during migration.",
+				MarkdownDescription: "The username for authentication during migration.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"migration_service_auth_password": schema.StringAttribute{
+				Optional:            true,
+				Sensitive:           true,
+				Description:         "The password for authentication during migration.",
+				MarkdownDescription: "The password for authentication during migration.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"migration_service_auth_token": schema.StringAttribute{
+				Optional:            true,
+				Sensitive:           true,
+				Description:         "The token for authentication during migration.",
+				MarkdownDescription: "The token for authentication during migration.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"migration_issue_labels": schema.BoolAttribute{
+				Optional:            true,
+				Description:         "Whether to migrate issue labels.",
+				MarkdownDescription: "Whether to migrate issue labels.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
+				},
+			},
+			"migration_lfs": schema.BoolAttribute{
+				Optional:            true,
+				Description:         "Whether to migrate LFS objects.",
+				MarkdownDescription: "Whether to migrate LFS objects.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
+				},
+			},
+			"migration_lfs_endpoint": schema.StringAttribute{
+				Optional:            true,
+				Description:         "The LFS endpoint URL for migration.",
+				MarkdownDescription: "The LFS endpoint URL for migration.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"migration_milestones": schema.BoolAttribute{
+				Optional:            true,
+				Description:         "Whether to migrate milestones.",
+				MarkdownDescription: "Whether to migrate milestones.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
+				},
+			},
+			"migration_mirror_interval": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The mirror interval for auto-sync (e.g., '8h0m0s'). Set to 0 to disable.",
+				MarkdownDescription: "The mirror interval for auto-sync (e.g., `8h0m0s`). Set to `0` to disable.",
+			},
+			"migration_releases": schema.BoolAttribute{
+				Optional:            true,
+				Description:         "Whether to migrate releases.",
+				MarkdownDescription: "Whether to migrate releases.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
+				},
+			},
+			"mirror": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the repository is a mirror.",
+				MarkdownDescription: "Whether the repository is a mirror.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
 				},
 			},
 
-			// ==================== NESTED OBJECTS ====================
-			"internal_tracker": schema.SingleNestedAttribute{
+			// ==================== OPTIONAL - Destroy Behavior ====================
+			"archive_on_destroy": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Settings for the built-in issue tracker. Requires has_issues to be true.",
-				MarkdownDescription: "Settings for the built-in issue tracker. Requires `has_issues` to be `true`.",
-				Attributes: map[string]schema.Attribute{
-					"enable_time_tracker": schema.BoolAttribute{
-						Optional:            true,
-						Computed:            true,
-						Description:         "Whether to enable time tracking.",
-						MarkdownDescription: "Whether to enable time tracking.",
-					},
-					"allow_only_contributors_to_track_time": schema.BoolAttribute{
-						Optional:            true,
-						Computed:            true,
-						Description:         "Whether only contributors can track time.",
-						MarkdownDescription: "Whether only contributors can track time.",
-					},
-					"enable_issue_dependencies": schema.BoolAttribute{
-						Optional:            true,
-						Computed:            true,
-						Description:         "Whether to enable issue dependencies.",
-						MarkdownDescription: "Whether to enable issue dependencies.",
-					},
-				},
-			},
-			"external_tracker": schema.SingleNestedAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Settings for external issue tracker. Requires has_issues to be true.",
-				MarkdownDescription: "Settings for external issue tracker. Requires `has_issues` to be `true`.",
-				Attributes: map[string]schema.Attribute{
-					"external_tracker_url": schema.StringAttribute{
-						Optional:            true,
-						Computed:            true,
-						Description:         "URL of external issue tracker.",
-						MarkdownDescription: "URL of external issue tracker.",
-					},
-					"external_tracker_format": schema.StringAttribute{
-						Optional:            true,
-						Computed:            true,
-						Description:         "External issue tracker URL format. Use placeholders {user}, {repo} and {index}.",
-						MarkdownDescription: "External issue tracker URL format. Use placeholders `{user}`, `{repo}` and `{index}`.",
-					},
-					"external_tracker_style": schema.StringAttribute{
-						Optional:            true,
-						Computed:            true,
-						Description:         "External issue tracker number format. Valid values: numeric, alphanumeric.",
-						MarkdownDescription: "External issue tracker number format. Valid values: `numeric`, `alphanumeric`.",
-						Validators: []validator.String{
-							stringvalidator.OneOf("numeric", "alphanumeric"),
-						},
-					},
-				},
-			},
-			"external_wiki": schema.SingleNestedAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Settings for external wiki. Requires has_wiki to be true.",
-				MarkdownDescription: "Settings for external wiki. Requires `has_wiki` to be `true`.",
-				Attributes: map[string]schema.Attribute{
-					"external_wiki_url": schema.StringAttribute{
-						Optional:            true,
-						Computed:            true,
-						Description:         "URL of external wiki.",
-						MarkdownDescription: "URL of external wiki.",
-					},
-				},
+				Default:             booldefault.StaticBool(false),
+				Description:         "Set to `true` to archive the repository instead of deleting on destroy.",
+				MarkdownDescription: "Set to `true` to archive the repository instead of deleting on destroy.",
 			},
 
 			// ==================== COMPUTED ====================
-			"id": schema.Int64Attribute{
+			"id": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The unique identifier of the repository.",
-				MarkdownDescription: "The unique identifier of the repository.",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
+				Description:         "The ID of the repository.",
+				MarkdownDescription: "The ID of the repository.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"full_name": schema.StringAttribute{
+			"clone_url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Full name of the repository (owner/name).",
-				MarkdownDescription: "Full name of the repository (`owner/name`).",
+				Description:         "The HTTPS clone URL of the repository.",
+				MarkdownDescription: "The HTTPS clone URL of the repository.",
+			},
+			"created": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Timestamp when the repository was created.",
+				MarkdownDescription: "Timestamp when the repository was created.",
 			},
 			"html_url": schema.StringAttribute{
 				Computed:            true,
 				Description:         "The URL to view the repository in the web UI.",
 				MarkdownDescription: "The URL to view the repository in the web UI.",
 			},
+			"permission_admin": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the current user has admin permission.",
+				MarkdownDescription: "Whether the current user has admin permission.",
+			},
+			"permission_pull": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the current user has pull permission.",
+				MarkdownDescription: "Whether the current user has pull permission.",
+			},
+			"permission_push": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the current user has push permission.",
+				MarkdownDescription: "Whether the current user has push permission.",
+			},
 			"ssh_url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The SSH URL to clone the repository.",
-				MarkdownDescription: "The SSH URL to clone the repository.",
+				Description:         "The SSH clone URL of the repository.",
+				MarkdownDescription: "The SSH clone URL of the repository.",
 			},
-			"clone_url": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The HTTPS URL to clone the repository.",
-				MarkdownDescription: "The HTTPS URL to clone the repository.",
-			},
-			"original_url": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The original URL of the repository (for mirrors/forks).",
-				MarkdownDescription: "The original URL of the repository (for mirrors/forks).",
-			},
-			"empty": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "Whether the repository is empty.",
-				MarkdownDescription: "Whether the repository is empty.",
-			},
-			"fork": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "Whether the repository is a fork.",
-				MarkdownDescription: "Whether the repository is a fork.",
-			},
-			"mirror": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "Whether the repository is a mirror.",
-				MarkdownDescription: "Whether the repository is a mirror.",
-			},
-			"size": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "Size of the repository in kilobytes.",
-				MarkdownDescription: "Size of the repository in kilobytes.",
-			},
-			"stars_count": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "Number of stars the repository has.",
-				MarkdownDescription: "Number of stars the repository has.",
-			},
-			"forks_count": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "Number of forks of the repository.",
-				MarkdownDescription: "Number of forks of the repository.",
-			},
-			"watchers_count": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "Number of watchers of the repository.",
-				MarkdownDescription: "Number of watchers of the repository.",
-			},
-			"open_issues_count": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "Number of open issues in the repository.",
-				MarkdownDescription: "Number of open issues in the repository.",
-			},
-			"open_pr_counter": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "Number of open pull requests in the repository.",
-				MarkdownDescription: "Number of open pull requests in the repository.",
-			},
-			"release_counter": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "Number of releases in the repository.",
-				MarkdownDescription: "Number of releases in the repository.",
-			},
-			"created_at": schema.StringAttribute{
-				Computed:            true,
-				Description:         "Timestamp when the repository was created.",
-				MarkdownDescription: "Timestamp when the repository was created.",
-			},
-			"updated_at": schema.StringAttribute{
+			"updated": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Timestamp when the repository was last updated.",
 				MarkdownDescription: "Timestamp when the repository was last updated.",
-			},
-			"avatar_url": schema.StringAttribute{
-				Computed:            true,
-				Description:         "URL of the repository avatar.",
-				MarkdownDescription: "URL of the repository avatar.",
-			},
-			"internal": schema.BoolAttribute{
-				Computed:            true,
-				Description:         "Whether the repository is internal (visible only to organization members).",
-				MarkdownDescription: "Whether the repository is internal (visible only to organization members).",
 			},
 		},
 	}
@@ -581,46 +448,40 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 // Helper function to map Gitea Repository to Terraform model
 func mapRepositoryToModel(ctx context.Context, repo *gitea.Repository, model *repositoryResourceModel) {
 	// Computed fields
-	model.Id = types.Int64Value(repo.ID)
-	model.FullName = types.StringValue(repo.FullName)
+	model.Id = types.StringValue(fmt.Sprintf("%d", repo.ID))
 	model.HtmlUrl = types.StringValue(repo.HTMLURL)
 	model.CloneUrl = types.StringValue(repo.CloneURL)
 	model.SshUrl = types.StringValue(repo.SSHURL)
-	model.OriginalUrl = types.StringValue(repo.OriginalURL)
-	model.Empty = types.BoolValue(repo.Empty)
-	model.Fork = types.BoolValue(repo.Fork)
-	model.Mirror = types.BoolValue(repo.Mirror)
-	model.Size = types.Int64Value(int64(repo.Size))
-	model.StarsCount = types.Int64Value(int64(repo.Stars))
-	model.ForksCount = types.Int64Value(int64(repo.Forks))
-	model.WatchersCount = types.Int64Value(int64(repo.Watchers))
-	model.OpenIssuesCount = types.Int64Value(int64(repo.OpenIssues))
-	model.OpenPrCounter = types.Int64Value(int64(repo.OpenPulls))
-	model.ReleaseCounter = types.Int64Value(int64(repo.Releases))
-	model.CreatedAt = types.StringValue(repo.Created.String())
-	model.UpdatedAt = types.StringValue(repo.Updated.String())
-	model.AvatarUrl = types.StringValue(repo.AvatarURL)
-	model.Internal = types.BoolValue(repo.Internal)
+	model.Created = types.StringValue(repo.Created.String())
+	model.Updated = types.StringValue(repo.Updated.String())
+
+	// Permission fields
+	if repo.Permissions != nil {
+		model.PermissionAdmin = types.BoolValue(repo.Permissions.Admin)
+		model.PermissionPull = types.BoolValue(repo.Permissions.Pull)
+		model.PermissionPush = types.BoolValue(repo.Permissions.Push)
+	} else {
+		model.PermissionAdmin = types.BoolValue(false)
+		model.PermissionPull = types.BoolValue(false)
+		model.PermissionPush = types.BoolValue(false)
+	}
 
 	// Basic fields that can be updated
 	model.Name = types.StringValue(repo.Name)
 	model.Description = types.StringValue(repo.Description)
 	model.Private = types.BoolValue(repo.Private)
 	model.DefaultBranch = types.StringValue(repo.DefaultBranch)
-	model.Template = types.BoolValue(repo.Template)
-	model.ObjectFormatName = types.StringValue(repo.ObjectFormatName)
 	model.Website = types.StringValue(repo.Website)
 	model.Archived = types.BoolValue(repo.Archived)
-	model.MirrorInterval = types.StringValue(repo.MirrorInterval)
+	model.RepoTemplate = types.BoolValue(repo.Template)
+	model.Mirror = types.BoolValue(repo.Mirror)
+	model.MigrationMirrorInterval = types.StringValue(repo.MirrorInterval)
 
 	// Feature flags
 	model.HasIssues = types.BoolValue(repo.HasIssues)
 	model.HasWiki = types.BoolValue(repo.HasWiki)
 	model.HasPullRequests = types.BoolValue(repo.HasPullRequests)
 	model.HasProjects = types.BoolValue(repo.HasProjects)
-	model.HasReleases = types.BoolValue(repo.HasReleases)
-	model.HasPackages = types.BoolValue(repo.HasPackages)
-	model.HasActions = types.BoolValue(repo.HasActions)
 
 	// Pull request merge settings
 	model.IgnoreWhitespaceConflicts = types.BoolValue(repo.IgnoreWhitespaceConflicts)
@@ -628,50 +489,6 @@ func mapRepositoryToModel(ctx context.Context, repo *gitea.Repository, model *re
 	model.AllowRebase = types.BoolValue(repo.AllowRebase)
 	model.AllowRebaseExplicit = types.BoolValue(repo.AllowRebaseMerge)
 	model.AllowSquashMerge = types.BoolValue(repo.AllowSquash)
-	model.AllowFastForwardOnlyMerge = types.BoolValue(repo.AllowFastForwardOnlyMerge)
-	model.DefaultMergeStyle = types.StringValue(string(repo.DefaultMergeStyle))
-	model.DefaultDeleteBranchAfterMerge = types.BoolValue(repo.DefaultDeleteBranchAfterMerge)
-
-	// Projects mode
-	if repo.ProjectsMode != nil {
-		model.ProjectsMode = types.StringValue(string(*repo.ProjectsMode))
-	} else {
-		model.ProjectsMode = types.StringNull()
-	}
-
-	// Internal tracker
-	if repo.InternalTracker != nil {
-		internalTrackerObj, _ := types.ObjectValue(internalTrackerAttrTypes, map[string]attr.Value{
-			"enable_time_tracker":                   types.BoolValue(repo.InternalTracker.EnableTimeTracker),
-			"allow_only_contributors_to_track_time": types.BoolValue(repo.InternalTracker.AllowOnlyContributorsToTrackTime),
-			"enable_issue_dependencies":             types.BoolValue(repo.InternalTracker.EnableIssueDependencies),
-		})
-		model.InternalTracker = internalTrackerObj
-	} else {
-		model.InternalTracker = types.ObjectNull(internalTrackerAttrTypes)
-	}
-
-	// External tracker
-	if repo.ExternalTracker != nil {
-		externalTrackerObj, _ := types.ObjectValue(externalTrackerAttrTypes, map[string]attr.Value{
-			"external_tracker_url":    types.StringValue(repo.ExternalTracker.ExternalTrackerURL),
-			"external_tracker_format": types.StringValue(repo.ExternalTracker.ExternalTrackerFormat),
-			"external_tracker_style":  types.StringValue(repo.ExternalTracker.ExternalTrackerStyle),
-		})
-		model.ExternalTracker = externalTrackerObj
-	} else {
-		model.ExternalTracker = types.ObjectNull(externalTrackerAttrTypes)
-	}
-
-	// External wiki
-	if repo.ExternalWiki != nil {
-		externalWikiObj, _ := types.ObjectValue(externalWikiAttrTypes, map[string]attr.Value{
-			"external_wiki_url": types.StringValue(repo.ExternalWiki.ExternalWikiURL),
-		})
-		model.ExternalWiki = externalWikiObj
-	} else {
-		model.ExternalWiki = types.ObjectNull(externalWikiAttrTypes)
-	}
 
 	// Creation-only fields - preserve from existing model if unknown/null (not returned by API after creation)
 	if model.AutoInit.IsUnknown() {
@@ -688,9 +505,6 @@ func mapRepositoryToModel(ctx context.Context, repo *gitea.Repository, model *re
 	}
 	if model.Readme.IsUnknown() {
 		model.Readme = types.StringNull()
-	}
-	if model.TrustModel.IsUnknown() {
-		model.TrustModel = types.StringNull()
 	}
 	// Note: AllowManualMerge and AutodetectManualMerge are not returned by the API
 	if model.AllowManualMerge.IsUnknown() {
@@ -726,52 +540,83 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// Create repository
-	owner := plan.Owner.ValueString()
+	username := plan.Username.ValueString()
 
-	createOpts := gitea.CreateRepoOption{
-		Name:             plan.Name.ValueString(),
-		Description:      plan.Description.ValueString(),
-		Private:          plan.Private.ValueBool(),
-		IssueLabels:      plan.IssueLabels.ValueString(),
-		AutoInit:         plan.AutoInit.ValueBool(),
-		Template:         plan.Template.ValueBool(),
-		Gitignores:       plan.Gitignores.ValueString(),
-		License:          plan.License.ValueString(),
-		Readme:           plan.Readme.ValueString(),
-		DefaultBranch:    plan.DefaultBranch.ValueString(),
-		TrustModel:       gitea.TrustModel(plan.TrustModel.ValueString()),
-		ObjectFormatName: plan.ObjectFormatName.ValueString(),
+	// Check if this is a migration
+	migrationAddress := plan.MigrationCloneAddress.ValueString()
+	if migrationAddress == "" {
+		// Check deprecated field
+		migrationAddress = plan.MigrationCloneAddresse.ValueString()
 	}
 
-	// Check if owner is an org or user and use appropriate API
 	var repo *gitea.Repository
 	var err error
 
-	// Try to get org first to determine if it's an org
-	org, _, orgErr := r.client.GetOrg(owner)
-	if orgErr == nil && org != nil {
-		// Owner is an organization
-		repo, _, err = r.client.CreateOrgRepo(owner, createOpts)
-	} else {
-		// Check if the owner is the currently authenticated user
-		currentUser, _, userErr := r.client.GetMyUserInfo()
-		if userErr != nil {
-			resp.Diagnostics.AddError(
-				"Error Getting Current User",
-				"Could not determine current user: "+userErr.Error(),
-			)
-			return
+	if migrationAddress != "" {
+		// Create via migration
+		migrateOpts := gitea.MigrateRepoOption{
+			CloneAddr:    migrationAddress,
+			RepoName:     plan.Name.ValueString(),
+			RepoOwner:    username,
+			Service:      gitea.GitServiceType(plan.MigrationService.ValueString()),
+			AuthUsername: plan.MigrationServiceAuthUsername.ValueString(),
+			AuthPassword: plan.MigrationServiceAuthPassword.ValueString(),
+			AuthToken:    plan.MigrationServiceAuthToken.ValueString(),
+			Mirror:       plan.Mirror.ValueBool(),
+			Private:      plan.Private.ValueBool(),
+			Description:  plan.Description.ValueString(),
+			Labels:       plan.MigrationIssueLabels.ValueBool(),
+			LFS:          plan.MigrationLfs.ValueBool(),
+			LFSEndpoint:  plan.MigrationLfsEndpoint.ValueString(),
+			Milestones:   plan.MigrationMilestones.ValueBool(),
+			Releases:     plan.MigrationReleases.ValueBool(),
+		}
+		if plan.MigrationMirrorInterval.ValueString() != "" {
+			migrateOpts.MirrorInterval = plan.MigrationMirrorInterval.ValueString()
 		}
 
-		if currentUser.UserName == owner {
-			// Owner is the current user
-			repo, _, err = r.client.CreateRepo(createOpts)
+		repo, _, err = r.client.MigrateRepo(migrateOpts)
+	} else {
+		// Create repository
+		createOpts := gitea.CreateRepoOption{
+			Name:          plan.Name.ValueString(),
+			Description:   plan.Description.ValueString(),
+			Private:       plan.Private.ValueBool(),
+			IssueLabels:   plan.IssueLabels.ValueString(),
+			AutoInit:      plan.AutoInit.ValueBool(),
+			Template:      plan.RepoTemplate.ValueBool(),
+			Gitignores:    plan.Gitignores.ValueString(),
+			License:       plan.License.ValueString(),
+			Readme:        plan.Readme.ValueString(),
+			DefaultBranch: plan.DefaultBranch.ValueString(),
+		}
+
+		// Check if owner is an org or user and use appropriate API
+		org, _, orgErr := r.client.GetOrg(username)
+		if orgErr == nil && org != nil {
+			// Owner is an organization
+			repo, _, err = r.client.CreateOrgRepo(username, createOpts)
 		} else {
-			// Try to create for another user (admin only)
-			repo, _, err = r.client.AdminCreateRepo(owner, createOpts)
+			// Check if the owner is the currently authenticated user
+			currentUser, _, userErr := r.client.GetMyUserInfo()
+			if userErr != nil {
+				resp.Diagnostics.AddError(
+					"Error Getting Current User",
+					"Could not determine current user: "+userErr.Error(),
+				)
+				return
+			}
+
+			if currentUser.UserName == username {
+				// Owner is the current user
+				repo, _, err = r.client.CreateRepo(createOpts)
+			} else {
+				// Try to create for another user (admin only)
+				repo, _, err = r.client.AdminCreateRepo(username, createOpts)
+			}
 		}
 	}
+
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating Repository",
@@ -782,16 +627,12 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// Map response to state
 	mapRepositoryToModel(ctx, repo, &plan)
-	plan.Owner = types.StringValue(owner)
-
-	// Preserve creation-only fields that aren't returned by API
-	// These stay as the user configured them
-	// (they're already in plan, so no action needed)
+	plan.Username = types.StringValue(username)
 
 	// If additional edit-only settings were specified, apply them now
 	if needsPostCreateUpdate(&plan) {
 		editOpts := buildEditRepoOption(ctx, &plan)
-		repo, _, err = r.client.EditRepo(owner, repo.Name, editOpts)
+		repo, _, err = r.client.EditRepo(username, repo.Name, editOpts)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Updating Repository After Creation",
@@ -800,7 +641,7 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 			return
 		}
 		mapRepositoryToModel(ctx, repo, &plan)
-		plan.Owner = types.StringValue(owner)
+		plan.Username = types.StringValue(username)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
@@ -813,25 +654,14 @@ func needsPostCreateUpdate(plan *repositoryResourceModel) bool {
 		!plan.HasWiki.IsNull() ||
 		!plan.HasPullRequests.IsNull() ||
 		!plan.HasProjects.IsNull() ||
-		!plan.HasReleases.IsNull() ||
-		!plan.HasPackages.IsNull() ||
-		!plan.HasActions.IsNull() ||
 		!plan.IgnoreWhitespaceConflicts.IsNull() ||
 		!plan.AllowMergeCommits.IsNull() ||
 		!plan.AllowRebase.IsNull() ||
 		!plan.AllowRebaseExplicit.IsNull() ||
 		!plan.AllowSquashMerge.IsNull() ||
-		!plan.AllowFastForwardOnlyMerge.IsNull() ||
 		!plan.Archived.IsNull() ||
-		!plan.DefaultMergeStyle.IsNull() ||
-		!plan.DefaultDeleteBranchAfterMerge.IsNull() ||
-		!plan.MirrorInterval.IsNull() ||
 		!plan.AllowManualMerge.IsNull() ||
-		!plan.AutodetectManualMerge.IsNull() ||
-		!plan.ProjectsMode.IsNull() ||
-		!plan.InternalTracker.IsNull() ||
-		!plan.ExternalTracker.IsNull() ||
-		!plan.ExternalWiki.IsNull()
+		!plan.AutodetectManualMerge.IsNull()
 }
 
 // buildEditRepoOption builds an EditRepoOption from the plan
@@ -851,8 +681,8 @@ func buildEditRepoOption(ctx context.Context, plan *repositoryResourceModel) git
 	if !plan.Private.IsNull() {
 		editOpts.Private = plan.Private.ValueBoolPointer()
 	}
-	if !plan.Template.IsNull() {
-		editOpts.Template = plan.Template.ValueBoolPointer()
+	if !plan.RepoTemplate.IsNull() {
+		editOpts.Template = plan.RepoTemplate.ValueBoolPointer()
 	}
 	if !plan.DefaultBranch.IsNull() {
 		editOpts.DefaultBranch = plan.DefaultBranch.ValueStringPointer()
@@ -871,15 +701,6 @@ func buildEditRepoOption(ctx context.Context, plan *repositoryResourceModel) git
 	if !plan.HasProjects.IsNull() {
 		editOpts.HasProjects = plan.HasProjects.ValueBoolPointer()
 	}
-	if !plan.HasReleases.IsNull() {
-		editOpts.HasReleases = plan.HasReleases.ValueBoolPointer()
-	}
-	if !plan.HasPackages.IsNull() {
-		editOpts.HasPackages = plan.HasPackages.ValueBoolPointer()
-	}
-	if !plan.HasActions.IsNull() {
-		editOpts.HasActions = plan.HasActions.ValueBoolPointer()
-	}
 
 	// Merge settings
 	if !plan.IgnoreWhitespaceConflicts.IsNull() {
@@ -897,16 +718,6 @@ func buildEditRepoOption(ctx context.Context, plan *repositoryResourceModel) git
 	if !plan.AllowSquashMerge.IsNull() {
 		editOpts.AllowSquash = plan.AllowSquashMerge.ValueBoolPointer()
 	}
-	if !plan.AllowFastForwardOnlyMerge.IsNull() {
-		editOpts.AllowFastForwardOnlyMerge = plan.AllowFastForwardOnlyMerge.ValueBoolPointer()
-	}
-	if !plan.DefaultMergeStyle.IsNull() {
-		mergeStyle := gitea.MergeStyle(plan.DefaultMergeStyle.ValueString())
-		editOpts.DefaultMergeStyle = &mergeStyle
-	}
-	if !plan.DefaultDeleteBranchAfterMerge.IsNull() {
-		editOpts.DefaultDeleteBranchAfterMerge = plan.DefaultDeleteBranchAfterMerge.ValueBoolPointer()
-	}
 	if !plan.AllowManualMerge.IsNull() {
 		editOpts.AllowManualMerge = plan.AllowManualMerge.ValueBoolPointer()
 	}
@@ -918,43 +729,8 @@ func buildEditRepoOption(ctx context.Context, plan *repositoryResourceModel) git
 	if !plan.Archived.IsNull() {
 		editOpts.Archived = plan.Archived.ValueBoolPointer()
 	}
-	if !plan.MirrorInterval.IsNull() {
-		editOpts.MirrorInterval = plan.MirrorInterval.ValueStringPointer()
-	}
-	if !plan.ProjectsMode.IsNull() {
-		projectsMode := gitea.ProjectsMode(plan.ProjectsMode.ValueString())
-		editOpts.ProjectsMode = &projectsMode
-	}
-
-	// Internal tracker
-	if !plan.InternalTracker.IsNull() {
-		var internalTracker internalTrackerModel
-		plan.InternalTracker.As(ctx, &internalTracker, types.ObjectAsOptions{})
-		editOpts.InternalTracker = &gitea.InternalTracker{
-			EnableTimeTracker:                internalTracker.EnableTimeTracker.ValueBool(),
-			AllowOnlyContributorsToTrackTime: internalTracker.AllowOnlyContributorsToTrackTime.ValueBool(),
-			EnableIssueDependencies:          internalTracker.EnableIssueDependencies.ValueBool(),
-		}
-	}
-
-	// External tracker
-	if !plan.ExternalTracker.IsNull() {
-		var externalTracker externalTrackerModel
-		plan.ExternalTracker.As(ctx, &externalTracker, types.ObjectAsOptions{})
-		editOpts.ExternalTracker = &gitea.ExternalTracker{
-			ExternalTrackerURL:    externalTracker.ExternalTrackerURL.ValueString(),
-			ExternalTrackerFormat: externalTracker.ExternalTrackerFormat.ValueString(),
-			ExternalTrackerStyle:  externalTracker.ExternalTrackerStyle.ValueString(),
-		}
-	}
-
-	// External wiki
-	if !plan.ExternalWiki.IsNull() {
-		var externalWiki externalWikiModel
-		plan.ExternalWiki.As(ctx, &externalWiki, types.ObjectAsOptions{})
-		editOpts.ExternalWiki = &gitea.ExternalWiki{
-			ExternalWikiURL: externalWiki.ExternalWikiURL.ValueString(),
-		}
+	if !plan.MigrationMirrorInterval.IsNull() {
+		editOpts.MirrorInterval = plan.MigrationMirrorInterval.ValueStringPointer()
 	}
 
 	return editOpts
@@ -968,10 +744,10 @@ func (r *repositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	owner := state.Owner.ValueString()
+	username := state.Username.ValueString()
 	repoName := state.Name.ValueString()
 
-	repo, httpResp, err := r.client.GetRepo(owner, repoName)
+	repo, httpResp, err := r.client.GetRepo(username, repoName)
 	if err != nil {
 		// Handle 404 gracefully - remove from state
 		if httpResp != nil && httpResp.StatusCode == 404 {
@@ -980,7 +756,7 @@ func (r *repositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 		}
 		resp.Diagnostics.AddError(
 			"Error Reading Repository",
-			"Could not read repository "+owner+"/"+repoName+": "+err.Error(),
+			"Could not read repository "+username+"/"+repoName+": "+err.Error(),
 		)
 		return
 	}
@@ -991,15 +767,28 @@ func (r *repositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 	issueLabels := state.IssueLabels
 	license := state.License
 	readme := state.Readme
-	trustModel := state.TrustModel
 	allowManualMerge := state.AllowManualMerge
 	autodetectManualMerge := state.AutodetectManualMerge
+	archiveOnDestroy := state.ArchiveOnDestroy
+
+	// Preserve migration fields
+	migrationCloneAddress := state.MigrationCloneAddress
+	migrationCloneAddresse := state.MigrationCloneAddresse
+	migrationService := state.MigrationService
+	migrationServiceAuthUsername := state.MigrationServiceAuthUsername
+	migrationServiceAuthPassword := state.MigrationServiceAuthPassword
+	migrationServiceAuthToken := state.MigrationServiceAuthToken
+	migrationIssueLabels := state.MigrationIssueLabels
+	migrationLfs := state.MigrationLfs
+	migrationLfsEndpoint := state.MigrationLfsEndpoint
+	migrationMilestones := state.MigrationMilestones
+	migrationReleases := state.MigrationReleases
 
 	// Map response to state
 	mapRepositoryToModel(ctx, repo, &state)
 
 	// Restore owner from state since it's not in the API response
-	state.Owner = types.StringValue(owner)
+	state.Username = types.StringValue(username)
 
 	// Restore creation-only fields
 	state.AutoInit = autoInit
@@ -1007,9 +796,22 @@ func (r *repositoryResource) Read(ctx context.Context, req resource.ReadRequest,
 	state.IssueLabels = issueLabels
 	state.License = license
 	state.Readme = readme
-	state.TrustModel = trustModel
 	state.AllowManualMerge = allowManualMerge
 	state.AutodetectManualMerge = autodetectManualMerge
+	state.ArchiveOnDestroy = archiveOnDestroy
+
+	// Restore migration fields
+	state.MigrationCloneAddress = migrationCloneAddress
+	state.MigrationCloneAddresse = migrationCloneAddresse
+	state.MigrationService = migrationService
+	state.MigrationServiceAuthUsername = migrationServiceAuthUsername
+	state.MigrationServiceAuthPassword = migrationServiceAuthPassword
+	state.MigrationServiceAuthToken = migrationServiceAuthToken
+	state.MigrationIssueLabels = migrationIssueLabels
+	state.MigrationLfs = migrationLfs
+	state.MigrationLfsEndpoint = migrationLfsEndpoint
+	state.MigrationMilestones = migrationMilestones
+	state.MigrationReleases = migrationReleases
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -1024,16 +826,16 @@ func (r *repositoryResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	owner := state.Owner.ValueString()
+	username := state.Username.ValueString()
 	repoName := state.Name.ValueString()
 
 	editOpts := buildEditRepoOption(ctx, &plan)
 
-	repo, _, err := r.client.EditRepo(owner, repoName, editOpts)
+	repo, _, err := r.client.EditRepo(username, repoName, editOpts)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Repository",
-			"Could not update repository "+owner+"/"+repoName+": "+err.Error(),
+			"Could not update repository "+username+"/"+repoName+": "+err.Error(),
 		)
 		return
 	}
@@ -1044,11 +846,23 @@ func (r *repositoryResource) Update(ctx context.Context, req resource.UpdateRequ
 	issueLabels := state.IssueLabels
 	license := state.License
 	readme := state.Readme
-	trustModel := state.TrustModel
+
+	// Preserve migration fields from state
+	migrationCloneAddress := state.MigrationCloneAddress
+	migrationCloneAddresse := state.MigrationCloneAddresse
+	migrationService := state.MigrationService
+	migrationServiceAuthUsername := state.MigrationServiceAuthUsername
+	migrationServiceAuthPassword := state.MigrationServiceAuthPassword
+	migrationServiceAuthToken := state.MigrationServiceAuthToken
+	migrationIssueLabels := state.MigrationIssueLabels
+	migrationLfs := state.MigrationLfs
+	migrationLfsEndpoint := state.MigrationLfsEndpoint
+	migrationMilestones := state.MigrationMilestones
+	migrationReleases := state.MigrationReleases
 
 	// Map response to state
 	mapRepositoryToModel(ctx, repo, &plan)
-	plan.Owner = types.StringValue(owner)
+	plan.Username = types.StringValue(username)
 
 	// Restore creation-only fields
 	plan.AutoInit = autoInit
@@ -1056,10 +870,19 @@ func (r *repositoryResource) Update(ctx context.Context, req resource.UpdateRequ
 	plan.IssueLabels = issueLabels
 	plan.License = license
 	plan.Readme = readme
-	plan.TrustModel = trustModel
 
-	// Preserve AllowManualMerge and AutodetectManualMerge from plan since they're not returned by API
-	// (they were set by the user in the plan)
+	// Restore migration fields
+	plan.MigrationCloneAddress = migrationCloneAddress
+	plan.MigrationCloneAddresse = migrationCloneAddresse
+	plan.MigrationService = migrationService
+	plan.MigrationServiceAuthUsername = migrationServiceAuthUsername
+	plan.MigrationServiceAuthPassword = migrationServiceAuthPassword
+	plan.MigrationServiceAuthToken = migrationServiceAuthToken
+	plan.MigrationIssueLabels = migrationIssueLabels
+	plan.MigrationLfs = migrationLfs
+	plan.MigrationLfsEndpoint = migrationLfsEndpoint
+	plan.MigrationMilestones = migrationMilestones
+	plan.MigrationReleases = migrationReleases
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -1072,65 +895,82 @@ func (r *repositoryResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	owner := state.Owner.ValueString()
+	username := state.Username.ValueString()
 	repoName := state.Name.ValueString()
 
-	_, err := r.client.DeleteRepo(owner, repoName)
+	// Check if we should archive instead of delete
+	if state.ArchiveOnDestroy.ValueBool() {
+		archived := true
+		editOpts := gitea.EditRepoOption{
+			Archived: &archived,
+		}
+		_, _, err := r.client.EditRepo(username, repoName, editOpts)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Archiving Repository",
+				"Could not archive repository "+username+"/"+repoName+": "+err.Error(),
+			)
+			return
+		}
+		return
+	}
+
+	_, err := r.client.DeleteRepo(username, repoName)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting Repository",
-			"Could not delete repository "+owner+"/"+repoName+": "+err.Error(),
+			"Could not delete repository "+username+"/"+repoName+": "+err.Error(),
 		)
 		return
 	}
 }
 
 func (r *repositoryResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	// Import format: "owner/repo"
+	// Import format: "username/repo"
 	id := req.ID
 
 	// Parse owner/repo - handle potential slashes in repo name by only splitting on first slash
-	var owner, repoName string
+	var username, repoName string
 	slashIndex := strings.Index(id, "/")
 	if slashIndex == -1 {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
-			fmt.Sprintf("Import ID must be in format 'owner/repo', got: %s", id),
+			fmt.Sprintf("Import ID must be in format 'username/repo', got: %s", id),
 		)
 		return
 	}
 
-	owner = id[:slashIndex]
+	username = id[:slashIndex]
 	repoName = id[slashIndex+1:]
 
-	if owner == "" || repoName == "" {
+	if username == "" || repoName == "" {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
-			fmt.Sprintf("Import ID must be in format 'owner/repo', got: %s", id),
+			fmt.Sprintf("Import ID must be in format 'username/repo', got: %s", id),
 		)
 		return
 	}
 
 	// Fetch the repository
-	repository, httpResp, err := r.client.GetRepo(owner, repoName)
+	repository, httpResp, err := r.client.GetRepo(username, repoName)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == 404 {
 			resp.Diagnostics.AddError(
 				"Repository Not Found",
-				fmt.Sprintf("Repository %s/%s does not exist or is not accessible", owner, repoName),
+				fmt.Sprintf("Repository %s/%s does not exist or is not accessible", username, repoName),
 			)
 			return
 		}
 		resp.Diagnostics.AddError(
 			"Error Importing Repository",
-			fmt.Sprintf("Could not import repository %s/%s: %s", owner, repoName, err.Error()),
+			fmt.Sprintf("Could not import repository %s/%s: %s", username, repoName, err.Error()),
 		)
 		return
 	}
 
 	var data repositoryResourceModel
 	mapRepositoryToModel(ctx, repository, &data)
-	data.Owner = types.StringValue(owner)
+	data.Username = types.StringValue(username)
 
 	// Set creation-only fields to null since we don't know what they were originally
 	data.AutoInit = types.BoolNull()
@@ -1138,9 +978,22 @@ func (r *repositoryResource) ImportState(ctx context.Context, req resource.Impor
 	data.IssueLabels = types.StringNull()
 	data.License = types.StringNull()
 	data.Readme = types.StringNull()
-	data.TrustModel = types.StringNull()
 	data.AllowManualMerge = types.BoolNull()
 	data.AutodetectManualMerge = types.BoolNull()
+	data.ArchiveOnDestroy = types.BoolValue(false)
+
+	// Set migration fields to null
+	data.MigrationCloneAddress = types.StringNull()
+	data.MigrationCloneAddresse = types.StringNull()
+	data.MigrationService = types.StringNull()
+	data.MigrationServiceAuthUsername = types.StringNull()
+	data.MigrationServiceAuthPassword = types.StringNull()
+	data.MigrationServiceAuthToken = types.StringNull()
+	data.MigrationIssueLabels = types.BoolNull()
+	data.MigrationLfs = types.BoolNull()
+	data.MigrationLfsEndpoint = types.StringNull()
+	data.MigrationMilestones = types.BoolNull()
+	data.MigrationReleases = types.BoolNull()
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

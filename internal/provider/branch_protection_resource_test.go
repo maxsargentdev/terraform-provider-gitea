@@ -8,64 +8,59 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccBranchProtectionResource(t *testing.T) {
+func TestAccRepositoryBranchProtectionResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccBranchProtectionResourceConfig("main", "Protect main"),
+				Config: testAccRepositoryBranchProtectionResourceConfig("Protect main"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("gitea_branch_protection.test", "branch_name", "main"),
-					resource.TestCheckResourceAttr("gitea_branch_protection.test", "rule_name", "Protect main"),
-					resource.TestCheckResourceAttr("gitea_branch_protection.test", "enable_push", "true"),
-					resource.TestCheckResourceAttr("gitea_branch_protection.test", "require_signed_commits", "true"),
+					resource.TestCheckResourceAttr("gitea_repository_branch_protection.test", "rule_name", "Protect main"),
+					resource.TestCheckResourceAttr("gitea_repository_branch_protection.test", "enable_push", "true"),
+					resource.TestCheckResourceAttr("gitea_repository_branch_protection.test", "require_signed_commits", "true"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:                         "gitea_branch_protection.test",
+				ResourceName:                         "gitea_repository_branch_protection.test",
 				ImportState:                          true,
 				ImportStateVerify:                    true,
 				ImportStateVerifyIdentifierAttribute: "rule_name",
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
 					return "root/test-repo/Protect main", nil
 				},
-				ImportStateVerifyIgnore: []string{"owner", "repo", "branch_name"},
+				ImportStateVerifyIgnore: []string{"username", "name"},
 			},
 			// Update and Read testing
 			{
-				Config: testAccBranchProtectionResourceConfig("main", "Protect main"),
+				Config: testAccRepositoryBranchProtectionResourceConfig("Protect main"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("gitea_branch_protection.test", "require_signed_commits", "true"),
+					resource.TestCheckResourceAttr("gitea_repository_branch_protection.test", "require_signed_commits", "true"),
 				),
 			},
 		},
 	})
 }
 
-func testAccBranchProtectionResourceConfig(branchName, ruleName string) string {
+func testAccRepositoryBranchProtectionResourceConfig(ruleName string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "gitea_repository" "test" {
+  username    = "root"
   name        = "test-repo"
   description = "Test repository"
   private     = true
 }
 
-resource "gitea_branch_protection" "test" {
-  owner       = "root"
-  repo        = gitea_repository.test.name
-  branch_name = %[1]q
-  rule_name   = %[2]q
+resource "gitea_repository_branch_protection" "test" {
+  username  = "root"
+  name      = gitea_repository.test.name
+  rule_name = %[1]q
 
-  enable_push              = true
-  enable_push_whitelist    = true
-  push_whitelist_usernames = ["root"]
-
-  enable_merge_whitelist   = false
-  enable_status_check      = false
-  require_signed_commits   = true
+  enable_push             = true
+  push_whitelist_users    = ["root"]
+  require_signed_commits  = true
 }
-`, branchName, ruleName)
+`, ruleName)
 }
