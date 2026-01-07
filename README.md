@@ -31,7 +31,7 @@ resource "gitea_team" "test_team" {
     "repo.releases"   = "none"   # Releases access
     "repo.ext_wiki"   = "none"   # External wiki access
     "repo.ext_issues" = "read"   # External issue tracker access
-    "repo.actions"    = "write"   # External issue tracker access
+    "repo.actions"    = "write"  # Actions access
   }
 }
 ~~~
