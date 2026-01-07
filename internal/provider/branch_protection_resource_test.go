@@ -17,15 +17,15 @@ func TestAccBranchProtectionResource(t *testing.T) {
 			{
 				Config: testAccBranchProtectionResourceConfig("main", "Protect main"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("icegitea_branch_protection.test", "branch_name", "main"),
-					resource.TestCheckResourceAttr("icegitea_branch_protection.test", "rule_name", "Protect main"),
-					resource.TestCheckResourceAttr("icegitea_branch_protection.test", "enable_push", "true"),
-					resource.TestCheckResourceAttr("icegitea_branch_protection.test", "require_signed_commits", "true"),
+					resource.TestCheckResourceAttr("gitea_branch_protection.test", "branch_name", "main"),
+					resource.TestCheckResourceAttr("gitea_branch_protection.test", "rule_name", "Protect main"),
+					resource.TestCheckResourceAttr("gitea_branch_protection.test", "enable_push", "true"),
+					resource.TestCheckResourceAttr("gitea_branch_protection.test", "require_signed_commits", "true"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:                         "icegitea_branch_protection.test",
+				ResourceName:                         "gitea_branch_protection.test",
 				ImportState:                          true,
 				ImportStateVerify:                    true,
 				ImportStateVerifyIdentifierAttribute: "rule_name",
@@ -38,7 +38,7 @@ func TestAccBranchProtectionResource(t *testing.T) {
 			{
 				Config: testAccBranchProtectionResourceConfig("main", "Protect main"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("icegitea_branch_protection.test", "require_signed_commits", "true"),
+					resource.TestCheckResourceAttr("gitea_branch_protection.test", "require_signed_commits", "true"),
 				),
 			},
 		},
@@ -47,15 +47,15 @@ func TestAccBranchProtectionResource(t *testing.T) {
 
 func testAccBranchProtectionResourceConfig(branchName, ruleName string) string {
 	return providerConfig() + fmt.Sprintf(`
-resource "icegitea_repository" "test" {
+resource "gitea_repository" "test" {
   name        = "test-repo"
   description = "Test repository"
   private     = true
 }
 
-resource "icegitea_branch_protection" "test" {
+resource "gitea_branch_protection" "test" {
   owner       = "root"
-  repo        = icegitea_repository.test.name
+  repo        = gitea_repository.test.name
   branch_name = %[1]q
   rule_name   = %[2]q
 

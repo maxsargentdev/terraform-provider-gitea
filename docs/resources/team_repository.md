@@ -1,11 +1,11 @@
 ---
-page_title: "Resource icegitea_team_repository - icegitea"
+page_title: "Resource gitea_team_repository - gitea"
 subcategory: ""
 description: |-
   Manages a team repository association in Gitea, assigning a repository to a team.
 ---
 
-# icegitea_team_repository (Resource)
+# gitea_team_repository (Resource)
 
 Manages a team repository association in Gitea, assigning a repository to a team.
 
@@ -14,7 +14,7 @@ Manages a team repository association in Gitea, assigning a repository to a team
 ## Example Usage
 
 ```terraform
-resource "icegitea_team_repository" "test_team_repo_association" {
+resource "gitea_team_repository" "test_team_repo_association" {
   org             = "testorg"
   team_name       = "test-team"
   repository_name = "test-repo-for-org"

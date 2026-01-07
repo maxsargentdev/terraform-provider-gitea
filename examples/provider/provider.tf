@@ -1,12 +1,12 @@
 terraform {
   required_providers {
-    icegitea = {
-      source = "hashicorp.com/maxsargentdev/icegitea"
+    gitea = {
+      source = "hashicorp.com/maxsargentdev/gitea"
     }
   }
 }
 
-provider "icegitea" {
+provider "gitea" {
   gitea_username = "your-username"
   gitea_password = "your-password"
   gitea_hostname = "https://gitea.example.com"

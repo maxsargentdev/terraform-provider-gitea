@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/maxsargendev/terraform-provider-icegitea/internal/provider"
+	"github.com/maxsargendev/terraform-provider-gitea/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
@@ -15,7 +15,7 @@ var (
 
 func main() {
 	opts := providerserver.ServeOpts{
-		Address: "hashicorp.com/maxsargentdev/icegitea",
+		Address: "hashicorp.com/maxsargentdev/gitea",
 	}
 
 	err := providerserver.Serve(context.Background(), provider.New(version), opts)
