@@ -23,13 +23,13 @@ data "gitea_team" "example" {
 
 ### Required
 
-- `id` (Number) id of the team to get
+- `name` (String) The name of the team
+- `org` (String) The name of the organization
 
 ### Read-Only
 
 - `can_create_org_repo` (Boolean) Whether the team can create repositories in the organization
 - `description` (String) The description of the team
+- `id` (Number) The unique identifier of the team
 - `includes_all_repositories` (Boolean) Whether the team has access to all repositories in the organization
-- `name` (String) The name of the team
-- `units` (List of String)
 - `units_map` (Map of String)

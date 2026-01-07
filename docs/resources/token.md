@@ -26,20 +26,14 @@ resource "gitea_token" "example" {
 ### Required
 
 - `name` (String) The name of the access token
-- `username` (String) The username of the user for whom the token is created
-
-### Optional
-
-- `limit` (Number) page size of results
-- `page` (Number) page number of results to return (1-based)
-- `scopes` (Set of String) The scopes of the token
+- `scopes` (Set of String) The scopes granted to this access token
 
 ### Read-Only
 
 - `created_at` (String) The timestamp when the token was created
 - `id` (Number) The unique identifier of the access token
 - `last_used_at` (String) The timestamp when the token was last used
-- `sha1` (String, Sensitive) The SHA1 hash of the access token
+- `sha1` (String) The SHA1 hash of the access token
 - `token_last_eight` (String) The last eight characters of the token
 
 ## Import

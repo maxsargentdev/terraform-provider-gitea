@@ -25,17 +25,18 @@ resource "gitea_user" "example" {
 
 ### Required
 
-- `email` (String)
-- `username` (String) username of the user
+- `email` (String) The email address of the user to create.
+- `password` (String, Sensitive) The plain text password for the user. This is write-only and cannot be read back.
+- `username` (String) Username of the user
 
 ### Optional
 
+- `active` (Boolean) Is user active (can login)
 - `created_at` (String) For explicitly setting the user creation timestamp. Useful when users are
 migrated from other systems. When omitted, the user's creation timestamp
 will be set to "now".
 - `full_name` (String) The full display name of the user
 - `must_change_password` (Boolean) Whether the user must change password on first login
-- `password` (String) The plain text password for the user
 - `restricted` (Boolean) Whether the user has restricted access privileges
 - `send_notify` (Boolean) Whether to send welcome notification email to the user
 - `source_id` (Number) The authentication source ID to associate with the user
@@ -43,7 +44,6 @@ will be set to "now".
 
 ### Read-Only
 
-- `active` (Boolean) Is user active
 - `avatar_url` (String) URL to the user's avatar
 - `created` (String)
 - `description` (String) the user's description

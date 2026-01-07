@@ -23,11 +23,11 @@ data "gitea_user" "example" {
 
 ### Required
 
-- `id` (String) username of the user whose data is to be listed
+- `username` (String) Username of the user whose data is to be listed
 
 ### Read-Only
 
-- `active` (Boolean) Is user active
+- `active` (Boolean) Is the user active?
 - `avatar_url` (String) URL to the user's avatar
 - `created` (String)
 - `description` (String) the user's description

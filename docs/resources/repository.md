@@ -36,12 +36,9 @@ resource "gitea_repository" "example" {
 - `gitignores` (String) Gitignores to use
 - `issue_labels` (String) Label-Set to use
 - `license` (String) License to use
-- `object_format_name` (String) ObjectFormatName of the underlying git repository
 - `private` (Boolean) Whether the repository is private
 - `readme` (String) Readme of the repository to create
-- `repo` (String) name of the repo
 - `template` (Boolean) Whether the repository is template
-- `trust_model` (String) TrustModel of the repository
 
 ### Read-Only
 
@@ -64,7 +61,6 @@ resource "gitea_repository" "example" {
 - `empty` (Boolean)
 - `fork` (Boolean)
 - `forks_count` (Number)
-- `full_name` (String)
 - `has_actions` (Boolean)
 - `has_code` (Boolean)
 - `has_issues` (Boolean)
@@ -81,12 +77,8 @@ resource "gitea_repository" "example" {
 - `languages_url` (String)
 - `licenses` (List of String)
 - `link` (String)
-- `mirror` (Boolean)
-- `mirror_interval` (String)
-- `mirror_updated` (String)
 - `open_issues_count` (Number)
 - `open_pr_counter` (Number)
-- `original_url` (String)
 - `projects_mode` (String)
 - `release_counter` (Number)
 - `size` (Number)

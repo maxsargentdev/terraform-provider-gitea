@@ -5,10 +5,8 @@ import (
 	"fmt"
 
 	"code.gitea.io/sdk/gitea"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -50,7 +48,6 @@ type repositoryResourceModel struct {
 	Empty                         types.Bool   `tfsdk:"empty"`
 	Fork                          types.Bool   `tfsdk:"fork"`
 	ForksCount                    types.Int64  `tfsdk:"forks_count"`
-	FullName                      types.String `tfsdk:"full_name"`
 	Gitignores                    types.String `tfsdk:"gitignores"`
 	HasActions                    types.Bool   `tfsdk:"has_actions"`
 	HasCode                       types.Bool   `tfsdk:"has_code"`
@@ -70,25 +67,18 @@ type repositoryResourceModel struct {
 	License                       types.String `tfsdk:"license"`
 	Licenses                      types.List   `tfsdk:"licenses"`
 	Link                          types.String `tfsdk:"link"`
-	Mirror                        types.Bool   `tfsdk:"mirror"`
-	MirrorInterval                types.String `tfsdk:"mirror_interval"`
-	MirrorUpdated                 types.String `tfsdk:"mirror_updated"`
 	Name                          types.String `tfsdk:"name"`
-	ObjectFormatName              types.String `tfsdk:"object_format_name"`
 	OpenIssuesCount               types.Int64  `tfsdk:"open_issues_count"`
 	OpenPrCounter                 types.Int64  `tfsdk:"open_pr_counter"`
-	OriginalUrl                   types.String `tfsdk:"original_url"`
 	Private                       types.Bool   `tfsdk:"private"`
 	ProjectsMode                  types.String `tfsdk:"projects_mode"`
 	Readme                        types.String `tfsdk:"readme"`
 	ReleaseCounter                types.Int64  `tfsdk:"release_counter"`
-	Repo                          types.String `tfsdk:"repo"`
 	Size                          types.Int64  `tfsdk:"size"`
 	SshUrl                        types.String `tfsdk:"ssh_url"`
 	StarsCount                    types.Int64  `tfsdk:"stars_count"`
 	Template                      types.Bool   `tfsdk:"template"`
 	Topics                        types.List   `tfsdk:"topics"`
-	TrustModel                    types.String `tfsdk:"trust_model"`
 	UpdatedAt                     types.String `tfsdk:"updated_at"`
 	Url                           types.String `tfsdk:"url"`
 	WatchersCount                 types.Int64  `tfsdk:"watchers_count"`
@@ -102,11 +92,76 @@ func (r *repositoryResource) Metadata(_ context.Context, req resource.MetadataRe
 func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+
+			// required - these are fundamental configuration options
 			"owner": schema.StringAttribute{
 				Required:            true,
 				Description:         "The owner of the repository (username or organization name)",
 				MarkdownDescription: "The owner of the repository (username or organization name)",
 			},
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "Name of the repository to create",
+				MarkdownDescription: "Name of the repository to create",
+			},
+
+			// optional - these tweak the created resource away from its defaults
+			"auto_init": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the repository should be auto-initialized?",
+				MarkdownDescription: "Whether the repository should be auto-initialized?",
+			},
+			"default_branch": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "DefaultBranch of the repository (used when initializes and in template)",
+				MarkdownDescription: "DefaultBranch of the repository (used when initializes and in template)",
+			},
+			"description": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Description of the repository to create",
+				MarkdownDescription: "Description of the repository to create",
+			},
+			"gitignores": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Gitignores to use",
+				MarkdownDescription: "Gitignores to use",
+			},
+			"issue_labels": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Label-Set to use",
+				MarkdownDescription: "Label-Set to use",
+			},
+			"license": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "License to use",
+				MarkdownDescription: "License to use",
+			},
+			"readme": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Readme of the repository to create",
+				MarkdownDescription: "Readme of the repository to create",
+			},
+			"private": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the repository is private",
+				MarkdownDescription: "Whether the repository is private",
+			},
+			"template": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the repository is template",
+				MarkdownDescription: "Whether the repository is template",
+			},
+
+			// computed - these are available to read back after creation but are really just metadata
 			"allow_fast_forward_only_merge": schema.BoolAttribute{
 				Computed: true,
 			},
@@ -134,12 +189,6 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 			"archived_at": schema.StringAttribute{
 				Computed: true,
 			},
-			"auto_init": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the repository should be auto-initialized?",
-				MarkdownDescription: "Whether the repository should be auto-initialized?",
-			},
 			"autodetect_manual_merge": schema.BoolAttribute{
 				Computed: true,
 			},
@@ -155,23 +204,11 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 			"default_allow_maintainer_edit": schema.BoolAttribute{
 				Computed: true,
 			},
-			"default_branch": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "DefaultBranch of the repository (used when initializes and in template)",
-				MarkdownDescription: "DefaultBranch of the repository (used when initializes and in template)",
-			},
 			"default_delete_branch_after_merge": schema.BoolAttribute{
 				Computed: true,
 			},
 			"default_merge_style": schema.StringAttribute{
 				Computed: true,
-			},
-			"description": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Description of the repository to create",
-				MarkdownDescription: "Description of the repository to create",
 			},
 			"empty": schema.BoolAttribute{
 				Computed: true,
@@ -181,15 +218,6 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 			},
 			"forks_count": schema.Int64Attribute{
 				Computed: true,
-			},
-			"full_name": schema.StringAttribute{
-				Computed: true,
-			},
-			"gitignores": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Gitignores to use",
-				MarkdownDescription: "Gitignores to use",
 			},
 			"has_actions": schema.BoolAttribute{
 				Computed: true,
@@ -227,23 +255,11 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 			"internal": schema.BoolAttribute{
 				Computed: true,
 			},
-			"issue_labels": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Label-Set to use",
-				MarkdownDescription: "Label-Set to use",
-			},
 			"language": schema.StringAttribute{
 				Computed: true,
 			},
 			"languages_url": schema.StringAttribute{
 				Computed: true,
-			},
-			"license": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "License to use",
-				MarkdownDescription: "License to use",
 			},
 			"licenses": schema.ListAttribute{
 				ElementType: types.StringType,
@@ -252,64 +268,17 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 			"link": schema.StringAttribute{
 				Computed: true,
 			},
-			"mirror": schema.BoolAttribute{
-				Computed: true,
-			},
-			"mirror_interval": schema.StringAttribute{
-				Computed: true,
-			},
-			"mirror_updated": schema.StringAttribute{
-				Computed: true,
-			},
-			"name": schema.StringAttribute{
-				Required:            true,
-				Description:         "Name of the repository to create",
-				MarkdownDescription: "Name of the repository to create",
-			},
-			"object_format_name": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "ObjectFormatName of the underlying git repository",
-				MarkdownDescription: "ObjectFormatName of the underlying git repository",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"sha1",
-						"sha256",
-					),
-				},
-			},
 			"open_issues_count": schema.Int64Attribute{
 				Computed: true,
 			},
 			"open_pr_counter": schema.Int64Attribute{
 				Computed: true,
 			},
-			"original_url": schema.StringAttribute{
-				Computed: true,
-			},
-			"private": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the repository is private",
-				MarkdownDescription: "Whether the repository is private",
-			},
 			"projects_mode": schema.StringAttribute{
 				Computed: true,
 			},
-			"readme": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Readme of the repository to create",
-				MarkdownDescription: "Readme of the repository to create",
-			},
 			"release_counter": schema.Int64Attribute{
 				Computed: true,
-			},
-			"repo": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "name of the repo",
-				MarkdownDescription: "name of the repo",
 			},
 			"size": schema.Int64Attribute{
 				Computed: true,
@@ -320,29 +289,9 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 			"stars_count": schema.Int64Attribute{
 				Computed: true,
 			},
-			"template": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the repository is template",
-				MarkdownDescription: "Whether the repository is template",
-			},
 			"topics": schema.ListAttribute{
 				ElementType: types.StringType,
 				Computed:    true,
-			},
-			"trust_model": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "TrustModel of the repository",
-				MarkdownDescription: "TrustModel of the repository",
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						"default",
-						"collaborator",
-						"committer",
-						"collaboratorcommitter",
-					),
-				},
 			},
 			"updated_at": schema.StringAttribute{
 				Computed: true,
@@ -362,9 +311,9 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 
 // Helper function to map Gitea Repository to Terraform model
 func mapRepositoryToModel(repo *gitea.Repository, model *repositoryResourceModel) {
+	// Basic fields
 	model.Id = types.Int64Value(repo.ID)
 	model.Name = types.StringValue(repo.Name)
-	model.FullName = types.StringValue(repo.FullName)
 	model.Description = types.StringValue(repo.Description)
 	model.Private = types.BoolValue(repo.Private)
 	model.DefaultBranch = types.StringValue(repo.DefaultBranch)
@@ -372,63 +321,84 @@ func mapRepositoryToModel(repo *gitea.Repository, model *repositoryResourceModel
 	model.HtmlUrl = types.StringValue(repo.HTMLURL)
 	model.CloneUrl = types.StringValue(repo.CloneURL)
 	model.SshUrl = types.StringValue(repo.SSHURL)
-	model.Url = types.StringNull() // Not available in SDK
 	model.Empty = types.BoolValue(repo.Empty)
 	model.Fork = types.BoolValue(repo.Fork)
-	model.Mirror = types.BoolValue(repo.Mirror)
 	model.Size = types.Int64Value(int64(repo.Size))
 	model.Archived = types.BoolValue(repo.Archived)
 	model.StarsCount = types.Int64Value(int64(repo.Stars))
 	model.WatchersCount = types.Int64Value(int64(repo.Watchers))
 	model.ForksCount = types.Int64Value(int64(repo.Forks))
 	model.OpenIssuesCount = types.Int64Value(int64(repo.OpenIssues))
-	model.Language = types.StringNull() // Not available in SDK
 	model.AvatarUrl = types.StringValue(repo.AvatarURL)
 	model.Template = types.BoolValue(repo.Template)
 	model.Internal = types.BoolValue(repo.Internal)
 
-	// Set remaining computed fields as null/empty
-	model.AutoInit = types.BoolNull()
-	model.AllowFastForwardOnlyMerge = types.BoolNull()
+	// Merge settings
+	model.AllowFastForwardOnlyMerge = types.BoolValue(repo.AllowFastForwardOnlyMerge)
+	model.AllowMergeCommits = types.BoolValue(repo.AllowMerge)
+	model.AllowRebase = types.BoolValue(repo.AllowRebase)
+	model.AllowRebaseExplicit = types.BoolValue(repo.AllowRebaseMerge)
+	model.AllowSquashMerge = types.BoolValue(repo.AllowSquash)
+	model.DefaultDeleteBranchAfterMerge = types.BoolValue(repo.DefaultDeleteBranchAfterMerge)
+	model.DefaultMergeStyle = types.StringValue(string(repo.DefaultMergeStyle))
+	model.IgnoreWhitespaceConflicts = types.BoolValue(repo.IgnoreWhitespaceConflicts)
+
+	// Feature flags
+	model.HasIssues = types.BoolValue(repo.HasIssues)
+	model.HasWiki = types.BoolValue(repo.HasWiki)
+	model.HasPullRequests = types.BoolValue(repo.HasPullRequests)
+	model.HasProjects = types.BoolValue(repo.HasProjects)
+	model.HasReleases = types.BoolValue(repo.HasReleases)
+	model.HasPackages = types.BoolValue(repo.HasPackages)
+	model.HasActions = types.BoolValue(repo.HasActions)
+
+	// Timestamps
+	model.CreatedAt = types.StringValue(repo.Created.Format("2006-01-02T15:04:05Z"))
+	model.UpdatedAt = types.StringValue(repo.Updated.Format("2006-01-02T15:04:05Z"))
+
+	// Counters
+	model.OpenPrCounter = types.Int64Value(int64(repo.OpenPulls))
+	model.ReleaseCounter = types.Int64Value(int64(repo.Releases))
+
+	// Projects mode
+	if repo.ProjectsMode != nil {
+		model.ProjectsMode = types.StringValue(string(*repo.ProjectsMode))
+	} else {
+		model.ProjectsMode = types.StringNull()
+	}
+
+	// Fields not available from API responses (only used during creation)
+	// Preserve these values from the existing model (they come from plan during Create, from state during Read)
+	// If they're still Unknown, set them to null
+	if model.AutoInit.IsUnknown() {
+		model.AutoInit = types.BoolNull()
+	}
+	if model.Gitignores.IsUnknown() {
+		model.Gitignores = types.StringNull()
+	}
+	if model.IssueLabels.IsUnknown() {
+		model.IssueLabels = types.StringNull()
+	}
+	if model.License.IsUnknown() {
+		model.License = types.StringNull()
+	}
+	if model.Readme.IsUnknown() {
+		model.Readme = types.StringNull()
+	}
+
+	// Fields not available in SDK
 	model.AllowManualMerge = types.BoolNull()
-	model.AllowMergeCommits = types.BoolNull()
-	model.AllowRebase = types.BoolNull()
-	model.AllowRebaseExplicit = types.BoolNull()
 	model.AllowRebaseUpdate = types.BoolNull()
-	model.AllowSquashMerge = types.BoolNull()
 	model.ArchivedAt = types.StringNull()
 	model.AutodetectManualMerge = types.BoolNull()
-	model.CreatedAt = types.StringNull()
 	model.DefaultAllowMaintainerEdit = types.BoolNull()
-	model.DefaultDeleteBranchAfterMerge = types.BoolNull()
-	model.DefaultMergeStyle = types.StringNull()
-	model.Gitignores = types.StringNull()
-	model.HasActions = types.BoolNull()
 	model.HasCode = types.BoolNull()
-	model.HasIssues = types.BoolNull()
-	model.HasPackages = types.BoolNull()
-	model.HasProjects = types.BoolNull()
-	model.HasPullRequests = types.BoolNull()
-	model.HasReleases = types.BoolNull()
-	model.HasWiki = types.BoolNull()
-	model.IgnoreWhitespaceConflicts = types.BoolNull()
-	model.IssueLabels = types.StringNull()
+	model.Language = types.StringNull()
 	model.LanguagesUrl = types.StringNull()
-	model.License = types.StringNull()
 	model.Licenses = types.ListNull(types.StringType)
 	model.Link = types.StringNull()
-	model.MirrorInterval = types.StringNull()
-	model.MirrorUpdated = types.StringNull()
-	model.ObjectFormatName = types.StringNull()
-	model.OpenPrCounter = types.Int64Null()
-	model.OriginalUrl = types.StringNull()
-	model.ProjectsMode = types.StringNull()
-	model.Readme = types.StringNull()
-	model.ReleaseCounter = types.Int64Null()
-	model.Repo = types.StringNull()
 	model.Topics = types.ListNull(types.StringType)
-	model.TrustModel = types.StringNull()
-	model.UpdatedAt = types.StringNull()
+	model.Url = types.StringNull()
 }
 
 func (r *repositoryResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -467,6 +437,24 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 
 	if !plan.DefaultBranch.IsNull() {
 		createOpts.DefaultBranch = plan.DefaultBranch.ValueString()
+	}
+	if !plan.AutoInit.IsNull() {
+		createOpts.AutoInit = plan.AutoInit.ValueBool()
+	}
+	if !plan.Gitignores.IsNull() {
+		createOpts.Gitignores = plan.Gitignores.ValueString()
+	}
+	if !plan.IssueLabels.IsNull() {
+		createOpts.IssueLabels = plan.IssueLabels.ValueString()
+	}
+	if !plan.License.IsNull() {
+		createOpts.License = plan.License.ValueString()
+	}
+	if !plan.Readme.IsNull() {
+		createOpts.Readme = plan.Readme.ValueString()
+	}
+	if !plan.Template.IsNull() {
+		createOpts.Template = plan.Template.ValueBool()
 	}
 
 	// Check if owner is an org or user and use appropriate API

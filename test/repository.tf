@@ -9,9 +9,6 @@ output "repository_id" {
   value = gitea_repository.test_repo.id
 }
 
-output "repository_full_name" {
-  value = gitea_repository.test_repo.full_name
-}
 
 resource "gitea_repository" "test_repo_2" {
   owner       = "testorg"
@@ -26,3 +23,27 @@ resource "gitea_repository" "test_repo_3" {
   description = "A test repository created with Terraform"
   private     = true
 }
+
+# resource "gitea_repository" "foo" {
+#   owner             = "test-org"
+#   name              = "foo"
+#   auto_init         = true
+#   private           = true
+#   issue_labels      = "Default"
+#   has_issues        = true
+#   has_projects      = false
+#   has_pull_requests = true
+#   has_wiki          = false
+
+#   allow_manual_merge    = false
+#   allow_merge_commits   = false
+#   allow_rebase          = false
+#   allow_rebase_explicit = false
+#   allow_squash_merge    = true
+
+#   lifecycle {
+#     prevent_destroy = true
+#   }
+
+#   description = "foo"
+# }

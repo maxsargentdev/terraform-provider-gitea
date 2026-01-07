@@ -24,5 +24,6 @@ data "gitea_team_membership" "example" {
 
 ### Required
 
-- `team_id` (Number) The ID of the team
+- `org` (String) The name of the organization
+- `team_name` (String) The name of the team
 - `username` (String) The username of the team member

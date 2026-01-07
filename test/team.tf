@@ -51,3 +51,26 @@ data "gitea_team" "test_team" {
 
   depends_on = [gitea_team.test_team]
 }
+
+resource "gitea_team" "foo" {
+  org             = gitea_org.test_org.username
+  name                     = "foo"
+  description              = "foo"
+  units_map = {
+    "repo.code"     = "write"
+    "repo.issues"   = "write"
+    "repo.pulls"    = "read"
+    "repo.releases" = "read"
+    "repo.packages" = "read"
+    "repo.actions" = "write"
+  }
+
+  can_create_org_repo       = false
+  includes_all_repositories = false
+}
+
+resource "gitea_team_repository" "test_team_repo_association_3" {
+  org             = gitea_org.test_org.username
+  team_name       = gitea_team.foo.name
+  repository_name = gitea_repository.test_repo_2.name
+}
