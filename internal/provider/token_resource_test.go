@@ -14,12 +14,12 @@ func TestAccTokenResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccTokenResourceConfig("test-token", "testuser"),
+				Config: testAccTokenResourceConfig("test-token"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("gitea_token.test", "name", "test-token"),
-					resource.TestCheckResourceAttr("gitea_token.test", "username", "testuser"),
 					resource.TestCheckResourceAttrSet("gitea_token.test", "id"),
-					resource.TestCheckResourceAttrSet("gitea_token.test", "sha1"),
+					resource.TestCheckResourceAttrSet("gitea_token.test", "token"),
+					resource.TestCheckResourceAttrSet("gitea_token.test", "last_eight"),
 				),
 			},
 			// ImportState testing
@@ -27,7 +27,7 @@ func TestAccTokenResource(t *testing.T) {
 				ResourceName:            "gitea_token.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"sha1", "username", "scopes", "created_at", "last_used_at"},
+				ImportStateVerifyIgnore: []string{"token", "scopes"},
 			},
 			// Tokens cannot be updated - any change requires replacement
 			// So we don't include an update test
@@ -35,19 +35,11 @@ func TestAccTokenResource(t *testing.T) {
 	})
 }
 
-func testAccTokenResourceConfig(name, username string) string {
+func testAccTokenResourceConfig(name string) string {
 	return providerConfig() + fmt.Sprintf(`
-resource "gitea_user" "test" {
-  username  = %[2]q
-  email     = "%[2]s@example.com"
-  password  = "testpass123"
-  full_name = "Test User"
-}
-
 resource "gitea_token" "test" {
-  name     = %[1]q
-  username = gitea_user.test.username
-  scopes   = ["read:user"]
+  name   = %[1]q
+  scopes = ["read:user"]
 }
-`, name, username)
+`, name)
 }

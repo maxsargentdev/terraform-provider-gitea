@@ -3,10 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -19,6 +21,7 @@ func NewUserDataSource() datasource.DataSource {
 
 // Helper function to map Gitea User to Terraform data source model
 func mapUserToDataSourceModel(user *gitea.User, model *userDataSourceModel) {
+	model.Id = types.Int64Value(user.ID)
 	model.Username = types.StringValue(user.UserName)
 	model.Login = types.StringValue(user.UserName)
 	model.Email = types.StringValue(user.Email)
@@ -52,6 +55,7 @@ type userDataSource struct {
 }
 
 type userDataSourceModel struct {
+	Id                types.Int64  `tfsdk:"id"`
 	Active            types.Bool   `tfsdk:"active"`
 	AvatarUrl         types.String `tfsdk:"avatar_url"`
 	Created           types.String `tfsdk:"created"`
@@ -82,110 +86,129 @@ func (d *userDataSource) Metadata(ctx context.Context, req datasource.MetadataRe
 
 func (d *userDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description:         "Use this data source to retrieve information about an existing Gitea user.",
+		MarkdownDescription: "Use this data source to retrieve information about an existing Gitea user.",
 		Attributes: map[string]schema.Attribute{
 
-			// required - these are fundamental configuration options
+			// query parameters - at least one must be provided
 			"username": schema.StringAttribute{
-				Required:            true,
-				Description:         "Username of the user whose data is to be listed",
-				MarkdownDescription: "Username of the user whose data is to be listed",
+				Optional:            true,
+				Computed:            true,
+				Description:         "The username of the user to look up. Either username or id must be specified.",
+				MarkdownDescription: "The username of the user to look up. Either `username` or `id` must be specified.",
+			},
+			"id": schema.Int64Attribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The numeric ID of the user to look up. Either username or id must be specified.",
+				MarkdownDescription: "The numeric ID of the user to look up. Either `username` or `id` must be specified.",
 			},
 
 			// computed - these are available to read back after creation but are really just metadata
 			"active": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Is the user active?",
-				MarkdownDescription: "Is the user active?",
+				Description:         "Whether the user account is active.",
+				MarkdownDescription: "Whether the user account is active.",
 			},
 			"avatar_url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "URL to the user's avatar",
-				MarkdownDescription: "URL to the user's avatar",
+				Description:         "URL to the user's avatar image.",
+				MarkdownDescription: "URL to the user's avatar image.",
 			},
 			"created": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "The timestamp when the user account was created.",
+				MarkdownDescription: "The timestamp when the user account was created.",
 			},
 			"description": schema.StringAttribute{
 				Computed:            true,
-				Description:         "the user's description",
-				MarkdownDescription: "the user's description",
+				Description:         "The user's bio/description.",
+				MarkdownDescription: "The user's bio/description.",
 			},
 			"email": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "The user's email address.",
+				MarkdownDescription: "The user's email address.",
 			},
 			"followers_count": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "user counts",
-				MarkdownDescription: "user counts",
+				Description:         "The number of followers the user has.",
+				MarkdownDescription: "The number of followers the user has.",
 			},
 			"following_count": schema.Int64Attribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "The number of users this user is following.",
+				MarkdownDescription: "The number of users this user is following.",
 			},
 			"full_name": schema.StringAttribute{
 				Computed:            true,
-				Description:         "the user's full name",
-				MarkdownDescription: "the user's full name",
+				Description:         "The user's full display name.",
+				MarkdownDescription: "The user's full display name.",
 			},
 			"html_url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "URL to the user's gitea page",
-				MarkdownDescription: "URL to the user's gitea page",
+				Description:         "URL to the user's Gitea profile page.",
+				MarkdownDescription: "URL to the user's Gitea profile page.",
 			},
 			"is_admin": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Is the user an administrator",
-				MarkdownDescription: "Is the user an administrator",
+				Description:         "Whether the user is a Gitea administrator.",
+				MarkdownDescription: "Whether the user is a Gitea administrator.",
 			},
 			"language": schema.StringAttribute{
 				Computed:            true,
-				Description:         "User locale",
-				MarkdownDescription: "User locale",
+				Description:         "The user's preferred language/locale.",
+				MarkdownDescription: "The user's preferred language/locale.",
 			},
 			"last_login": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "The timestamp of the user's last login.",
+				MarkdownDescription: "The timestamp of the user's last login.",
 			},
 			"location": schema.StringAttribute{
 				Computed:            true,
-				Description:         "the user's location",
-				MarkdownDescription: "the user's location",
+				Description:         "The user's location.",
+				MarkdownDescription: "The user's location.",
 			},
 			"login": schema.StringAttribute{
 				Computed:            true,
-				Description:         "login of the user, same as `username`",
-				MarkdownDescription: "login of the user, same as `username`",
+				Description:         "The user's login name (same as username).",
+				MarkdownDescription: "The user's login name (same as `username`).",
 			},
 			"login_name": schema.StringAttribute{
 				Computed:            true,
-				Description:         "identifier of the user, provided by the external authenticator (if configured)",
-				MarkdownDescription: "identifier of the user, provided by the external authenticator (if configured)",
+				Description:         "The identifier provided by an external authenticator (if configured).",
+				MarkdownDescription: "The identifier provided by an external authenticator (if configured).",
 			},
 			"prohibit_login": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Is user login prohibited",
-				MarkdownDescription: "Is user login prohibited",
+				Description:         "Whether the user is prohibited from logging in.",
+				MarkdownDescription: "Whether the user is prohibited from logging in.",
 			},
 			"restricted": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Is user restricted",
-				MarkdownDescription: "Is user restricted",
+				Description:         "Whether the user has restricted permissions.",
+				MarkdownDescription: "Whether the user has restricted permissions.",
 			},
 			"source_id": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The ID of the user's Authentication Source",
-				MarkdownDescription: "The ID of the user's Authentication Source",
+				Description:         "The ID of the user's authentication source.",
+				MarkdownDescription: "The ID of the user's authentication source.",
 			},
 			"starred_repos_count": schema.Int64Attribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "The number of repositories the user has starred.",
+				MarkdownDescription: "The number of repositories the user has starred.",
 			},
 			"visibility": schema.StringAttribute{
 				Computed:            true,
-				Description:         "User visibility level option: public, limited, private",
-				MarkdownDescription: "User visibility level option: public, limited, private",
+				Description:         "The user's visibility level (public, limited, or private).",
+				MarkdownDescription: "The user's visibility level (`public`, `limited`, or `private`).",
 			},
 			"website": schema.StringAttribute{
 				Computed:            true,
-				Description:         "the user's website",
-				MarkdownDescription: "the user's website",
+				Description:         "The user's website URL.",
+				MarkdownDescription: "The user's website URL.",
 			},
 		},
 	}
@@ -216,16 +239,56 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	var username = data.Username.ValueString()
-
-	// Get user from Gitea API
-	user, _, err := d.client.GetUserInfo(username)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading User",
-			"Could not read user "+username+": "+err.Error(),
+	// Validate that at least one of username or id is provided
+	if data.Username.IsNull() && data.Id.IsNull() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("username"),
+			"Missing Required Attribute",
+			"Either 'username' or 'id' must be specified to look up a user.",
 		)
 		return
+	}
+
+	var user *gitea.User
+	var httpResp *gitea.Response
+	var err error
+
+	if !data.Username.IsNull() {
+		// Query by username
+		username := data.Username.ValueString()
+		user, httpResp, err = d.client.GetUserInfo(username)
+		if err != nil {
+			if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+				resp.Diagnostics.AddError(
+					"User Not Found",
+					fmt.Sprintf("User '%s' does not exist or you do not have permission to access it.", username),
+				)
+				return
+			}
+			resp.Diagnostics.AddError(
+				"Error Reading User",
+				fmt.Sprintf("Could not read user '%s': %s", username, err.Error()),
+			)
+			return
+		}
+	} else {
+		// Query by ID - need to use admin API
+		userID := data.Id.ValueInt64()
+		user, httpResp, err = d.client.GetUserByID(userID)
+		if err != nil {
+			if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+				resp.Diagnostics.AddError(
+					"User Not Found",
+					fmt.Sprintf("User with ID %d does not exist or you do not have permission to access it.", userID),
+				)
+				return
+			}
+			resp.Diagnostics.AddError(
+				"Error Reading User",
+				fmt.Sprintf("Could not read user with ID %d: %s", userID, err.Error()),
+			)
+			return
+		}
 	}
 
 	// Map response to model

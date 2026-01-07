@@ -48,6 +48,7 @@ func TestAccRepositoryResource(t *testing.T) {
 func testAccRepositoryResourceConfig(name, description string, private bool) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "gitea_repository" "test" {
+  username    = "root"
   name        = %[1]q
   description = %[2]q
   private     = %[3]t

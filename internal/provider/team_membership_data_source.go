@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -27,6 +28,7 @@ type teamMembershipDataSourceModel struct {
 	Org      types.String `tfsdk:"org"`
 	TeamName types.String `tfsdk:"team_name"`
 	Username types.String `tfsdk:"username"`
+	TeamId   types.Int64  `tfsdk:"team_id"`
 }
 
 func (d *teamMembershipDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -35,25 +37,32 @@ func (d *teamMembershipDataSource) Metadata(_ context.Context, req datasource.Me
 
 func (d *teamMembershipDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description:         "Get information about a team membership (checks if a user is a member of a team)",
-		MarkdownDescription: "Get information about a team membership (checks if a user is a member of a team)",
+		Description:         "Use this data source to verify that a user is a member of a specific team. If the user is not a member of the team, the data source will return an error.",
+		MarkdownDescription: "Use this data source to verify that a user is a member of a specific team. If the user is not a member of the team, the data source will return an error.",
 		Attributes: map[string]schema.Attribute{
 
 			// required - these are fundamental configuration options
 			"org": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the organization",
-				MarkdownDescription: "The name of the organization",
+				Description:         "The name of the organization that owns the team.",
+				MarkdownDescription: "The name of the organization that owns the team.",
 			},
 			"team_name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the team",
-				MarkdownDescription: "The name of the team",
+				Description:         "The name of the team to check membership for.",
+				MarkdownDescription: "The name of the team to check membership for.",
 			},
 			"username": schema.StringAttribute{
 				Required:            true,
-				Description:         "The username of the team member",
-				MarkdownDescription: "The username of the team member",
+				Description:         "The username of the user to verify membership for.",
+				MarkdownDescription: "The username of the user to verify membership for.",
+			},
+
+			// computed - available after successful lookup
+			"team_id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The numeric ID of the team.",
+				MarkdownDescription: "The numeric ID of the team.",
 			},
 		},
 	}
@@ -89,8 +98,15 @@ func (d *teamMembershipDataSource) Read(ctx context.Context, req datasource.Read
 	username := data.Username.ValueString()
 
 	// Get team ID from name
-	teams, _, err := d.client.ListOrgTeams(org, gitea.ListTeamsOptions{})
+	teams, httpResp, err := d.client.ListOrgTeams(org, gitea.ListTeamsOptions{})
 	if err != nil {
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+			resp.Diagnostics.AddError(
+				"Organization Not Found",
+				fmt.Sprintf("Organization '%s' does not exist or you do not have permission to access it.", org),
+			)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Listing Teams",
 			fmt.Sprintf("Could not list teams for organization '%s': %s", org, err.Error()),
@@ -109,22 +125,30 @@ func (d *teamMembershipDataSource) Read(ctx context.Context, req datasource.Read
 	if teamID == 0 {
 		resp.Diagnostics.AddError(
 			"Team Not Found",
-			fmt.Sprintf("Could not find team '%s' in organization '%s'", teamName, org),
+			fmt.Sprintf("Team '%s' does not exist in organization '%s' or you do not have permission to access it.", teamName, org),
 		)
 		return
 	}
 
 	// Check if the user is a member of the team
-	_, _, err = d.client.GetTeamMember(teamID, username)
+	_, httpResp, err = d.client.GetTeamMember(teamID, username)
 	if err != nil {
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+			resp.Diagnostics.AddError(
+				"User Not a Team Member",
+				fmt.Sprintf("User '%s' is not a member of team '%s' in organization '%s'.", username, teamName, org),
+			)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Reading Team Membership",
-			fmt.Sprintf("Could not verify team membership for user %s in team %s: %s", username, teamName, err.Error()),
+			fmt.Sprintf("Could not verify team membership for user '%s' in team '%s': %s", username, teamName, err.Error()),
 		)
 		return
 	}
 
-	// If we get here, the membership exists
-	// The data already has the required fields from the config
+	// If we get here, the membership exists - set the team_id
+	data.TeamId = types.Int64Value(teamID)
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

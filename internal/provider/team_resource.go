@@ -44,24 +44,42 @@ func (r *teamResource) Metadata(_ context.Context, req resource.MetadataRequest,
 
 func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description:         "Manages a Gitea team.",
-		MarkdownDescription: "Manages a Gitea team.",
+		Description:         "Manages a Gitea team within an organization. Teams allow you to group users and assign permissions to repositories.",
+		MarkdownDescription: "Manages a Gitea team within an organization. Teams allow you to group users and assign permissions to repositories.",
 		Attributes: map[string]schema.Attribute{
 
 			// required - these are fundamental configuration options
 			"org": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the organization to create the team in.",
-				MarkdownDescription: "The name of the organization to create the team in.",
+				Description:         "The name of the organization the team belongs to. This is required for creating and managing the team.",
+				MarkdownDescription: "The name of the organization the team belongs to. This is required for creating and managing the team.",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the team.",
-				MarkdownDescription: "The name of the team.",
+				Description:         "The name of the team. Must be unique within the organization.",
+				MarkdownDescription: "The name of the team. Must be unique within the organization.",
 			},
 			"units_map": schema.MapAttribute{
 				Required:    true,
-				Description: "The units this team has access to, and the permission mode granted.",
+				Description: "A map of repository units to their permission levels. Keys are unit names (e.g., 'repo.code', 'repo.issues', 'repo.pulls', 'repo.releases', 'repo.wiki', 'repo.ext_wiki', 'repo.ext_issues', 'repo.projects', 'repo.packages', 'repo.actions'). Values must be one of: 'none' (no access), 'read' (read-only access), 'write' (read and write access), 'admin' (full administrative access).",
+				MarkdownDescription: `A map of repository units to their permission levels.
+
+**Unit names:**
+- ` + "`repo.code`" + ` - Repository code/files
+- ` + "`repo.issues`" + ` - Issue tracker
+- ` + "`repo.pulls`" + ` - Pull requests
+- ` + "`repo.releases`" + ` - Releases
+- ` + "`repo.wiki`" + ` - Wiki
+- ` + "`repo.ext_wiki`" + ` - External wiki
+- ` + "`repo.ext_issues`" + ` - External issue tracker
+- ` + "`repo.projects`" + ` - Projects
+- ` + "`repo.packages`" + ` - Packages
+- ` + "`repo.actions`" + ` - Actions
+
+**Permission values:**
+- ` + "`none`" + ` - No access
+- ` + "`read`" + ` - Read-only access
+- ` + "`write`" + ` - Read and write access`,
 				ElementType: types.StringType,
 			},
 
@@ -69,27 +87,27 @@ func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 			"can_create_org_repo": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the team can create repositories in the organization.",
-				MarkdownDescription: "Whether the team can create repositories in the organization.",
+				Description:         "Whether team members can create new repositories in the organization. Defaults to false if not specified.",
+				MarkdownDescription: "Whether team members can create new repositories in the organization. Defaults to `false` if not specified.",
 			},
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The description of the team.",
-				MarkdownDescription: "The description of the team.",
+				Description:         "A description of the team's purpose. Optional, but recommended for documentation.",
+				MarkdownDescription: "A description of the team's purpose. Optional, but recommended for documentation.",
 			},
 			"includes_all_repositories": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the team has access to all repositories in the organization.",
-				MarkdownDescription: "Whether the team has access to all repositories in the organization.",
+				Description:         "Whether the team automatically has access to all repositories in the organization, including newly created ones. Defaults to false if not specified.",
+				MarkdownDescription: "Whether the team automatically has access to all repositories in the organization, including newly created ones. Defaults to `false` if not specified.",
 			},
 
 			// computed - these are available to read back after creation but are really just metadata
 			"id": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The unique identifier of the team.",
-				MarkdownDescription: "The unique identifier of the team.",
+				Description:         "The unique numeric identifier of the team in Gitea.",
+				MarkdownDescription: "The unique numeric identifier of the team in Gitea.",
 
 				// ID doesnt change once set, only computed once so refer to state
 				PlanModifiers: []planmodifier.Int64{
@@ -140,13 +158,13 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 	unitsMap := make(map[string]string)
 	plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
 
-	// Validate permission values - only "none", "read", "write" are allowed
+	// Validate permission values - only "none", "read", "write", "admin" are allowed
 	validPermissions := map[string]bool{"none": true, "read": true, "write": true}
 	for unit, permission := range unitsMap {
 		if !validPermissions[permission] {
 			resp.Diagnostics.AddError(
 				"Invalid Permission Value",
-				fmt.Sprintf("Unit '%s' has invalid permission '%s'. Valid values are: 'none', 'read', 'write'", unit, permission),
+				fmt.Sprintf("Unit '%s' has invalid permission '%s'. Valid values are: 'none', 'read', 'write', 'admin'", unit, permission),
 			)
 		}
 	}
@@ -185,11 +203,16 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	team, _, err := r.client.GetTeam(state.Id.ValueInt64())
+	team, httpResp, err := r.client.GetTeam(state.Id.ValueInt64())
 	if err != nil {
+		// Handle 404 - team was deleted outside of Terraform
+		if httpResp != nil && httpResp.StatusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Reading Team",
-			"Could not read team: "+err.Error(),
+			fmt.Sprintf("Could not read team (ID: %d): %s", state.Id.ValueInt64(), err.Error()),
 		)
 		return
 	}
@@ -236,13 +259,13 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	unitsMap := make(map[string]string)
 	plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
 
-	// Validate permission values - only "none", "read", "write" are allowed
-	validPermissions := map[string]bool{"none": true, "read": true, "write": true}
+	// Validate permission values - only "none", "read", "write", "admin" are allowed
+	validPermissions := map[string]bool{"none": true, "read": true, "write": true, "admin": true}
 	for unit, permission := range unitsMap {
 		if !validPermissions[permission] {
 			resp.Diagnostics.AddError(
 				"Invalid Permission Value",
-				fmt.Sprintf("Unit '%s' has invalid permission '%s'. Valid values are: 'none', 'read', 'write'", unit, permission),
+				fmt.Sprintf("Unit '%s' has invalid permission '%s'. Valid values are: 'none', 'read', 'write', 'admin'", unit, permission),
 			)
 		}
 	}
@@ -306,14 +329,21 @@ func (r *teamResource) ImportState(ctx context.Context, req resource.ImportState
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Importing Team",
-			"Could not parse team ID: "+err.Error(),
+			fmt.Sprintf("Could not parse team ID '%s': %s. The import ID must be a numeric team ID.", req.ID, err.Error()),
 		)
 		return
 	}
 
 	// Fetch the full team details
-	team, _, err := r.client.GetTeam(id)
+	team, httpResp, err := r.client.GetTeam(id)
 	if err != nil {
+		if httpResp != nil && httpResp.StatusCode == 404 {
+			resp.Diagnostics.AddError(
+				"Team Not Found",
+				fmt.Sprintf("Team with ID %d does not exist or you don't have permission to access it.", id),
+			)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Importing Team",
 			fmt.Sprintf("Could not fetch team with ID %d: %s", id, err.Error()),
@@ -325,6 +355,15 @@ func (r *teamResource) ImportState(ctx context.Context, req resource.ImportState
 	var state teamResourceModel
 	mapTeamToModel(ctx, team, &state)
 
+	// Verify that org was populated (required for the resource to function)
+	if state.Org.IsNull() || state.Org.IsUnknown() || state.Org.ValueString() == "" {
+		resp.Diagnostics.AddError(
+			"Import Error",
+			fmt.Sprintf("Could not determine organization for team ID %d. The API response did not include organization information.", id),
+		)
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -334,6 +373,11 @@ func mapTeamToModel(ctx context.Context, team *gitea.Team, model *teamResourceMo
 	model.Description = types.StringValue(team.Description)
 	model.CanCreateOrgRepo = types.BoolValue(team.CanCreateOrgRepo)
 	model.IncludesAllRepositories = types.BoolValue(team.IncludesAllRepositories)
+
+	// Set organization name from API response if available (important for import)
+	if team.Organization != nil {
+		model.Org = types.StringValue(team.Organization.UserName)
+	}
 
 	// Map units_map if present
 	if len(team.UnitsMap) > 0 {
@@ -348,5 +392,4 @@ func mapTeamToModel(ctx context.Context, team *gitea.Team, model *teamResourceMo
 			model.UnitsMap = types.MapNull(types.StringType)
 		}
 	}
-
 }

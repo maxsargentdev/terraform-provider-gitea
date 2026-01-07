@@ -3,21 +3,21 @@
 page_title: "gitea_org Resource - gitea"
 subcategory: ""
 description: |-
-  Manages a Gitea organization.
+  Manages a Gitea organization. This resource allows you to create, update, and delete organizations in Gitea.
 ---
 
 # gitea_org (Resource)
 
-Manages a Gitea organization.
+Manages a Gitea organization. This resource allows you to create, update, and delete organizations in Gitea.
 
 ## Example Usage
 
 ```terraform
 resource "gitea_org" "test_org" {
-  name         = "testorg"
-  display_name = "Test Organization"
-  description  = "A test organization"
-  visibility   = "public"
+  name        = "testorg"
+  full_name   = "Test Organization"
+  description = "A test organization"
+  visibility  = "public"
 }
 ```
 
@@ -30,18 +30,17 @@ resource "gitea_org" "test_org" {
 
 ### Optional
 
-- `description` (String) The description of the organization.
-- `display_name` (String) The full display name of the organization.
-- `email` (String) The email address of the organization.
-- `location` (String) The location of the organization.
-- `repo_admin_change_team_access` (Boolean) Whether repository administrators can change team access.
-- `visibility` (String) possible values are `public` (default), `limited` or `private`.
-- `website` (String) The website URL of the organization.
+- `description` (String) Description of the organization.
+- `full_name` (String) The full (display) name of the organization.
+- `location` (String) Location of the organization.
+- `visibility` (String) Visibility of the organization (`public`, `limited`, `private`).
+- `website` (String) Website of the organization.
 
 ### Read-Only
 
 - `avatar_url` (String) The URL of the organization's avatar.
-- `id` (Number) The unique identifier of the organization.
+- `id` (String) The ID of the organization.
+- `repos` (List of String) List of repository names belonging to the organization.
 
 ## Import
 

@@ -3,12 +3,12 @@
 page_title: "gitea_team Resource - gitea"
 subcategory: ""
 description: |-
-  Manages a Gitea team.
+  Manages a Gitea team within an organization. Teams allow you to group users and assign permissions to repositories.
 ---
 
 # gitea_team (Resource)
 
-Manages a Gitea team.
+Manages a Gitea team within an organization. Teams allow you to group users and assign permissions to repositories.
 
 ## Example Usage
 
@@ -38,19 +38,36 @@ resource "gitea_team" "test_team" {
 
 ### Required
 
-- `name` (String) The name of the team.
-- `org` (String) The name of the organization to create the team in.
-- `units_map` (Map of String) The units this team has access to, and the permission mode granted.
+- `name` (String) The name of the team. Must be unique within the organization.
+- `org` (String) The name of the organization the team belongs to. This is required for creating and managing the team.
+- `units_map` (Map of String) A map of repository units to their permission levels.
+
+**Unit names:**
+- `repo.code` - Repository code/files
+- `repo.issues` - Issue tracker
+- `repo.pulls` - Pull requests
+- `repo.releases` - Releases
+- `repo.wiki` - Wiki
+- `repo.ext_wiki` - External wiki
+- `repo.ext_issues` - External issue tracker
+- `repo.projects` - Projects
+- `repo.packages` - Packages
+- `repo.actions` - Actions
+
+**Permission values:**
+- `none` - No access
+- `read` - Read-only access
+- `write` - Read and write access
 
 ### Optional
 
-- `can_create_org_repo` (Boolean) Whether the team can create repositories in the organization.
-- `description` (String) The description of the team.
-- `includes_all_repositories` (Boolean) Whether the team has access to all repositories in the organization.
+- `can_create_org_repo` (Boolean) Whether team members can create new repositories in the organization. Defaults to `false` if not specified.
+- `description` (String) A description of the team's purpose. Optional, but recommended for documentation.
+- `includes_all_repositories` (Boolean) Whether the team automatically has access to all repositories in the organization, including newly created ones. Defaults to `false` if not specified.
 
 ### Read-Only
 
-- `id` (Number) The unique identifier of the team.
+- `id` (Number) The unique numeric identifier of the team in Gitea.
 
 ## Import
 

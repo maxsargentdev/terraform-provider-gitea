@@ -3,12 +3,12 @@
 page_title: "gitea_user Resource - gitea"
 subcategory: ""
 description: |-
-  Manages a Gitea user.
+  Manages a Gitea user account. This resource allows you to create, update, and delete user accounts in your Gitea instance. Requires admin privileges.
 ---
 
 # gitea_user (Resource)
 
-Manages a Gitea user.
+Manages a Gitea user account. This resource allows you to create, update, and delete user accounts in your Gitea instance. Requires admin privileges.
 
 ## Example Usage
 
@@ -25,34 +25,32 @@ resource "gitea_user" "test_user" {
 
 ### Required
 
-- `email` (String) The email address of the user
-- `password` (String, Sensitive) The plain text password for the user. This is write-only and cannot be read back.
-- `username` (String) Username of the user.
+- `email` (String) E-Mail Address of the user.
+- `login_name` (String) The login name can differ from the username.
+- `password` (String, Sensitive) Password to be set for the user.
+- `username` (String) Username of the user to be created.
 
 ### Optional
 
-- `active` (Boolean) Is user active (can login).
-- `admin` (Boolean) Is the user an administrator.
-- `allow_create_organization` (Boolean) Whether the user can create organizations.
-- `allow_git_hook` (Boolean) Whether the user can use git hooks.
-- `allow_import_local` (Boolean) Whether the user can import local repositories.
-- `description` (String) The user's description.
-- `full_name` (String) The full display name of the user.
-- `location` (String) The user's location.
-- `login_name` (String) The login name for the authentication source.
-- `max_repo_creation` (Number) Maximum number of repositories the user can create.
-- `must_change_password` (Boolean) Whether the user must change password on first login.
-- `prohibit_login` (Boolean) Is user login prohibited.
-- `restricted` (Boolean) Whether the user has restricted access privileges.
-- `send_notify` (Boolean) Whether to send welcome notification email to the user.
-- `source_id` (Number) The authentication source ID to associate with the user.
-- `visibility` (String) User visibility level: public, limited, or private
-- `website` (String) The user's website.
+- `active` (Boolean) Flag indicating if the user account should be enabled.
+- `admin` (Boolean) Flag indicating if the user should have administrator privileges.
+- `allow_create_organization` (Boolean) Whether the user is allowed to create organizations.
+- `allow_git_hook` (Boolean) Whether the user is allowed to create Git hooks.
+- `allow_import_local` (Boolean) Whether the user is allowed to import local repositories.
+- `description` (String) A description of the user.
+- `force_password_change` (Boolean) Flag if the user defined password should be overwritten or not.
+- `full_name` (String) Full name of the user.
+- `location` (String) The location of the user.
+- `max_repo_creation` (Number) The maximum number of repositories this user can create. `-1` for unlimited.
+- `must_change_password` (Boolean) Flag if the user should change the password after first login.
+- `prohibit_login` (Boolean) Flag if the user should not be allowed to log in (bot user).
+- `restricted` (Boolean) Whether the user has restricted access.
+- `send_notification` (Boolean) Flag to send a notification about the user creation to the defined email.
+- `visibility` (String) Visibility of the user. Can be `public`, `limited` or `private`.
 
 ### Read-Only
 
-- `avatar_url` (String) URL to the user's avatar.
-- `id` (Number) The user's ID.
+- `id` (String) The ID of this resource.
 
 ## Import
 

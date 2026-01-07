@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go doc:*)",
+      "Bash(powershell -Command \"\\(Get-Content ''internal/provider/repository_data_source.go'' | Select-String -Pattern ''OpenPRCount''\\).LineNumber\")",
+      "Bash(powershell -Command:*)",
+      "Bash(tfplugindocs generate:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}
