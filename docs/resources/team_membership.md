@@ -13,9 +13,10 @@ Manages a team membership (assigns a user to a team)
 ## Example Usage
 
 ```terraform
-resource "gitea_team_membership" "example" {
-  team_id  = gitea_team.example.id
-  username = "johndoe"
+resource "gitea_team_membership" "test_membership" {
+  org       = "testorg"
+  team_name = "test-team"
+  username  = "test"
 }
 ```
 

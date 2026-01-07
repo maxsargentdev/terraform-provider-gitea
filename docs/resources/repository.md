@@ -3,20 +3,28 @@
 page_title: "gitea_repository Resource - gitea"
 subcategory: ""
 description: |-
-  
+  Manages a Gitea repository.
 ---
 
 # gitea_repository (Resource)
 
-
+Manages a Gitea repository.
 
 ## Example Usage
 
 ```terraform
-resource "gitea_repository" "example" {
-  name        = "my-repo"
-  description = "An example repository"
-  private     = false
+resource "gitea_repository" "test_repo" {
+  owner       = "root"
+  name        = "test-repo"
+  description = "A test repository created with Terraform, using a user as the owner"
+  private     = true
+}
+
+resource "gitea_repository" "test_repo_for_org" {
+  owner       = "testorg"
+  name        = "test-repo-for-org"
+  description = "A test repository created with Terraform"
+  private     = true
 }
 ```
 
@@ -34,61 +42,20 @@ resource "gitea_repository" "example" {
 - `default_branch` (String) DefaultBranch of the repository (used when initializes and in template)
 - `description` (String) Description of the repository to create
 - `gitignores` (String) Gitignores to use
-- `issue_labels` (String) Label-Set to use
+- `issue_labels` (String) Issue Label set to use
 - `license` (String) License to use
+- `object_format_name` (String) ObjectFormatName of the underlying git repository (sha1 or sha256)
 - `private` (Boolean) Whether the repository is private
 - `readme` (String) Readme of the repository to create
 - `template` (Boolean) Whether the repository is template
+- `trust_model` (String) TrustModel of the repository
 
 ### Read-Only
 
-- `allow_fast_forward_only_merge` (Boolean)
-- `allow_manual_merge` (Boolean)
-- `allow_merge_commits` (Boolean)
-- `allow_rebase` (Boolean)
-- `allow_rebase_explicit` (Boolean)
-- `allow_rebase_update` (Boolean)
-- `allow_squash_merge` (Boolean)
-- `archived` (Boolean)
-- `archived_at` (String)
-- `autodetect_manual_merge` (Boolean)
-- `avatar_url` (String)
-- `clone_url` (String)
-- `created_at` (String)
-- `default_allow_maintainer_edit` (Boolean)
-- `default_delete_branch_after_merge` (Boolean)
-- `default_merge_style` (String)
-- `empty` (Boolean)
-- `fork` (Boolean)
-- `forks_count` (Number)
-- `has_actions` (Boolean)
-- `has_code` (Boolean)
-- `has_issues` (Boolean)
-- `has_packages` (Boolean)
-- `has_projects` (Boolean)
-- `has_pull_requests` (Boolean)
-- `has_releases` (Boolean)
-- `has_wiki` (Boolean)
-- `html_url` (String)
-- `id` (Number) The ID of this resource.
-- `ignore_whitespace_conflicts` (Boolean)
-- `internal` (Boolean)
-- `language` (String)
-- `languages_url` (String)
-- `licenses` (List of String)
-- `link` (String)
-- `open_issues_count` (Number)
-- `open_pr_counter` (Number)
-- `projects_mode` (String)
-- `release_counter` (Number)
-- `size` (Number)
-- `ssh_url` (String)
-- `stars_count` (Number)
-- `topics` (List of String)
-- `updated_at` (String)
-- `url` (String)
-- `watchers_count` (Number)
-- `website` (String)
+- `clone_url` (String) The HTTPS URL to clone the repository
+- `html_url` (String) The URL to the repository in the web UI
+- `id` (Number) The ID of the repository
+- `ssh_url` (String) The SSH URL to clone the repository
 
 ## Import
 

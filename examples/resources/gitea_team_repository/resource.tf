@@ -1,5 +1,5 @@
-resource "gitea_team_repository" "example" {
-  org                        = "my-organization"
-  team_name                  = "developers"
-  repository_name            = "my-repository"
+resource "gitea_team_repository" "test_team_repo_association" {
+  org             = "testorg"
+  team_name       = "test-team"
+  repository_name = "test-repo-for-org"
 }

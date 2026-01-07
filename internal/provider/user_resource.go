@@ -20,31 +20,49 @@ func NewUserResource() resource.Resource {
 
 // Helper function to map Gitea User to Terraform model
 func mapUserToModel(user *gitea.User, model *userResourceModel) {
-	model.Active = types.BoolValue(user.IsActive)
-	model.AvatarUrl = types.StringValue(user.AvatarURL)
-	model.Created = types.StringValue(user.Created.String())
-	model.CreatedAt = types.StringNull()
-	model.Description = types.StringValue(user.Description)
-	model.Email = types.StringValue(user.Email)
-	model.FollowersCount = types.Int64Null()
-	model.FollowingCount = types.Int64Null()
-	model.FullName = types.StringValue(user.FullName)
-	model.HtmlUrl = types.StringValue("")
+	// Computed fields
 	model.Id = types.Int64Value(user.ID)
-	model.IsAdmin = types.BoolValue(user.IsAdmin)
-	model.Language = types.StringValue(user.Language)
-	model.LastLogin = types.StringValue(user.LastLogin.String())
+	model.AvatarUrl = types.StringValue(user.AvatarURL)
+
+	// Optional fields returned by API
+	model.Username = types.StringValue(user.UserName)
+	model.Email = types.StringValue(user.Email)
+	model.FullName = types.StringValue(user.FullName)
+	model.Description = types.StringValue(user.Description)
+	model.Website = types.StringValue(user.Website)
 	model.Location = types.StringValue(user.Location)
-	model.Login = types.StringValue(user.UserName)
-	model.MustChangePassword = types.BoolNull()
+	model.Active = types.BoolValue(user.IsActive)
+	model.Admin = types.BoolValue(user.IsAdmin)
 	model.ProhibitLogin = types.BoolValue(user.ProhibitLogin)
 	model.Restricted = types.BoolValue(user.Restricted)
-	model.SendNotify = types.BoolNull()
-	model.SourceId = types.Int64Value(user.SourceID)
-	model.StarredReposCount = types.Int64Null()
-	model.Username = types.StringValue(user.UserName)
 	model.Visibility = types.StringValue(string(user.Visibility))
-	model.Website = types.StringValue(user.Website)
+	model.SourceId = types.Int64Value(user.SourceID)
+
+	// Creation-only fields - preserve from existing model, convert Unknown to null
+	if model.Password.IsUnknown() {
+		model.Password = types.StringNull()
+	}
+	if model.LoginName.IsUnknown() {
+		model.LoginName = types.StringNull()
+	}
+	if model.MustChangePassword.IsUnknown() {
+		model.MustChangePassword = types.BoolNull()
+	}
+	if model.SendNotify.IsUnknown() {
+		model.SendNotify = types.BoolNull()
+	}
+	if model.AllowGitHook.IsUnknown() {
+		model.AllowGitHook = types.BoolNull()
+	}
+	if model.AllowImportLocal.IsUnknown() {
+		model.AllowImportLocal = types.BoolNull()
+	}
+	if model.MaxRepoCreation.IsUnknown() {
+		model.MaxRepoCreation = types.Int64Null()
+	}
+	if model.AllowCreateOrganization.IsUnknown() {
+		model.AllowCreateOrganization = types.BoolNull()
+	}
 }
 
 type userResource struct {
@@ -52,32 +70,35 @@ type userResource struct {
 }
 
 type userResourceModel struct {
-	Active             types.Bool   `tfsdk:"active"`
-	AvatarUrl          types.String `tfsdk:"avatar_url"`
-	Created            types.String `tfsdk:"created"`
-	CreatedAt          types.String `tfsdk:"created_at"`
-	Description        types.String `tfsdk:"description"`
-	Email              types.String `tfsdk:"email"`
-	FollowersCount     types.Int64  `tfsdk:"followers_count"`
-	FollowingCount     types.Int64  `tfsdk:"following_count"`
-	FullName           types.String `tfsdk:"full_name"`
-	HtmlUrl            types.String `tfsdk:"html_url"`
-	Id                 types.Int64  `tfsdk:"id"`
-	IsAdmin            types.Bool   `tfsdk:"is_admin"`
-	Language           types.String `tfsdk:"language"`
-	LastLogin          types.String `tfsdk:"last_login"`
-	Location           types.String `tfsdk:"location"`
-	Login              types.String `tfsdk:"login"`
-	MustChangePassword types.Bool   `tfsdk:"must_change_password"`
-	Password           types.String `tfsdk:"password"`
-	ProhibitLogin      types.Bool   `tfsdk:"prohibit_login"`
-	Restricted         types.Bool   `tfsdk:"restricted"`
-	SendNotify         types.Bool   `tfsdk:"send_notify"`
+	// Required
+	Username types.String `tfsdk:"username"`
+	Email    types.String `tfsdk:"email"`
+	Password types.String `tfsdk:"password"`
+
+	// Optional - from CreateUserOption and EditUserOption
 	SourceId           types.Int64  `tfsdk:"source_id"`
-	StarredReposCount  types.Int64  `tfsdk:"starred_repos_count"`
-	Username           types.String `tfsdk:"username"`
+	LoginName          types.String `tfsdk:"login_name"`
+	FullName           types.String `tfsdk:"full_name"`
+	MustChangePassword types.Bool   `tfsdk:"must_change_password"`
+	SendNotify         types.Bool   `tfsdk:"send_notify"`
 	Visibility         types.String `tfsdk:"visibility"`
-	Website            types.String `tfsdk:"website"`
+
+	// Optional - from EditUserOption only
+	Description             types.String `tfsdk:"description"`
+	Website                 types.String `tfsdk:"website"`
+	Location                types.String `tfsdk:"location"`
+	Active                  types.Bool   `tfsdk:"active"`
+	Admin                   types.Bool   `tfsdk:"admin"`
+	AllowGitHook            types.Bool   `tfsdk:"allow_git_hook"`
+	AllowImportLocal        types.Bool   `tfsdk:"allow_import_local"`
+	MaxRepoCreation         types.Int64  `tfsdk:"max_repo_creation"`
+	ProhibitLogin           types.Bool   `tfsdk:"prohibit_login"`
+	AllowCreateOrganization types.Bool   `tfsdk:"allow_create_organization"`
+	Restricted              types.Bool   `tfsdk:"restricted"`
+
+	// Computed - key outputs
+	Id        types.Int64  `tfsdk:"id"`
+	AvatarUrl types.String `tfsdk:"avatar_url"`
 }
 
 func (r *userResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -86,18 +107,18 @@ func (r *userResource) Metadata(ctx context.Context, req resource.MetadataReques
 
 func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Manages a Gitea user.",
 		Attributes: map[string]schema.Attribute{
-
-			// required - these are fundamental configuration options
-			"email": schema.StringAttribute{
-				Required:            true,
-				Description:         "The email of the user to create.",
-				MarkdownDescription: "The email address of the user to create.",
-			},
+			// Required
 			"username": schema.StringAttribute{
 				Required:            true,
 				Description:         "Username of the user",
 				MarkdownDescription: "Username of the user",
+			},
+			"email": schema.StringAttribute{
+				Required:            true,
+				Description:         "The email address of the user",
+				MarkdownDescription: "The email address of the user",
 			},
 			"password": schema.StringAttribute{
 				Required:            true,
@@ -106,18 +127,18 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: "The plain text password for the user. This is write-only and cannot be read back.",
 			},
 
-			// optional - these tweak the created resource away from its defaults
-			"active": schema.BoolAttribute{
+			// Optional - from CreateUserOption and EditUserOption
+			"source_id": schema.Int64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Is user active (can login)",
-				MarkdownDescription: "Is user active (can login)",
+				Description:         "The authentication source ID to associate with the user",
+				MarkdownDescription: "The authentication source ID to associate with the user",
 			},
-			"created_at": schema.StringAttribute{
+			"login_name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\".",
-				MarkdownDescription: "For explicitly setting the user creation timestamp. Useful when users are\nmigrated from other systems. When omitted, the user's creation timestamp\nwill be set to \"now\".",
+				Description:         "The login name for the authentication source",
+				MarkdownDescription: "The login name for the authentication source",
 			},
 			"full_name": schema.StringAttribute{
 				Optional:            true,
@@ -131,23 +152,11 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Description:         "Whether the user must change password on first login",
 				MarkdownDescription: "Whether the user must change password on first login",
 			},
-			"restricted": schema.BoolAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "Whether the user has restricted access privileges",
-				MarkdownDescription: "Whether the user has restricted access privileges",
-			},
 			"send_notify": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
 				Description:         "Whether to send welcome notification email to the user",
 				MarkdownDescription: "Whether to send welcome notification email to the user",
-			},
-			"source_id": schema.Int64Attribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "The authentication source ID to associate with the user",
-				MarkdownDescription: "The authentication source ID to associate with the user",
 			},
 			"visibility": schema.StringAttribute{
 				Optional:            true,
@@ -155,74 +164,83 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Description:         "User visibility level: public, limited, or private",
 				MarkdownDescription: "User visibility level: public, limited, or private",
 			},
-
-			// computed - these are available to read back after creation but are really just metadata
-			"avatar_url": schema.StringAttribute{
-				Computed:            true,
-				Description:         "URL to the user's avatar",
-				MarkdownDescription: "URL to the user's avatar",
-			},
-			"created": schema.StringAttribute{
-				Computed: true,
-			},
 			"description": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
-				Description:         "the user's description",
-				MarkdownDescription: "the user's description",
+				Description:         "The user's description",
+				MarkdownDescription: "The user's description",
 			},
-			"followers_count": schema.Int64Attribute{
+			"website": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
-				Description:         "user counts",
-				MarkdownDescription: "user counts",
+				Description:         "The user's website",
+				MarkdownDescription: "The user's website",
 			},
-			"following_count": schema.Int64Attribute{
-				Computed: true,
-			},
-			"html_url": schema.StringAttribute{
+			"location": schema.StringAttribute{
+				Optional:            true,
 				Computed:            true,
-				Description:         "URL to the user's gitea page",
-				MarkdownDescription: "URL to the user's gitea page",
+				Description:         "The user's location",
+				MarkdownDescription: "The user's location",
 			},
-			"id": schema.Int64Attribute{
+			"active": schema.BoolAttribute{
+				Optional:            true,
 				Computed:            true,
-				Description:         "the user's id",
-				MarkdownDescription: "the user's id",
+				Description:         "Is user active (can login)",
+				MarkdownDescription: "Is user active (can login)",
 			},
-			"is_admin": schema.BoolAttribute{
+			"admin": schema.BoolAttribute{
+				Optional:            true,
 				Computed:            true,
 				Description:         "Is the user an administrator",
 				MarkdownDescription: "Is the user an administrator",
 			},
-			"language": schema.StringAttribute{
+			"allow_git_hook": schema.BoolAttribute{
+				Optional:            true,
 				Computed:            true,
-				Description:         "User locale",
-				MarkdownDescription: "User locale",
+				Description:         "Whether the user can use git hooks",
+				MarkdownDescription: "Whether the user can use git hooks",
 			},
-			"last_login": schema.StringAttribute{
-				Computed: true,
-			},
-			"location": schema.StringAttribute{
+			"allow_import_local": schema.BoolAttribute{
+				Optional:            true,
 				Computed:            true,
-				Description:         "the user's location",
-				MarkdownDescription: "the user's location",
+				Description:         "Whether the user can import local repositories",
+				MarkdownDescription: "Whether the user can import local repositories",
 			},
-			"login": schema.StringAttribute{
+			"max_repo_creation": schema.Int64Attribute{
+				Optional:            true,
 				Computed:            true,
-				Description:         "login of the user, same as `username`",
-				MarkdownDescription: "login of the user, same as `username`",
+				Description:         "Maximum number of repositories the user can create",
+				MarkdownDescription: "Maximum number of repositories the user can create",
 			},
 			"prohibit_login": schema.BoolAttribute{
+				Optional:            true,
 				Computed:            true,
 				Description:         "Is user login prohibited",
 				MarkdownDescription: "Is user login prohibited",
 			},
-			"starred_repos_count": schema.Int64Attribute{
-				Computed: true,
-			},
-			"website": schema.StringAttribute{
+			"allow_create_organization": schema.BoolAttribute{
+				Optional:            true,
 				Computed:            true,
-				Description:         "the user's website",
-				MarkdownDescription: "the user's website",
+				Description:         "Whether the user can create organizations",
+				MarkdownDescription: "Whether the user can create organizations",
+			},
+			"restricted": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the user has restricted access privileges",
+				MarkdownDescription: "Whether the user has restricted access privileges",
+			},
+
+			// Computed - key outputs
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The user's ID",
+				MarkdownDescription: "The user's ID",
+			},
+			"avatar_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "URL to the user's avatar",
+				MarkdownDescription: "URL to the user's avatar",
 			},
 		},
 	}
@@ -246,34 +264,24 @@ func (r *userResource) Configure(ctx context.Context, req resource.ConfigureRequ
 }
 
 func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data userResourceModel
+	var plan userResourceModel
 
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Preserve plan values for fields not returned by API or set during creation
-	sendNotify := data.SendNotify
-	mustChangePassword := data.MustChangePassword
-	restricted := data.Restricted
-	visibility := data.Visibility
-	sourceId := data.SourceId
-	createdAt := data.CreatedAt
-
 	// Create user via Gitea API
 	createOpts := gitea.CreateUserOption{
-		Username:           data.Username.ValueString(),
-		Email:              data.Email.ValueString(),
-		Password:           data.Password.ValueString(),
-		MustChangePassword: data.MustChangePassword.ValueBoolPointer(),
-		SendNotify:         data.SendNotify.ValueBool(),
-		Visibility:         (*gitea.VisibleType)(data.Visibility.ValueStringPointer()),
-		SourceID:           data.SourceId.ValueInt64(),
-	}
-
-	if !data.FullName.IsNull() && !data.FullName.IsUnknown() {
-		createOpts.FullName = data.FullName.ValueString()
+		Username:           plan.Username.ValueString(),
+		Email:              plan.Email.ValueString(),
+		Password:           plan.Password.ValueString(),
+		SourceID:           plan.SourceId.ValueInt64(),
+		LoginName:          plan.LoginName.ValueString(),
+		FullName:           plan.FullName.ValueString(),
+		MustChangePassword: plan.MustChangePassword.ValueBoolPointer(),
+		SendNotify:         plan.SendNotify.ValueBool(),
+		Visibility:         (*gitea.VisibleType)(plan.Visibility.ValueStringPointer()),
 	}
 
 	user, _, err := r.client.AdminCreateUser(createOpts)
@@ -285,196 +293,140 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	// If restricted was set in the plan, we need to update the user after creation
-	// because CreateUserOption doesn't support the restricted field
-	if !restricted.IsNull() && !restricted.IsUnknown() {
-		editOpts := gitea.EditUserOption{
-			LoginName:  data.Username.ValueString(),
-			Restricted: restricted.ValueBoolPointer(),
-		}
-		_, err := r.client.AdminEditUser(data.Username.ValueString(), editOpts)
+	// Apply EditUserOption fields via update (since some fields aren't in CreateUserOption)
+	editOpts := gitea.EditUserOption{
+		LoginName:               plan.LoginName.ValueString(),
+		Description:             plan.Description.ValueStringPointer(),
+		Website:                 plan.Website.ValueStringPointer(),
+		Location:                plan.Location.ValueStringPointer(),
+		Active:                  plan.Active.ValueBoolPointer(),
+		Admin:                   plan.Admin.ValueBoolPointer(),
+		AllowGitHook:            plan.AllowGitHook.ValueBoolPointer(),
+		AllowImportLocal:        plan.AllowImportLocal.ValueBoolPointer(),
+		ProhibitLogin:           plan.ProhibitLogin.ValueBoolPointer(),
+		AllowCreateOrganization: plan.AllowCreateOrganization.ValueBoolPointer(),
+		Restricted:              plan.Restricted.ValueBoolPointer(),
+	}
+
+	if !plan.MaxRepoCreation.IsNull() && !plan.MaxRepoCreation.IsUnknown() {
+		maxRepoInt := int(plan.MaxRepoCreation.ValueInt64())
+		editOpts.MaxRepoCreation = &maxRepoInt
+	}
+
+	// Only call edit if we have fields to update
+	hasEditFields := !plan.Description.IsNull() || !plan.Website.IsNull() || !plan.Location.IsNull() ||
+		!plan.Active.IsNull() || !plan.Admin.IsNull() || !plan.AllowGitHook.IsNull() ||
+		!plan.AllowImportLocal.IsNull() || !plan.MaxRepoCreation.IsNull() || !plan.ProhibitLogin.IsNull() ||
+		!plan.AllowCreateOrganization.IsNull() || !plan.Restricted.IsNull()
+
+	if hasEditFields {
+		_, err = r.client.AdminEditUser(plan.Username.ValueString(), editOpts)
 		if err != nil {
 			resp.Diagnostics.AddError(
-				"Error Setting User Restricted Status",
-				"User was created but could not set restricted status: "+err.Error(),
+				"Error Updating User After Creation",
+				"User was created but could not apply additional settings: "+err.Error(),
 			)
 			return
 		}
 
 		// Re-read the user to get updated values
-		user, _, err = r.client.GetUserInfo(data.Username.ValueString())
+		user, _, err = r.client.GetUserInfo(plan.Username.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
-				"Error Reading User After Setting Restricted",
-				"Could not read user "+data.Username.ValueString()+": "+err.Error(),
+				"Error Reading User After Update",
+				"Could not read user "+plan.Username.ValueString()+": "+err.Error(),
 			)
 			return
 		}
 	}
 
 	// Map response to model
-	mapUserToModel(user, &data)
+	mapUserToModel(user, &plan)
 
-	// Restore plan values for fields not returned by API or that we want to preserve
-	if !sendNotify.IsUnknown() {
-		data.SendNotify = sendNotify
-	} else {
-		data.SendNotify = types.BoolNull()
-	}
-	if !mustChangePassword.IsUnknown() {
-		data.MustChangePassword = mustChangePassword
-	} else {
-		data.MustChangePassword = types.BoolNull()
-	}
-	if !visibility.IsUnknown() && !visibility.IsNull() {
-		data.Visibility = visibility
-	}
-	if !sourceId.IsUnknown() && !sourceId.IsNull() {
-		data.SourceId = sourceId
-	}
-	if !createdAt.IsUnknown() && !createdAt.IsNull() {
-		data.CreatedAt = createdAt
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data userResourceModel
+	var state userResourceModel
 
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Preserve state values for fields not returned by API
-	sendNotify := data.SendNotify
-	mustChangePassword := data.MustChangePassword
-	restricted := data.Restricted
-	visibility := data.Visibility
-	sourceId := data.SourceId
-	createdAt := data.CreatedAt
-
 	// Get user from Gitea API
-	user, _, err := r.client.GetUserInfo(data.Username.ValueString())
+	user, _, err := r.client.GetUserInfo(state.Username.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading User",
-			"Could not read user "+data.Username.ValueString()+": "+err.Error(),
+			"Could not read user "+state.Username.ValueString()+": "+err.Error(),
 		)
 		return
 	}
 
 	// Map response to model
-	mapUserToModel(user, &data)
+	mapUserToModel(user, &state)
 
-	// Restore state values for fields not returned by API, but only if they were known
-	if !sendNotify.IsUnknown() {
-		data.SendNotify = sendNotify
-	} else {
-		data.SendNotify = types.BoolNull()
-	}
-	if !mustChangePassword.IsUnknown() {
-		data.MustChangePassword = mustChangePassword
-	} else {
-		data.MustChangePassword = types.BoolNull()
-	}
-	if !restricted.IsUnknown() && !restricted.IsNull() {
-		data.Restricted = restricted
-	}
-	if !visibility.IsUnknown() && !visibility.IsNull() {
-		data.Visibility = visibility
-	}
-	if !sourceId.IsUnknown() && !sourceId.IsNull() {
-		data.SourceId = sourceId
-	}
-	if !createdAt.IsUnknown() && !createdAt.IsNull() {
-		data.CreatedAt = createdAt
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data userResourceModel
+	var plan userResourceModel
 
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Preserve plan values for fields not returned by API
-	sendNotify := data.SendNotify
-	mustChangePassword := data.MustChangePassword
-	restricted := data.Restricted
-	visibility := data.Visibility
-	sourceId := data.SourceId
-	createdAt := data.CreatedAt
-
 	// Update user via Gitea API
 	editOpts := gitea.EditUserOption{
-		Email:              data.Email.ValueStringPointer(),
-		FullName:           data.FullName.ValueStringPointer(),
-		LoginName:          data.Username.ValueString(),
-		Restricted:         data.Restricted.ValueBoolPointer(),
-		Visibility:         (*gitea.VisibleType)(data.Visibility.ValueStringPointer()),
-		SourceID:           data.SourceId.ValueInt64(),
-		Password:           data.Password.ValueString(),
-		MustChangePassword: data.MustChangePassword.ValueBoolPointer(),
+		LoginName:               plan.LoginName.ValueString(),
+		SourceID:                plan.SourceId.ValueInt64(),
+		Email:                   plan.Email.ValueStringPointer(),
+		FullName:                plan.FullName.ValueStringPointer(),
+		Password:                plan.Password.ValueString(),
+		Description:             plan.Description.ValueStringPointer(),
+		MustChangePassword:      plan.MustChangePassword.ValueBoolPointer(),
+		Website:                 plan.Website.ValueStringPointer(),
+		Location:                plan.Location.ValueStringPointer(),
+		Active:                  plan.Active.ValueBoolPointer(),
+		Admin:                   plan.Admin.ValueBoolPointer(),
+		AllowGitHook:            plan.AllowGitHook.ValueBoolPointer(),
+		AllowImportLocal:        plan.AllowImportLocal.ValueBoolPointer(),
+		ProhibitLogin:           plan.ProhibitLogin.ValueBoolPointer(),
+		AllowCreateOrganization: plan.AllowCreateOrganization.ValueBoolPointer(),
+		Restricted:              plan.Restricted.ValueBoolPointer(),
+		Visibility:              (*gitea.VisibleType)(plan.Visibility.ValueStringPointer()),
 	}
 
-	// Only set Active if explicitly provided (not null/unknown)
-	if !data.Active.IsNull() && !data.Active.IsUnknown() {
-		editOpts.Active = data.Active.ValueBoolPointer()
+	if !plan.MaxRepoCreation.IsNull() && !plan.MaxRepoCreation.IsUnknown() {
+		maxRepoInt := int(plan.MaxRepoCreation.ValueInt64())
+		editOpts.MaxRepoCreation = &maxRepoInt
 	}
 
-	_, err := r.client.AdminEditUser(data.Username.ValueString(), editOpts)
+	_, err := r.client.AdminEditUser(plan.Username.ValueString(), editOpts)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating User",
-			"Could not update user "+data.Username.ValueString()+": "+err.Error(),
+			"Could not update user "+plan.Username.ValueString()+": "+err.Error(),
 		)
 		return
 	}
 
 	// Read back the user to get updated values
-	user, _, err := r.client.GetUserInfo(data.Username.ValueString())
+	user, _, err := r.client.GetUserInfo(plan.Username.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading User After Update",
-			"Could not read user "+data.Username.ValueString()+": "+err.Error(),
+			"Could not read user "+plan.Username.ValueString()+": "+err.Error(),
 		)
 		return
 	}
 
 	// Map response to model
-	mapUserToModel(user, &data)
+	mapUserToModel(user, &plan)
 
-	// Restore plan values for fields not returned by API, but only if they were specified
-	if !sendNotify.IsUnknown() {
-		data.SendNotify = sendNotify
-	} else {
-		data.SendNotify = types.BoolNull()
-	}
-	if !mustChangePassword.IsUnknown() {
-		data.MustChangePassword = mustChangePassword
-	} else {
-		data.MustChangePassword = types.BoolNull()
-	}
-	if !restricted.IsUnknown() && !restricted.IsNull() {
-		data.Restricted = restricted
-	}
-	if !visibility.IsUnknown() && !visibility.IsNull() {
-		data.Visibility = visibility
-	}
-	if !sourceId.IsUnknown() && !sourceId.IsNull() {
-		data.SourceId = sourceId
-	}
-	if !createdAt.IsUnknown() && !createdAt.IsNull() {
-		data.CreatedAt = createdAt
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 func (r *userResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
