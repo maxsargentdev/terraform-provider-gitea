@@ -3,15 +3,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strconv"
-
-	"github.com/maxsargendev/terraform-provider-gitea/internal/resource_team"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -29,10 +28,14 @@ type teamResource struct {
 	client *gitea.Client
 }
 
-// TeamModel wraps the generated model and adds the org field
-type TeamModel struct {
-	resource_team.TeamModel
-	Org types.String `tfsdk:"org"`
+type teamResourceModel struct {
+	Org                     types.String `tfsdk:"org"`
+	Name                    types.String `tfsdk:"name"`
+	UnitsMap                types.Map    `tfsdk:"units_map"`
+	CanCreateOrgRepo        types.Bool   `tfsdk:"can_create_org_repo"`
+	Description             types.String `tfsdk:"description"`
+	IncludesAllRepositories types.Bool   `tfsdk:"includes_all_repositories"`
+	Id                      types.Int64  `tfsdk:"id"`
 }
 
 func (r *teamResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -40,16 +43,61 @@ func (r *teamResource) Metadata(_ context.Context, req resource.MetadataRequest,
 }
 
 func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	baseSchema := resource_team.TeamResourceSchema(ctx)
+	resp.Schema = schema.Schema{
+		Description:         "Manages a Gitea team.",
+		MarkdownDescription: "Manages a Gitea team.",
+		Attributes: map[string]schema.Attribute{
 
-	// Add org as a required string field - this is the input for which org to create the team in
-	baseSchema.Attributes["org"] = schema.StringAttribute{
-		Required:            true,
-		Description:         "The name of the organization to create the team in",
-		MarkdownDescription: "The name of the organization to create the team in",
+			// required - these are fundamental configuration options
+			"org": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the organization to create the team in.",
+				MarkdownDescription: "The name of the organization to create the team in.",
+			},
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the team.",
+				MarkdownDescription: "The name of the team.",
+			},
+			"units_map": schema.MapAttribute{
+				Required:    true,
+				Description: "The units this team has access to, and the permission mode granted.",
+				ElementType: types.StringType,
+			},
+
+			// optional - these tweak the created resource away from its defaults
+			"can_create_org_repo": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the team can create repositories in the organization.",
+				MarkdownDescription: "Whether the team can create repositories in the organization.",
+			},
+			"description": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The description of the team.",
+				MarkdownDescription: "The description of the team.",
+			},
+			"includes_all_repositories": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the team has access to all repositories in the organization.",
+				MarkdownDescription: "Whether the team has access to all repositories in the organization.",
+			},
+
+			// computed - these are available to read back after creation but are really just metadata
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The unique identifier of the team.",
+				MarkdownDescription: "The unique identifier of the team.",
+
+				// ID doesnt change once set, only computed once so refer to state
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
+			},
+		},
 	}
-
-	resp.Schema = baseSchema
 }
 
 func (r *teamResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -70,7 +118,7 @@ func (r *teamResource) Configure(_ context.Context, req resource.ConfigureReques
 }
 
 func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan TeamModel
+	var plan teamResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -79,21 +127,40 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	orgName := plan.Org.ValueString()
 
+	// Validate units_map is provided (required attribute)
+	if plan.UnitsMap.IsNull() || plan.UnitsMap.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Missing Required Attribute",
+			"units_map is required but was not provided",
+		)
+		return
+	}
+
+	// Extract units_map for specifying permissions
+	unitsMap := make(map[string]string)
+	plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
+
+	// Validate permission values - only "none", "read", "write" are allowed
+	validPermissions := map[string]bool{"none": true, "read": true, "write": true}
+	for unit, permission := range unitsMap {
+		if !validPermissions[permission] {
+			resp.Diagnostics.AddError(
+				"Invalid Permission Value",
+				fmt.Sprintf("Unit '%s' has invalid permission '%s'. Valid values are: 'none', 'read', 'write'", unit, permission),
+			)
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	opts := gitea.CreateTeamOption{
 		Name:                    plan.Name.ValueString(),
 		Description:             plan.Description.ValueString(),
 		CanCreateOrgRepo:        plan.CanCreateOrgRepo.ValueBool(),
 		IncludesAllRepositories: plan.IncludesAllRepositories.ValueBool(),
 		Permission:              gitea.AccessModeNone,
-	}
-
-	// units_map is required for specifying permissions
-	if !plan.UnitsMap.IsNull() && !plan.UnitsMap.IsUnknown() {
-		unitsMap := make(map[string]string)
-		plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
-		if len(unitsMap) > 0 {
-			opts.UnitsMap = unitsMap
-		}
+		UnitsMap:                unitsMap,
 	}
 
 	team, _, err := r.client.CreateTeam(orgName, opts)
@@ -105,13 +172,13 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	mapTeamToModel(ctx, team, &plan.TeamModel)
+	mapTeamToModel(ctx, team, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
 func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state TeamModel
+	var state teamResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -127,14 +194,14 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	mapTeamToModel(ctx, team, &state.TeamModel)
+	mapTeamToModel(ctx, team, &state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan TeamModel
-	var state TeamModel
+	var plan teamResourceModel
+	var state teamResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -156,21 +223,40 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	canCreate := plan.CanCreateOrgRepo.ValueBool()
 	inclAll := plan.IncludesAllRepositories.ValueBool()
 
+	// Validate units_map is provided (required attribute)
+	if plan.UnitsMap.IsNull() || plan.UnitsMap.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Missing Required Attribute",
+			"units_map is required but was not provided",
+		)
+		return
+	}
+
+	// Extract units_map for specifying permissions
+	unitsMap := make(map[string]string)
+	plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
+
+	// Validate permission values - only "none", "read", "write" are allowed
+	validPermissions := map[string]bool{"none": true, "read": true, "write": true}
+	for unit, permission := range unitsMap {
+		if !validPermissions[permission] {
+			resp.Diagnostics.AddError(
+				"Invalid Permission Value",
+				fmt.Sprintf("Unit '%s' has invalid permission '%s'. Valid values are: 'none', 'read', 'write'", unit, permission),
+			)
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	opts := gitea.EditTeamOption{
 		Name:                    plan.Name.ValueString(),
 		Description:             &desc,
 		CanCreateOrgRepo:        &canCreate,
 		IncludesAllRepositories: &inclAll,
 		Permission:              gitea.AccessModeNone,
-	}
-
-	// units_map is required for specifying permissions
-	if !plan.UnitsMap.IsNull() && !plan.UnitsMap.IsUnknown() {
-		unitsMap := make(map[string]string)
-		plan.UnitsMap.ElementsAs(ctx, &unitsMap, false)
-		if len(unitsMap) > 0 {
-			opts.UnitsMap = unitsMap
-		}
+		UnitsMap:                unitsMap,
 	}
 
 	_, err := r.client.EditTeam(teamID, opts)
@@ -192,13 +278,13 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	mapTeamToModel(ctx, team, &plan.TeamModel)
+	mapTeamToModel(ctx, team, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 func (r *teamResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state TeamModel
+	var state teamResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -236,36 +322,18 @@ func (r *teamResource) ImportState(ctx context.Context, req resource.ImportState
 	}
 
 	// Map to model
-	var state TeamModel
-	mapTeamToModel(ctx, team, &state.TeamModel)
+	var state teamResourceModel
+	mapTeamToModel(ctx, team, &state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func mapTeamToModel(ctx context.Context, team *gitea.Team, model *resource_team.TeamModel) {
+func mapTeamToModel(ctx context.Context, team *gitea.Team, model *teamResourceModel) {
 	model.Id = types.Int64Value(team.ID)
 	model.Name = types.StringValue(team.Name)
 	model.Description = types.StringValue(team.Description)
 	model.CanCreateOrgRepo = types.BoolValue(team.CanCreateOrgRepo)
 	model.IncludesAllRepositories = types.BoolValue(team.IncludesAllRepositories)
-
-	// Map units list
-	if len(team.Units) > 0 {
-		// Sort units for consistent ordering
-		unitStrs := make([]string, len(team.Units))
-		for i, v := range team.Units {
-			unitStrs[i] = string(v)
-		}
-		sort.Strings(unitStrs)
-
-		elements := make([]attr.Value, len(unitStrs))
-		for i, v := range unitStrs {
-			elements[i] = types.StringValue(v)
-		}
-		model.Units, _ = types.ListValue(types.StringType, elements)
-	} else {
-		model.Units = types.ListNull(types.StringType)
-	}
 
 	// Map units_map if present
 	if len(team.UnitsMap) > 0 {
@@ -281,30 +349,4 @@ func mapTeamToModel(ctx context.Context, team *gitea.Team, model *resource_team.
 		}
 	}
 
-	// Map organization nested object
-	if team.Organization != nil {
-		orgAttrs := map[string]attr.Value{
-			"id":                            types.Int64Value(team.Organization.ID),
-			"name":                          types.StringValue(team.Organization.UserName),
-			"username":                      types.StringValue(team.Organization.UserName),
-			"full_name":                     types.StringValue(team.Organization.FullName),
-			"avatar_url":                    types.StringValue(team.Organization.AvatarURL),
-			"description":                   types.StringValue(team.Organization.Description),
-			"website":                       types.StringValue(team.Organization.Website),
-			"location":                      types.StringValue(team.Organization.Location),
-			"visibility":                    types.StringValue(team.Organization.Visibility),
-			"email":                         types.StringNull(),
-			"repo_admin_change_team_access": types.BoolNull(),
-		}
-
-		orgValue, diags := resource_team.NewOrganizationValue(
-			resource_team.OrganizationValue{}.AttributeTypes(ctx),
-			orgAttrs,
-		)
-		if !diags.HasError() {
-			model.Organization = orgValue
-		}
-	} else {
-		model.Organization = resource_team.NewOrganizationValueNull()
-	}
 }

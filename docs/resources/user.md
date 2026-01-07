@@ -3,20 +3,20 @@
 page_title: "gitea_user Resource - gitea"
 subcategory: ""
 description: |-
-  
+  Manages a Gitea user.
 ---
 
 # gitea_user (Resource)
 
-
+Manages a Gitea user.
 
 ## Example Usage
 
 ```terraform
-resource "gitea_user" "example" {
-  username = "johndoe"
-  email    = "johndoe@example.com"
-  password = "securepassword123"
+resource "gitea_user" "test_user" {
+  username = "test"
+  email    = "test@gitea.local"
+  password = "testpassword123"
 }
 ```
 
@@ -25,41 +25,34 @@ resource "gitea_user" "example" {
 
 ### Required
 
-- `email` (String)
-- `username` (String) username of the user
+- `email` (String) The email address of the user
+- `password` (String, Sensitive) The plain text password for the user. This is write-only and cannot be read back.
+- `username` (String) Username of the user.
 
 ### Optional
 
-- `created_at` (String) For explicitly setting the user creation timestamp. Useful when users are
-migrated from other systems. When omitted, the user's creation timestamp
-will be set to "now".
-- `full_name` (String) The full display name of the user
-- `login_name` (String) identifier of the user, provided by the external authenticator (if configured)
-- `must_change_password` (Boolean) Whether the user must change password on first login
-- `password` (String) The plain text password for the user
-- `restricted` (Boolean) Whether the user has restricted access privileges
-- `send_notify` (Boolean) Whether to send welcome notification email to the user
-- `source_id` (Number) The authentication source ID to associate with the user
+- `active` (Boolean) Is user active (can login).
+- `admin` (Boolean) Is the user an administrator.
+- `allow_create_organization` (Boolean) Whether the user can create organizations.
+- `allow_git_hook` (Boolean) Whether the user can use git hooks.
+- `allow_import_local` (Boolean) Whether the user can import local repositories.
+- `description` (String) The user's description.
+- `full_name` (String) The full display name of the user.
+- `location` (String) The user's location.
+- `login_name` (String) The login name for the authentication source.
+- `max_repo_creation` (Number) Maximum number of repositories the user can create.
+- `must_change_password` (Boolean) Whether the user must change password on first login.
+- `prohibit_login` (Boolean) Is user login prohibited.
+- `restricted` (Boolean) Whether the user has restricted access privileges.
+- `send_notify` (Boolean) Whether to send welcome notification email to the user.
+- `source_id` (Number) The authentication source ID to associate with the user.
 - `visibility` (String) User visibility level: public, limited, or private
+- `website` (String) The user's website.
 
 ### Read-Only
 
-- `active` (Boolean) Is user active
-- `avatar_url` (String) URL to the user's avatar
-- `created` (String)
-- `description` (String) the user's description
-- `followers_count` (Number) user counts
-- `following_count` (Number)
-- `html_url` (String) URL to the user's gitea page
-- `id` (Number) the user's id
-- `is_admin` (Boolean) Is the user an administrator
-- `language` (String) User locale
-- `last_login` (String)
-- `location` (String) the user's location
-- `login` (String) login of the user, same as `username`
-- `prohibit_login` (Boolean) Is user login prohibited
-- `starred_repos_count` (Number)
-- `website` (String) the user's website
+- `avatar_url` (String) URL to the user's avatar.
+- `id` (Number) The user's ID.
 
 ## Import
 

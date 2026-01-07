@@ -87,7 +87,7 @@
 		{
 			"label": "Generate Resources",
 			"type": "shell",
-			"command": "tfplugingen-framework generate resources --input provider_code_spec.json --output ../../internal",
+			"command": "tfplugingen-framework generate resources --input provider_code_spec.json --output ./reference",
 			"options": {
 				"cwd": "${workspaceFolder}/openapi/1.25.3"
 			},
@@ -96,7 +96,7 @@
 		{
 			"label": "Generate Data Sources",
 			"type": "shell",
-			"command": "tfplugingen-framework generate data-sources --input provider_code_spec.json --output ../../internal",
+			"command": "tfplugingen-framework generate data-sources --input provider_code_spec.json --output ./reference",
 			"options": {
 				"cwd": "${workspaceFolder}/openapi/1.25.3"
 			},

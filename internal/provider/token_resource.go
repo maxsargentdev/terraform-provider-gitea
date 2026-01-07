@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/maxsargendev/terraform-provider-gitea/internal/resource_token"
-
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -27,20 +26,14 @@ type tokenResource struct {
 	client *gitea.Client
 }
 
-// tokenModel wraps the generated model with Set type for scopes
-// we do this because the openapi spec for gitea defines it as a list which is order-sensitive
-// we can fix this at the gitea api level by using the custom "format":"set" to the scopes field
-type tokenModel struct {
+type tokenResourceModel struct {
 	CreatedAt      types.String `tfsdk:"created_at"`
 	Id             types.Int64  `tfsdk:"id"`
 	LastUsedAt     types.String `tfsdk:"last_used_at"`
-	Limit          types.Int64  `tfsdk:"limit"`
 	Name           types.String `tfsdk:"name"`
-	Page           types.Int64  `tfsdk:"page"`
 	Scopes         types.Set    `tfsdk:"scopes"` // Override: Set instead of List
 	Sha1           types.String `tfsdk:"sha1"`
 	TokenLastEight types.String `tfsdk:"token_last_eight"`
-	Username       types.String `tfsdk:"username"`
 }
 
 func (r *tokenResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -48,41 +41,57 @@ func (r *tokenResource) Metadata(_ context.Context, req resource.MetadataRequest
 }
 
 func (r *tokenResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	baseSchema := resource_token.TokenResourceSchema(ctx)
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
 
-	// Make username required and force replacement on change
-	baseSchema.Attributes["username"] = schema.StringAttribute{
-		Required:            true,
-		Description:         "The username of the user for whom the token is created",
-		MarkdownDescription: "The username of the user for whom the token is created",
-		PlanModifiers: []planmodifier.String{
-			stringplanmodifier.RequiresReplace(),
+			// required - these are fundamental configuration options
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the access token",
+				MarkdownDescription: "The name of the access token",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"scopes": schema.SetAttribute{
+				ElementType:         types.StringType,
+				Required:            true,
+				Description:         "The scopes granted to this access token",
+				MarkdownDescription: "The scopes granted to this access token",
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.RequiresReplace(),
+				},
+			},
+
+			// computed - these are available to read back after creation but are really just metadata
+			"created_at": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The timestamp when the token was created",
+				MarkdownDescription: "The timestamp when the token was created",
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The unique identifier of the access token",
+				MarkdownDescription: "The unique identifier of the access token",
+			},
+			"last_used_at": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The timestamp when the token was last used",
+				MarkdownDescription: "The timestamp when the token was last used",
+			},
+			"sha1": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The SHA1 hash of the access token",
+				MarkdownDescription: "The SHA1 hash of the access token",
+			},
+			"token_last_eight": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The last eight characters of the token",
+				MarkdownDescription: "The last eight characters of the token",
+			},
 		},
 	}
 
-	// Add RequiresReplace to name (tokens can't be updated)
-	if nameAttr, ok := baseSchema.Attributes["name"].(schema.StringAttribute); ok {
-		nameAttr.PlanModifiers = []planmodifier.String{
-			stringplanmodifier.RequiresReplace(),
-		}
-		baseSchema.Attributes["name"] = nameAttr
-	}
-
-	// Make sha1 sensitive
-	if sha1Attr, ok := baseSchema.Attributes["sha1"].(schema.StringAttribute); ok {
-		sha1Attr.Sensitive = true
-		baseSchema.Attributes["sha1"] = sha1Attr
-	}
-
-	// Override scopes to use Set instead of List since order doesn't matter
-	baseSchema.Attributes["scopes"] = schema.SetAttribute{
-		ElementType:         types.StringType,
-		Optional:            true,
-		Description:         "The scopes of the token",
-		MarkdownDescription: "The scopes of the token",
-	}
-
-	resp.Schema = baseSchema
 }
 
 func (r *tokenResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -103,35 +112,29 @@ func (r *tokenResource) Configure(_ context.Context, req resource.ConfigureReque
 }
 
 func (r *tokenResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan tokenModel
+	var plan tokenResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	opts := gitea.CreateAccessTokenOption{
-		Name: plan.Name.ValueString(),
+	// Extract scopes from the plan
+	var scopes []string
+	resp.Diagnostics.Append(plan.Scopes.ElementsAs(ctx, &scopes, false)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	// Set scopes if provided (scopes are Set in schema but we handle as slice)
-	if !plan.Scopes.IsNull() && !plan.Scopes.IsUnknown() {
-		// Convert the Set to a slice for API call
-		scopesSet, diags := types.SetValueFrom(ctx, types.StringType, plan.Scopes)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+	// Convert to gitea.AccessTokenScope slice
+	apiScopes := make([]gitea.AccessTokenScope, len(scopes))
+	for i, s := range scopes {
+		apiScopes[i] = gitea.AccessTokenScope(s)
+	}
 
-		var scopes []string
-		scopesSet.ElementsAs(ctx, &scopes, false)
-
-		// Convert strings to AccessTokenScope
-		giteaScopes := make([]gitea.AccessTokenScope, len(scopes))
-		for i, s := range scopes {
-			giteaScopes[i] = gitea.AccessTokenScope(s)
-		}
-		opts.Scopes = giteaScopes
+	opts := gitea.CreateAccessTokenOption{
+		Name:   plan.Name.ValueString(),
+		Scopes: apiScopes,
 	}
 
 	token, _, err := r.client.CreateAccessToken(opts)
@@ -149,7 +152,7 @@ func (r *tokenResource) Create(ctx context.Context, req resource.CreateRequest, 
 }
 
 func (r *tokenResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state tokenModel
+	var state tokenResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -198,7 +201,7 @@ func (r *tokenResource) Update(ctx context.Context, req resource.UpdateRequest, 
 }
 
 func (r *tokenResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state tokenModel
+	var state tokenResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -254,16 +257,13 @@ func (r *tokenResource) ImportState(ctx context.Context, req resource.ImportStat
 		return
 	}
 
-	var data tokenModel
+	var data tokenResourceModel
 	mapTokenToModel(found, &data)
-
-	// Note: username field won't be populated from import since API doesn't return it
-	data.Username = types.StringNull()
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func mapTokenToModel(token *gitea.AccessToken, model *tokenModel) {
+func mapTokenToModel(token *gitea.AccessToken, model *tokenResourceModel) {
 	model.Id = types.Int64Value(token.ID)
 	model.Name = types.StringValue(token.Name)
 	model.Sha1 = types.StringValue(token.Token)
@@ -282,19 +282,13 @@ func mapTokenToModel(token *gitea.AccessToken, model *tokenModel) {
 	}
 
 	if len(token.Scopes) > 0 {
-		// Convert to Set (order doesn't matter for Sets)
 		scopeValues := make([]attr.Value, len(token.Scopes))
 		for i, s := range token.Scopes {
 			scopeValues[i] = types.StringValue(string(s))
 		}
-		// Create a Set value to match schema (even though model field is List type)
 		model.Scopes = types.SetValueMust(types.StringType, scopeValues)
 	} else {
 		model.Scopes = types.SetNull(types.StringType)
 	}
-	// Set pagination fields to null (not used in resource)
-	model.Page = types.Int64Null()
-	model.Limit = types.Int64Null()
-}
 
-// sortListPlanModifier is a custom plan modifier that sorts a list of strings
+}

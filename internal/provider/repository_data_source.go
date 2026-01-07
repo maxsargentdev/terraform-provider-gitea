@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/maxsargendev/terraform-provider-gitea/internal/datasource_repository"
-
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -21,7 +20,7 @@ func NewRepositoryDataSource() datasource.DataSource {
 }
 
 // Helper function to map Gitea Repository to Terraform data source model
-func mapRepositoryToDataSourceModel(repo *gitea.Repository, model *datasource_repository.RepositoryModel) {
+func mapRepositoryToDataSourceModel(repo *gitea.Repository, model *repositoryDataSourceModel) {
 	model.Id = types.Int64Value(repo.ID)
 	model.Name = types.StringValue(repo.Name)
 	model.FullName = types.StringValue(repo.FullName)
@@ -50,12 +49,260 @@ type repositoryDataSource struct {
 	client *gitea.Client
 }
 
+type repositoryDataSourceModel struct {
+	AllowFastForwardOnlyMerge     types.Bool   `tfsdk:"allow_fast_forward_only_merge"`
+	AllowManualMerge              types.Bool   `tfsdk:"allow_manual_merge"`
+	AllowMergeCommits             types.Bool   `tfsdk:"allow_merge_commits"`
+	AllowRebase                   types.Bool   `tfsdk:"allow_rebase"`
+	AllowRebaseExplicit           types.Bool   `tfsdk:"allow_rebase_explicit"`
+	AllowRebaseUpdate             types.Bool   `tfsdk:"allow_rebase_update"`
+	AllowSquashMerge              types.Bool   `tfsdk:"allow_squash_merge"`
+	Archived                      types.Bool   `tfsdk:"archived"`
+	ArchivedAt                    types.String `tfsdk:"archived_at"`
+	AutodetectManualMerge         types.Bool   `tfsdk:"autodetect_manual_merge"`
+	AvatarUrl                     types.String `tfsdk:"avatar_url"`
+	CloneUrl                      types.String `tfsdk:"clone_url"`
+	CreatedAt                     types.String `tfsdk:"created_at"`
+	DefaultAllowMaintainerEdit    types.Bool   `tfsdk:"default_allow_maintainer_edit"`
+	DefaultBranch                 types.String `tfsdk:"default_branch"`
+	DefaultDeleteBranchAfterMerge types.Bool   `tfsdk:"default_delete_branch_after_merge"`
+	DefaultMergeStyle             types.String `tfsdk:"default_merge_style"`
+	Description                   types.String `tfsdk:"description"`
+	Empty                         types.Bool   `tfsdk:"empty"`
+	Fork                          types.Bool   `tfsdk:"fork"`
+	ForksCount                    types.Int64  `tfsdk:"forks_count"`
+	FullName                      types.String `tfsdk:"full_name"`
+	HasActions                    types.Bool   `tfsdk:"has_actions"`
+	HasCode                       types.Bool   `tfsdk:"has_code"`
+	HasIssues                     types.Bool   `tfsdk:"has_issues"`
+	HasPackages                   types.Bool   `tfsdk:"has_packages"`
+	HasProjects                   types.Bool   `tfsdk:"has_projects"`
+	HasPullRequests               types.Bool   `tfsdk:"has_pull_requests"`
+	HasReleases                   types.Bool   `tfsdk:"has_releases"`
+	HasWiki                       types.Bool   `tfsdk:"has_wiki"`
+	HtmlUrl                       types.String `tfsdk:"html_url"`
+	Id                            types.Int64  `tfsdk:"id"`
+	IgnoreWhitespaceConflicts     types.Bool   `tfsdk:"ignore_whitespace_conflicts"`
+	Internal                      types.Bool   `tfsdk:"internal"`
+	Language                      types.String `tfsdk:"language"`
+	LanguagesUrl                  types.String `tfsdk:"languages_url"`
+	Licenses                      types.List   `tfsdk:"licenses"`
+	Link                          types.String `tfsdk:"link"`
+	Mirror                        types.Bool   `tfsdk:"mirror"`
+	MirrorInterval                types.String `tfsdk:"mirror_interval"`
+	MirrorUpdated                 types.String `tfsdk:"mirror_updated"`
+	Name                          types.String `tfsdk:"name"`
+	ObjectFormatName              types.String `tfsdk:"object_format_name"`
+	OpenIssuesCount               types.Int64  `tfsdk:"open_issues_count"`
+	OpenPrCounter                 types.Int64  `tfsdk:"open_pr_counter"`
+	OriginalUrl                   types.String `tfsdk:"original_url"`
+	Private                       types.Bool   `tfsdk:"private"`
+	ProjectsMode                  types.String `tfsdk:"projects_mode"`
+	ReleaseCounter                types.Int64  `tfsdk:"release_counter"`
+	Repo                          types.String `tfsdk:"repo"`
+	Size                          types.Int64  `tfsdk:"size"`
+	SshUrl                        types.String `tfsdk:"ssh_url"`
+	StarsCount                    types.Int64  `tfsdk:"stars_count"`
+	Template                      types.Bool   `tfsdk:"template"`
+	Topics                        types.List   `tfsdk:"topics"`
+	UpdatedAt                     types.String `tfsdk:"updated_at"`
+	Url                           types.String `tfsdk:"url"`
+	WatchersCount                 types.Int64  `tfsdk:"watchers_count"`
+	Website                       types.String `tfsdk:"website"`
+}
+
 func (d *repositoryDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_repository"
 }
 
 func (d *repositoryDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_repository.RepositoryDataSourceSchema(ctx)
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"allow_fast_forward_only_merge": schema.BoolAttribute{
+				Computed: true,
+			},
+			"allow_manual_merge": schema.BoolAttribute{
+				Computed: true,
+			},
+			"allow_merge_commits": schema.BoolAttribute{
+				Computed: true,
+			},
+			"allow_rebase": schema.BoolAttribute{
+				Computed: true,
+			},
+			"allow_rebase_explicit": schema.BoolAttribute{
+				Computed: true,
+			},
+			"allow_rebase_update": schema.BoolAttribute{
+				Computed: true,
+			},
+			"allow_squash_merge": schema.BoolAttribute{
+				Computed: true,
+			},
+			"archived": schema.BoolAttribute{
+				Computed: true,
+			},
+			"archived_at": schema.StringAttribute{
+				Computed: true,
+			},
+			"autodetect_manual_merge": schema.BoolAttribute{
+				Computed: true,
+			},
+			"avatar_url": schema.StringAttribute{
+				Computed: true,
+			},
+			"clone_url": schema.StringAttribute{
+				Computed: true,
+			},
+			"created_at": schema.StringAttribute{
+				Computed: true,
+			},
+			"default_allow_maintainer_edit": schema.BoolAttribute{
+				Computed: true,
+			},
+			"default_branch": schema.StringAttribute{
+				Computed: true,
+			},
+			"default_delete_branch_after_merge": schema.BoolAttribute{
+				Computed: true,
+			},
+			"default_merge_style": schema.StringAttribute{
+				Computed: true,
+			},
+			"description": schema.StringAttribute{
+				Computed: true,
+			},
+			"empty": schema.BoolAttribute{
+				Computed: true,
+			},
+			"fork": schema.BoolAttribute{
+				Computed: true,
+			},
+			"forks_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"full_name": schema.StringAttribute{
+				Computed: true,
+			},
+			"has_actions": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_code": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_issues": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_packages": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_projects": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_pull_requests": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_releases": schema.BoolAttribute{
+				Computed: true,
+			},
+			"has_wiki": schema.BoolAttribute{
+				Computed: true,
+			},
+			"html_url": schema.StringAttribute{
+				Computed: true,
+			},
+			"id": schema.Int64Attribute{
+				Computed: true,
+			},
+			"ignore_whitespace_conflicts": schema.BoolAttribute{
+				Computed: true,
+			},
+			"internal": schema.BoolAttribute{
+				Computed: true,
+			},
+			"language": schema.StringAttribute{
+				Computed: true,
+			},
+			"languages_url": schema.StringAttribute{
+				Computed: true,
+			},
+			"licenses": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"link": schema.StringAttribute{
+				Computed: true,
+			},
+			"mirror": schema.BoolAttribute{
+				Computed: true,
+			},
+			"mirror_interval": schema.StringAttribute{
+				Computed: true,
+			},
+			"mirror_updated": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Computed: true,
+			},
+			"object_format_name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "ObjectFormatName of the underlying git repository",
+				MarkdownDescription: "ObjectFormatName of the underlying git repository",
+			},
+			"open_issues_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"open_pr_counter": schema.Int64Attribute{
+				Computed: true,
+			},
+			"original_url": schema.StringAttribute{
+				Computed: true,
+			},
+			"private": schema.BoolAttribute{
+				Computed: true,
+			},
+			"projects_mode": schema.StringAttribute{
+				Computed: true,
+			},
+			"release_counter": schema.Int64Attribute{
+				Computed: true,
+			},
+			"repo": schema.StringAttribute{
+				Required:            true,
+				Description:         "name of the repo",
+				MarkdownDescription: "name of the repo",
+			},
+			"size": schema.Int64Attribute{
+				Computed: true,
+			},
+			"ssh_url": schema.StringAttribute{
+				Computed: true,
+			},
+			"stars_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"template": schema.BoolAttribute{
+				Computed: true,
+			},
+			"topics": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"updated_at": schema.StringAttribute{
+				Computed: true,
+			},
+			"url": schema.StringAttribute{
+				Computed: true,
+			},
+			"watchers_count": schema.Int64Attribute{
+				Computed: true,
+			},
+			"website": schema.StringAttribute{
+				Computed: true,
+			},
+		},
+	}
 }
 
 func (d *repositoryDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -76,7 +323,7 @@ func (d *repositoryDataSource) Configure(_ context.Context, req datasource.Confi
 }
 
 func (d *repositoryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data datasource_repository.RepositoryModel
+	var data repositoryDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {

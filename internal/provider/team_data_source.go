@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/maxsargendev/terraform-provider-gitea/internal/datasource_team"
-
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -25,12 +24,63 @@ type teamDataSource struct {
 	client *gitea.Client
 }
 
+type teamDataSourceModel struct {
+	Org                     types.String `tfsdk:"org"`
+	Name                    types.String `tfsdk:"name"`
+	CanCreateOrgRepo        types.Bool   `tfsdk:"can_create_org_repo"`
+	Description             types.String `tfsdk:"description"`
+	Id                      types.Int64  `tfsdk:"id"`
+	IncludesAllRepositories types.Bool   `tfsdk:"includes_all_repositories"`
+	UnitsMap                types.Map    `tfsdk:"units_map"`
+}
+
 func (d *teamDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_team"
 }
 
 func (d *teamDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasource_team.TeamDataSourceSchema(ctx)
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+
+			// required - these are fundamental configuration options
+			"org": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the organization",
+				MarkdownDescription: "The name of the organization",
+			},
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the team",
+				MarkdownDescription: "The name of the team",
+			},
+
+			// computed - these are available to read back after creation but are really just metadata
+			"can_create_org_repo": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the team can create repositories in the organization",
+				MarkdownDescription: "Whether the team can create repositories in the organization",
+			},
+			"description": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The description of the team",
+				MarkdownDescription: "The description of the team",
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The unique identifier of the team",
+				MarkdownDescription: "The unique identifier of the team",
+			},
+			"includes_all_repositories": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the team has access to all repositories in the organization",
+				MarkdownDescription: "Whether the team has access to all repositories in the organization",
+			},
+			"units_map": schema.MapAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+		},
+	}
 }
 
 func (d *teamDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -51,19 +101,38 @@ func (d *teamDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 }
 
 func (d *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data datasource_team.TeamModel
+	var data teamDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Get team by ID
-	team, _, err := d.client.GetTeam(data.Id.ValueInt64())
+	org := data.Org.ValueString()
+	teamName := data.Name.ValueString()
+
+	// Get team by org and name
+	teams, _, err := d.client.ListOrgTeams(org, gitea.ListTeamsOptions{})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Reading Team",
-			"Could not read team: "+err.Error(),
+			"Error Listing Teams",
+			fmt.Sprintf("Could not list teams for organization '%s': %s", org, err.Error()),
+		)
+		return
+	}
+
+	var team *gitea.Team
+	for _, t := range teams {
+		if t.Name == teamName {
+			team = t
+			break
+		}
+	}
+
+	if team == nil {
+		resp.Diagnostics.AddError(
+			"Team Not Found",
+			fmt.Sprintf("Could not find team '%s' in organization '%s'", teamName, org),
 		)
 		return
 	}
@@ -73,23 +142,12 @@ func (d *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func mapTeamToDataSourceModel(ctx context.Context, team *gitea.Team, model *datasource_team.TeamModel) {
+func mapTeamToDataSourceModel(ctx context.Context, team *gitea.Team, model *teamDataSourceModel) {
 	model.Id = types.Int64Value(team.ID)
 	model.Name = types.StringValue(team.Name)
 	model.Description = types.StringValue(team.Description)
 	model.CanCreateOrgRepo = types.BoolValue(team.CanCreateOrgRepo)
 	model.IncludesAllRepositories = types.BoolValue(team.IncludesAllRepositories)
-
-	// Map units list
-	if len(team.Units) > 0 {
-		elements := make([]attr.Value, len(team.Units))
-		for i, v := range team.Units {
-			elements[i] = types.StringValue(string(v))
-		}
-		model.Units, _ = types.ListValue(types.StringType, elements)
-	} else {
-		model.Units = types.ListNull(types.StringType)
-	}
 
 	// Map units_map if present
 	if len(team.UnitsMap) > 0 {
@@ -102,30 +160,4 @@ func mapTeamToDataSourceModel(ctx context.Context, team *gitea.Team, model *data
 		model.UnitsMap = types.MapNull(types.StringType)
 	}
 
-	// Map organization nested object
-	if team.Organization != nil {
-		orgAttrs := map[string]attr.Value{
-			"id":                            types.Int64Value(team.Organization.ID),
-			"name":                          types.StringValue(team.Organization.UserName),
-			"username":                      types.StringValue(team.Organization.UserName),
-			"full_name":                     types.StringValue(team.Organization.FullName),
-			"avatar_url":                    types.StringValue(team.Organization.AvatarURL),
-			"description":                   types.StringValue(team.Organization.Description),
-			"website":                       types.StringValue(team.Organization.Website),
-			"location":                      types.StringValue(team.Organization.Location),
-			"visibility":                    types.StringValue(team.Organization.Visibility),
-			"email":                         types.StringNull(),
-			"repo_admin_change_team_access": types.BoolNull(),
-		}
-
-		orgValue, diags := datasource_team.NewOrganizationValue(
-			datasource_team.OrganizationValue{}.AttributeTypes(ctx),
-			orgAttrs,
-		)
-		if !diags.HasError() {
-			model.Organization = orgValue
-		}
-	} else {
-		model.Organization = datasource_team.NewOrganizationValueNull()
-	}
 }

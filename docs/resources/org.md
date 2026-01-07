@@ -3,21 +3,21 @@
 page_title: "gitea_org Resource - gitea"
 subcategory: ""
 description: |-
-  
+  Manages a Gitea organization.
 ---
 
 # gitea_org (Resource)
 
-
+Manages a Gitea organization.
 
 ## Example Usage
 
 ```terraform
-resource "gitea_org" "example" {
-  username    = "my-organization"
-  full_name   = "My Organization"
-  description = "An example organization"
-  visibility  = "public"
+resource "gitea_org" "test_org" {
+  name         = "testorg"
+  display_name = "Test Organization"
+  description  = "A test organization"
+  visibility   = "public"
 }
 ```
 
@@ -26,24 +26,22 @@ resource "gitea_org" "example" {
 
 ### Required
 
-- `username` (String) username of the organization
+- `name` (String) The name of the organization.
 
 ### Optional
 
-- `description` (String) The description of the organization
-- `email` (String) The email address of the organization
-- `full_name` (String) The full display name of the organization
-- `location` (String) The location of the organization
-- `org` (String) name of the organization to get
-- `repo_admin_change_team_access` (Boolean) Whether repository administrators can change team access
-- `visibility` (String) possible values are `public` (default), `limited` or `private`
-- `website` (String) The website URL of the organization
+- `description` (String) The description of the organization.
+- `display_name` (String) The full display name of the organization.
+- `email` (String) The email address of the organization.
+- `location` (String) The location of the organization.
+- `repo_admin_change_team_access` (Boolean) Whether repository administrators can change team access.
+- `visibility` (String) possible values are `public` (default), `limited` or `private`.
+- `website` (String) The website URL of the organization.
 
 ### Read-Only
 
-- `avatar_url` (String) The URL of the organization's avatar
-- `id` (Number) The unique identifier of the organization
-- `name` (String) The name of the organization
+- `avatar_url` (String) The URL of the organization's avatar.
+- `id` (Number) The unique identifier of the organization.
 
 ## Import
 

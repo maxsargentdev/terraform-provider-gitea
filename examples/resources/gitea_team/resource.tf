@@ -1,16 +1,18 @@
-resource "gitea_team" "example" {
-  org                        = "my-organization"
-  name                       = "developers"
-  description                = "Development team"
-  can_create_org_repo        = true
-  includes_all_repositories  = false
-  
-  # Fine-grained permissions using units_map
+resource "gitea_team" "test_team" {
+  org  = "testorg"
+  name = "test-team"
+
+  description = "A test team with all attributes configured"
+
+  can_create_org_repo       = true
+  includes_all_repositories = false
+
   units_map = {
-    "repo.code"     = "write"
-    "repo.issues"   = "write"
-    "repo.pulls"    = "write"
-    "repo.wiki"     = "read"
-    "repo.releases" = "write"
+    "repo.code"       = "write"  # Source code access (none, read, write, admin)
+    "repo.issues"     = "write"  # Issue tracker access
+    "repo.pulls"      = "write"  # Pull requests access
+    "repo.releases"   = "none"   # Releases access
+    "repo.ext_wiki"   = "none"   # External wiki access
+    "repo.ext_issues" = "read"   # External issue tracker access
   }
 }

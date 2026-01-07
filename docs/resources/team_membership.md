@@ -3,19 +3,20 @@
 page_title: "gitea_team_membership Resource - gitea"
 subcategory: ""
 description: |-
-  Manages a team membership (assigns a user to a team)
+  Manages a team membership, assigning a user to a team.
 ---
 
 # gitea_team_membership (Resource)
 
-Manages a team membership (assigns a user to a team)
+Manages a team membership, assigning a user to a team.
 
 ## Example Usage
 
 ```terraform
-resource "gitea_team_membership" "example" {
-  team_id  = gitea_team.example.id
-  username = "johndoe"
+resource "gitea_team_membership" "test_membership" {
+  org       = "testorg"
+  team_name = "test-team"
+  username  = "test"
 }
 ```
 
@@ -24,8 +25,9 @@ resource "gitea_team_membership" "example" {
 
 ### Required
 
-- `team_id` (Number) The ID of the team
-- `username` (String) The username of the user to add to the team
+- `org` (String) The name of the organization.
+- `team_name` (String) The name of the team.
+- `username` (String) The username of the user to add to the team.
 
 ## Import
 

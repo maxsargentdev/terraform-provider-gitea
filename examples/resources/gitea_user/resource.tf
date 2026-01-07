@@ -1,5 +1,5 @@
-resource "gitea_user" "example" {
-  username = "johndoe"
-  email    = "johndoe@example.com"
-  password = "securepassword123"
+resource "gitea_user" "test_user" {
+  username = "test"
+  email    = "test@gitea.local"
+  password = "testpassword123"
 }

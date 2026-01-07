@@ -3,20 +3,28 @@
 page_title: "gitea_repository Resource - gitea"
 subcategory: ""
 description: |-
-  
+  Manages a Gitea repository.
 ---
 
 # gitea_repository (Resource)
 
-
+Manages a Gitea repository.
 
 ## Example Usage
 
 ```terraform
-resource "gitea_repository" "example" {
-  name        = "my-repo"
-  description = "An example repository"
-  private     = false
+resource "gitea_repository" "test_repo" {
+  owner       = "root"
+  name        = "test-repo"
+  description = "A test repository created with Terraform, using a user as the owner"
+  private     = true
+}
+
+resource "gitea_repository" "test_repo_for_org" {
+  owner       = "testorg"
+  name        = "test-repo-for-org"
+  description = "A test repository created with Terraform"
+  private     = true
 }
 ```
 
@@ -25,251 +33,29 @@ resource "gitea_repository" "example" {
 
 ### Required
 
-- `name` (String) Name of the repository to create
+- `name` (String) Name of the repository to create.
+- `owner` (String) The owner of the repository (username or organization name).
 
 ### Optional
 
 - `auto_init` (Boolean) Whether the repository should be auto-initialized?
-- `default_branch` (String) DefaultBranch of the repository (used when initializes and in template)
-- `description` (String) Description of the repository to create
-- `gitignores` (String) Gitignores to use
-- `issue_labels` (String) Label-Set to use
-- `license` (String) License to use
-- `object_format_name` (String) ObjectFormatName of the underlying git repository
-- `private` (Boolean) Whether the repository is private
-- `readme` (String) Readme of the repository to create
-- `repo` (String) name of the repo
-- `template` (Boolean) Whether the repository is template
-- `trust_model` (String) TrustModel of the repository
+- `default_branch` (String) DefaultBranch of the repository, used when initializes and in template.
+- `description` (String) Description of the repository to create.
+- `gitignores` (String) Gitignores to use.
+- `issue_labels` (String) Issue Label set to use.
+- `license` (String) License to use.
+- `object_format_name` (String) ObjectFormatName of the underlying git repository (sha1 or sha256).
+- `private` (Boolean) Whether the repository is private.
+- `readme` (String) Readme of the repository to create.
+- `template` (Boolean) Whether the repository is template.
+- `trust_model` (String) TrustModel of the repository.
 
 ### Read-Only
 
-- `allow_fast_forward_only_merge` (Boolean)
-- `allow_manual_merge` (Boolean)
-- `allow_merge_commits` (Boolean)
-- `allow_rebase` (Boolean)
-- `allow_rebase_explicit` (Boolean)
-- `allow_rebase_update` (Boolean)
-- `allow_squash_merge` (Boolean)
-- `archived` (Boolean)
-- `archived_at` (String)
-- `autodetect_manual_merge` (Boolean)
-- `avatar_url` (String)
-- `clone_url` (String)
-- `created_at` (String)
-- `default_allow_maintainer_edit` (Boolean)
-- `default_delete_branch_after_merge` (Boolean)
-- `default_merge_style` (String)
-- `empty` (Boolean)
-- `external_tracker` (Attributes) ExternalTracker represents settings for external tracker (see [below for nested schema](#nestedatt--external_tracker))
-- `external_wiki` (Attributes) ExternalWiki represents setting for external wiki (see [below for nested schema](#nestedatt--external_wiki))
-- `fork` (Boolean)
-- `forks_count` (Number)
-- `full_name` (String)
-- `has_actions` (Boolean)
-- `has_code` (Boolean)
-- `has_issues` (Boolean)
-- `has_packages` (Boolean)
-- `has_projects` (Boolean)
-- `has_pull_requests` (Boolean)
-- `has_releases` (Boolean)
-- `has_wiki` (Boolean)
-- `html_url` (String)
-- `id` (Number) The ID of this resource.
-- `ignore_whitespace_conflicts` (Boolean)
-- `internal` (Boolean)
-- `internal_tracker` (Attributes) InternalTracker represents settings for internal tracker (see [below for nested schema](#nestedatt--internal_tracker))
-- `language` (String)
-- `languages_url` (String)
-- `licenses` (List of String)
-- `link` (String)
-- `mirror` (Boolean)
-- `mirror_interval` (String)
-- `mirror_updated` (String)
-- `open_issues_count` (Number)
-- `open_pr_counter` (Number)
-- `original_url` (String)
-- `owner` (Attributes) User represents a user (see [below for nested schema](#nestedatt--owner))
-- `permissions` (Attributes) Permission represents a set of permissions (see [below for nested schema](#nestedatt--permissions))
-- `projects_mode` (String)
-- `release_counter` (Number)
-- `repo_transfer` (Attributes) RepoTransfer represents a pending repo transfer (see [below for nested schema](#nestedatt--repo_transfer))
-- `size` (Number)
-- `ssh_url` (String)
-- `stars_count` (Number)
-- `topics` (List of String)
-- `updated_at` (String)
-- `url` (String)
-- `watchers_count` (Number)
-- `website` (String)
-
-<a id="nestedatt--external_tracker"></a>
-### Nested Schema for `external_tracker`
-
-Read-Only:
-
-- `external_tracker_format` (String) External Issue Tracker URL Format. Use the placeholders {user}, {repo} and {index} for the username, repository name and issue index.
-- `external_tracker_regexp_pattern` (String) External Issue Tracker issue regular expression
-- `external_tracker_style` (String) External Issue Tracker Number Format, either `numeric`, `alphanumeric`, or `regexp`
-- `external_tracker_url` (String) URL of external issue tracker.
-
-
-<a id="nestedatt--external_wiki"></a>
-### Nested Schema for `external_wiki`
-
-Read-Only:
-
-- `external_wiki_url` (String) URL of external wiki.
-
-
-<a id="nestedatt--internal_tracker"></a>
-### Nested Schema for `internal_tracker`
-
-Read-Only:
-
-- `allow_only_contributors_to_track_time` (Boolean) Let only contributors track time (Built-in issue tracker)
-- `enable_issue_dependencies` (Boolean) Enable dependencies for issues and pull requests (Built-in issue tracker)
-- `enable_time_tracker` (Boolean) Enable time tracking (Built-in issue tracker)
-
-
-<a id="nestedatt--owner"></a>
-### Nested Schema for `owner`
-
-Read-Only:
-
-- `active` (Boolean) Is user active
-- `avatar_url` (String) URL to the user's avatar
-- `created` (String)
-- `description` (String) the user's description
-- `email` (String)
-- `followers_count` (Number) user counts
-- `following_count` (Number)
-- `full_name` (String) the user's full name
-- `html_url` (String) URL to the user's gitea page
-- `id` (Number) the user's id
-- `is_admin` (Boolean) Is the user an administrator
-- `language` (String) User locale
-- `last_login` (String)
-- `location` (String) the user's location
-- `login` (String) login of the user, same as `username`
-- `login_name` (String) identifier of the user, provided by the external authenticator (if configured)
-- `prohibit_login` (Boolean) Is user login prohibited
-- `restricted` (Boolean) Is user restricted
-- `source_id` (Number) The ID of the user's Authentication Source
-- `starred_repos_count` (Number)
-- `visibility` (String) User visibility level option: public, limited, private
-- `website` (String) the user's website
-
-
-<a id="nestedatt--permissions"></a>
-### Nested Schema for `permissions`
-
-Read-Only:
-
-- `admin` (Boolean)
-- `pull` (Boolean)
-- `push` (Boolean)
-
-
-<a id="nestedatt--repo_transfer"></a>
-### Nested Schema for `repo_transfer`
-
-Read-Only:
-
-- `doer` (Attributes) User represents a user (see [below for nested schema](#nestedatt--repo_transfer--doer))
-- `recipient` (Attributes) User represents a user (see [below for nested schema](#nestedatt--repo_transfer--recipient))
-- `teams` (Attributes List) (see [below for nested schema](#nestedatt--repo_transfer--teams))
-
-<a id="nestedatt--repo_transfer--doer"></a>
-### Nested Schema for `repo_transfer.doer`
-
-Read-Only:
-
-- `active` (Boolean) Is user active
-- `avatar_url` (String) URL to the user's avatar
-- `created` (String)
-- `description` (String) the user's description
-- `email` (String)
-- `followers_count` (Number) user counts
-- `following_count` (Number)
-- `full_name` (String) the user's full name
-- `html_url` (String) URL to the user's gitea page
-- `id` (Number) the user's id
-- `is_admin` (Boolean) Is the user an administrator
-- `language` (String) User locale
-- `last_login` (String)
-- `location` (String) the user's location
-- `login` (String) login of the user, same as `username`
-- `login_name` (String) identifier of the user, provided by the external authenticator (if configured)
-- `prohibit_login` (Boolean) Is user login prohibited
-- `restricted` (Boolean) Is user restricted
-- `source_id` (Number) The ID of the user's Authentication Source
-- `starred_repos_count` (Number)
-- `visibility` (String) User visibility level option: public, limited, private
-- `website` (String) the user's website
-
-
-<a id="nestedatt--repo_transfer--recipient"></a>
-### Nested Schema for `repo_transfer.recipient`
-
-Read-Only:
-
-- `active` (Boolean) Is user active
-- `avatar_url` (String) URL to the user's avatar
-- `created` (String)
-- `description` (String) the user's description
-- `email` (String)
-- `followers_count` (Number) user counts
-- `following_count` (Number)
-- `full_name` (String) the user's full name
-- `html_url` (String) URL to the user's gitea page
-- `id` (Number) the user's id
-- `is_admin` (Boolean) Is the user an administrator
-- `language` (String) User locale
-- `last_login` (String)
-- `location` (String) the user's location
-- `login` (String) login of the user, same as `username`
-- `login_name` (String) identifier of the user, provided by the external authenticator (if configured)
-- `prohibit_login` (Boolean) Is user login prohibited
-- `restricted` (Boolean) Is user restricted
-- `source_id` (Number) The ID of the user's Authentication Source
-- `starred_repos_count` (Number)
-- `visibility` (String) User visibility level option: public, limited, private
-- `website` (String) the user's website
-
-
-<a id="nestedatt--repo_transfer--teams"></a>
-### Nested Schema for `repo_transfer.teams`
-
-Read-Only:
-
-- `can_create_org_repo` (Boolean) Whether the team can create repositories in the organization
-- `description` (String) The description of the team
-- `id` (Number) The unique identifier of the team
-- `includes_all_repositories` (Boolean) Whether the team has access to all repositories in the organization
-- `name` (String) The name of the team
-- `organization` (Attributes) Organization represents an organization (see [below for nested schema](#nestedatt--repo_transfer--teams--organization))
-- `permission` (String)
-- `units` (List of String)
-- `units_map` (Map of String)
-
-<a id="nestedatt--repo_transfer--teams--organization"></a>
-### Nested Schema for `repo_transfer.teams.organization`
-
-Read-Only:
-
-- `avatar_url` (String) The URL of the organization's avatar
-- `description` (String) The description of the organization
-- `email` (String) The email address of the organization
-- `full_name` (String) The full display name of the organization
-- `id` (Number) The unique identifier of the organization
-- `location` (String) The location of the organization
-- `name` (String) The name of the organization
-- `repo_admin_change_team_access` (Boolean) Whether repository administrators can change team access
-- `username` (String) username of the organization
-deprecated
-- `visibility` (String) The visibility level of the organization (public, limited, private)
-- `website` (String) The website URL of the organization
+- `clone_url` (String) The HTTPS URL to clone the repository.
+- `html_url` (String) The URL to the repository in the web UI.
+- `id` (Number) The ID of the repository.
+- `ssh_url` (String) The SSH URL to clone the repository.
 
 ## Import
 

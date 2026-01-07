@@ -1,6 +1,6 @@
-resource "gitea_org" "example" {
-  username    = "my-organization"
-  full_name   = "My Organization"
-  description = "An example organization"
-  visibility  = "public"
+resource "gitea_org" "test_org" {
+  name         = "testorg"
+  display_name = "Test Organization"
+  description  = "A test organization"
+  visibility   = "public"
 }
