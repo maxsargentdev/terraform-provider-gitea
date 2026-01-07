@@ -133,6 +133,8 @@ func (p *giteaProvider) DataSources(ctx context.Context) []func() datasource.Dat
 		NewBranchProtectionDataSource,
 		NewTeamDataSource,
 		NewTeamMembershipDataSource,
+		NewRepositoriesDataSource,
+		NewTeamsDataSource,
 	}
 }
 
