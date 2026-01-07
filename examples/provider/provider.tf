@@ -1,6 +1,6 @@
 terraform {
   required_providers {
-    gitea = {
+    icegitea = {
       source = "hashicorp.com/maxsargentdev/icegitea"
     }
   }
