@@ -127,12 +127,12 @@ func (p *giteaProvider) Metadata(ctx context.Context, req provider.MetadataReque
 
 func (p *giteaProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		// NewUserDataSource,
-		// NewOrgDataSource,
-		// NewRepositoryDataSource,
-		// NewBranchProtectionDataSource,
-		// NewTeamDataSource,
-		// NewTeamMembershipDataSource,
+		NewUserDataSource,
+		NewOrgDataSource,
+		NewRepositoryDataSource,
+		NewBranchProtectionDataSource,
+		NewTeamDataSource,
+		NewTeamMembershipDataSource,
 	}
 }
 
@@ -141,10 +141,19 @@ func (p *giteaProvider) Resources(ctx context.Context) []func() resource.Resourc
 		NewUserResource,
 		NewOrgResource,
 		NewRepositoryResource,
-		// NewBranchProtectionResource,
+		NewBranchProtectionResource,
 		NewTeamResource,
 		NewTeamRepositoryResource,
-		// NewTokenResource,
+		NewTokenResource,
 		NewTeamMembershipResource,
+		NewPublicKeyResource,
+		NewGPGKeyResource,
+		NewRepositoryKeyResource,
+		NewOAuth2AppResource,
+		NewRepositoryWebhookResource,
+		NewRepositoryActionsSecretResource,
+		NewRepositoryActionsVariableResource,
+		NewForkResource,
+		NewGitHookResource,
 	}
 }
