@@ -3,12 +3,12 @@
 page_title: "gitea_team Resource - gitea"
 subcategory: ""
 description: |-
-  
+  Manages a Gitea team.
 ---
 
 # gitea_team (Resource)
 
-
+Manages a Gitea team.
 
 ## Example Usage
 
@@ -38,19 +38,19 @@ resource "gitea_team" "test_team" {
 
 ### Required
 
-- `name` (String) The name of the team
-- `org` (String) The name of the organization to create the team in
-- `units_map` (Map of String) The units this team has access to, and the permission mode granted
+- `name` (String) The name of the team.
+- `org` (String) The name of the organization to create the team in.
+- `units_map` (Map of String) The units this team has access to, and the permission mode granted.
 
 ### Optional
 
-- `can_create_org_repo` (Boolean) Whether the team can create repositories in the organization
-- `description` (String) The description of the team
-- `includes_all_repositories` (Boolean) Whether the team has access to all repositories in the organization
+- `can_create_org_repo` (Boolean) Whether the team can create repositories in the organization.
+- `description` (String) The description of the team.
+- `includes_all_repositories` (Boolean) Whether the team has access to all repositories in the organization.
 
 ### Read-Only
 
-- `id` (Number) The unique identifier of the team
+- `id` (Number) The unique identifier of the team.
 
 ## Import
 

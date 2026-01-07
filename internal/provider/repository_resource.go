@@ -7,6 +7,8 @@ import (
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -55,38 +57,39 @@ func (r *repositoryResource) Metadata(_ context.Context, req resource.MetadataRe
 
 func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a Gitea repository.",
+		Description:         "Manages a Gitea repository.",
+		MarkdownDescription: "Manages a Gitea repository.",
 		Attributes: map[string]schema.Attribute{
 			// Required
 			"owner": schema.StringAttribute{
 				Required:            true,
-				Description:         "The owner of the repository (username or organization name)",
-				MarkdownDescription: "The owner of the repository (username or organization name)",
+				Description:         "The owner of the repository (username or organization name).",
+				MarkdownDescription: "The owner of the repository (username or organization name).",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "Name of the repository to create",
-				MarkdownDescription: "Name of the repository to create",
+				Description:         "Name of the repository to create.",
+				MarkdownDescription: "Name of the repository to create.",
 			},
 
 			// Optional - from CreateRepoOption
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Description of the repository to create",
-				MarkdownDescription: "Description of the repository to create",
+				Description:         "Description of the repository to create.",
+				MarkdownDescription: "Description of the repository to create.",
 			},
 			"private": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the repository is private",
-				MarkdownDescription: "Whether the repository is private",
+				Description:         "Whether the repository is private.",
+				MarkdownDescription: "Whether the repository is private.",
 			},
 			"issue_labels": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Issue Label set to use",
-				MarkdownDescription: "Issue Label set to use",
+				Description:         "Issue Label set to use.",
+				MarkdownDescription: "Issue Label set to use.",
 			},
 			"auto_init": schema.BoolAttribute{
 				Optional:            true,
@@ -97,66 +100,71 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 			"template": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the repository is template",
-				MarkdownDescription: "Whether the repository is template",
+				Description:         "Whether the repository is template.",
+				MarkdownDescription: "Whether the repository is template.",
 			},
 			"gitignores": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Gitignores to use",
-				MarkdownDescription: "Gitignores to use",
+				Description:         "Gitignores to use.",
+				MarkdownDescription: "Gitignores to use.",
 			},
 			"license": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "License to use",
-				MarkdownDescription: "License to use",
+				Description:         "License to use.",
+				MarkdownDescription: "License to use.",
 			},
 			"readme": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Readme of the repository to create",
-				MarkdownDescription: "Readme of the repository to create",
+				Description:         "Readme of the repository to create.",
+				MarkdownDescription: "Readme of the repository to create.",
 			},
 			"default_branch": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "DefaultBranch of the repository (used when initializes and in template)",
-				MarkdownDescription: "DefaultBranch of the repository (used when initializes and in template)",
+				Description:         "DefaultBranch of the repository, used when initializes and in template.",
+				MarkdownDescription: "DefaultBranch of the repository, used when initializes and in template.",
 			},
 			"trust_model": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "TrustModel of the repository",
-				MarkdownDescription: "TrustModel of the repository",
+				Description:         "TrustModel of the repository.",
+				MarkdownDescription: "TrustModel of the repository.",
 			},
 			"object_format_name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "ObjectFormatName of the underlying git repository (sha1 or sha256)",
-				MarkdownDescription: "ObjectFormatName of the underlying git repository (sha1 or sha256)",
+				Description:         "ObjectFormatName of the underlying git repository (sha1 or sha256).",
+				MarkdownDescription: "ObjectFormatName of the underlying git repository (sha1 or sha256).",
 			},
 
 			// Computed - key outputs
 			"id": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The ID of the repository",
-				MarkdownDescription: "The ID of the repository",
+				Description:         "The ID of the repository.",
+				MarkdownDescription: "The ID of the repository.",
+
+				// ID doesnt change once set, only computed once so refer to state
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"html_url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The URL to the repository in the web UI",
-				MarkdownDescription: "The URL to the repository in the web UI",
+				Description:         "The URL to the repository in the web UI.",
+				MarkdownDescription: "The URL to the repository in the web UI.",
 			},
 			"ssh_url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The SSH URL to clone the repository",
-				MarkdownDescription: "The SSH URL to clone the repository",
+				Description:         "The SSH URL to clone the repository.",
+				MarkdownDescription: "The SSH URL to clone the repository.",
 			},
 			"clone_url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The HTTPS URL to clone the repository",
-				MarkdownDescription: "The HTTPS URL to clone the repository",
+				Description:         "The HTTPS URL to clone the repository.",
+				MarkdownDescription: "The HTTPS URL to clone the repository.",
 			},
 		},
 	}

@@ -38,7 +38,8 @@ func (r *TeamRepositoryResource) Metadata(ctx context.Context, req resource.Meta
 
 func (r *TeamRepositoryResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a team repository association in Gitea.",
+		Description:         "Manages a team repository association in Gitea, assigning a repository to a team.",
+		MarkdownDescription: "Manages a team repository association in Gitea, assigning a repository to a team.",
 		Attributes: map[string]schema.Attribute{
 
 			// required - these are fundamental configuration options

@@ -7,6 +7,8 @@ import (
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -107,13 +109,14 @@ func (r *userResource) Metadata(ctx context.Context, req resource.MetadataReques
 
 func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a Gitea user.",
+		Description:         "Manages a Gitea user.",
+		MarkdownDescription: "Manages a Gitea user.",
 		Attributes: map[string]schema.Attribute{
 			// Required
 			"username": schema.StringAttribute{
 				Required:            true,
-				Description:         "Username of the user",
-				MarkdownDescription: "Username of the user",
+				Description:         "Username of the user.",
+				MarkdownDescription: "Username of the user.",
 			},
 			"email": schema.StringAttribute{
 				Required:            true,
@@ -131,32 +134,32 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"source_id": schema.Int64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The authentication source ID to associate with the user",
-				MarkdownDescription: "The authentication source ID to associate with the user",
+				Description:         "The authentication source ID to associate with the user.",
+				MarkdownDescription: "The authentication source ID to associate with the user.",
 			},
 			"login_name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The login name for the authentication source",
-				MarkdownDescription: "The login name for the authentication source",
+				Description:         "The login name for the authentication source.",
+				MarkdownDescription: "The login name for the authentication source.",
 			},
 			"full_name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The full display name of the user",
-				MarkdownDescription: "The full display name of the user",
+				Description:         "The full display name of the user.",
+				MarkdownDescription: "The full display name of the user.",
 			},
 			"must_change_password": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the user must change password on first login",
-				MarkdownDescription: "Whether the user must change password on first login",
+				Description:         "Whether the user must change password on first login.",
+				MarkdownDescription: "Whether the user must change password on first login.",
 			},
 			"send_notify": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether to send welcome notification email to the user",
-				MarkdownDescription: "Whether to send welcome notification email to the user",
+				Description:         "Whether to send welcome notification email to the user.",
+				MarkdownDescription: "Whether to send welcome notification email to the user.",
 			},
 			"visibility": schema.StringAttribute{
 				Optional:            true,
@@ -167,80 +170,85 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The user's description",
-				MarkdownDescription: "The user's description",
+				Description:         "The user's description.",
+				MarkdownDescription: "The user's description.",
 			},
 			"website": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The user's website",
-				MarkdownDescription: "The user's website",
+				Description:         "The user's website.",
+				MarkdownDescription: "The user's website.",
 			},
 			"location": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The user's location",
-				MarkdownDescription: "The user's location",
+				Description:         "The user's location.",
+				MarkdownDescription: "The user's location.",
 			},
 			"active": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Is user active (can login)",
-				MarkdownDescription: "Is user active (can login)",
+				Description:         "Is user active (can login).",
+				MarkdownDescription: "Is user active (can login).",
 			},
 			"admin": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Is the user an administrator",
-				MarkdownDescription: "Is the user an administrator",
+				Description:         "Is the user an administrator.",
+				MarkdownDescription: "Is the user an administrator.",
 			},
 			"allow_git_hook": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the user can use git hooks",
-				MarkdownDescription: "Whether the user can use git hooks",
+				Description:         "Whether the user can use git hooks.",
+				MarkdownDescription: "Whether the user can use git hooks.",
 			},
 			"allow_import_local": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the user can import local repositories",
-				MarkdownDescription: "Whether the user can import local repositories",
+				Description:         "Whether the user can import local repositories.",
+				MarkdownDescription: "Whether the user can import local repositories.",
 			},
 			"max_repo_creation": schema.Int64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Maximum number of repositories the user can create",
-				MarkdownDescription: "Maximum number of repositories the user can create",
+				Description:         "Maximum number of repositories the user can create.",
+				MarkdownDescription: "Maximum number of repositories the user can create.",
 			},
 			"prohibit_login": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Is user login prohibited",
-				MarkdownDescription: "Is user login prohibited",
+				Description:         "Is user login prohibited.",
+				MarkdownDescription: "Is user login prohibited.",
 			},
 			"allow_create_organization": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the user can create organizations",
-				MarkdownDescription: "Whether the user can create organizations",
+				Description:         "Whether the user can create organizations.",
+				MarkdownDescription: "Whether the user can create organizations.",
 			},
 			"restricted": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the user has restricted access privileges",
-				MarkdownDescription: "Whether the user has restricted access privileges",
+				Description:         "Whether the user has restricted access privileges.",
+				MarkdownDescription: "Whether the user has restricted access privileges.",
 			},
 
 			// Computed - key outputs
 			"id": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The user's ID",
-				MarkdownDescription: "The user's ID",
+				Description:         "The user's ID.",
+				MarkdownDescription: "The user's ID.",
+
+				// ID doesnt change once set, only computed once so refer to state
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"avatar_url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "URL to the user's avatar",
-				MarkdownDescription: "URL to the user's avatar",
+				Description:         "URL to the user's avatar.",
+				MarkdownDescription: "URL to the user's avatar.",
 			},
 		},
 	}

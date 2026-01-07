@@ -57,51 +57,52 @@ func (r *orgResource) Metadata(ctx context.Context, req resource.MetadataRequest
 
 func (r *orgResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description:         "Manages a Gitea organization.",
+		MarkdownDescription: "Manages a Gitea organization.",
 		Attributes: map[string]schema.Attribute{
-
 			// required - these are fundamental configuration options
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the organization",
-				MarkdownDescription: "The name of the organization",
+				Description:         "The name of the organization.",
+				MarkdownDescription: "The name of the organization.",
 			},
 
 			// optional - these tweak the created resource away from its defaults
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The description of the organization",
-				MarkdownDescription: "The description of the organization",
+				Description:         "The description of the organization.",
+				MarkdownDescription: "The description of the organization.",
 			},
 			"email": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The email address of the organization",
-				MarkdownDescription: "The email address of the organization",
+				Description:         "The email address of the organization.",
+				MarkdownDescription: "The email address of the organization.",
 			},
 			"display_name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The full display name of the organization",
-				MarkdownDescription: "The full display name of the organization",
+				Description:         "The full display name of the organization.",
+				MarkdownDescription: "The full display name of the organization.",
 			},
 			"location": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The location of the organization",
-				MarkdownDescription: "The location of the organization",
+				Description:         "The location of the organization.",
+				MarkdownDescription: "The location of the organization.",
 			},
 			"repo_admin_change_team_access": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether repository administrators can change team access",
-				MarkdownDescription: "Whether repository administrators can change team access",
+				Description:         "Whether repository administrators can change team access.",
+				MarkdownDescription: "Whether repository administrators can change team access.",
 			},
 			"visibility": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "possible values are `public` (default), `limited` or `private`",
-				MarkdownDescription: "possible values are `public` (default), `limited` or `private`",
+				Description:         "possible values are `public` (default), `limited` or `private`.",
+				MarkdownDescription: "possible values are `public` (default), `limited` or `private`.",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"public",
@@ -113,20 +114,20 @@ func (r *orgResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 			"website": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The website URL of the organization",
-				MarkdownDescription: "The website URL of the organization",
+				Description:         "The website URL of the organization.",
+				MarkdownDescription: "The website URL of the organization.",
 			},
 
 			// computed - these are available to read back after creation but are really just metadata
 			"avatar_url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The URL of the organization's avatar",
-				MarkdownDescription: "The URL of the organization's avatar",
+				Description:         "The URL of the organization's avatar.",
+				MarkdownDescription: "The URL of the organization's avatar.",
 			},
 			"id": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The unique identifier of the organization",
-				MarkdownDescription: "The unique identifier of the organization",
+				Description:         "The unique identifier of the organization.",
+				MarkdownDescription: "The unique identifier of the organization.",
 			},
 		},
 	}

@@ -33,29 +33,29 @@ resource "gitea_repository" "test_repo_for_org" {
 
 ### Required
 
-- `name` (String) Name of the repository to create
-- `owner` (String) The owner of the repository (username or organization name)
+- `name` (String) Name of the repository to create.
+- `owner` (String) The owner of the repository (username or organization name).
 
 ### Optional
 
 - `auto_init` (Boolean) Whether the repository should be auto-initialized?
-- `default_branch` (String) DefaultBranch of the repository (used when initializes and in template)
-- `description` (String) Description of the repository to create
-- `gitignores` (String) Gitignores to use
-- `issue_labels` (String) Issue Label set to use
-- `license` (String) License to use
-- `object_format_name` (String) ObjectFormatName of the underlying git repository (sha1 or sha256)
-- `private` (Boolean) Whether the repository is private
-- `readme` (String) Readme of the repository to create
-- `template` (Boolean) Whether the repository is template
-- `trust_model` (String) TrustModel of the repository
+- `default_branch` (String) DefaultBranch of the repository, used when initializes and in template.
+- `description` (String) Description of the repository to create.
+- `gitignores` (String) Gitignores to use.
+- `issue_labels` (String) Issue Label set to use.
+- `license` (String) License to use.
+- `object_format_name` (String) ObjectFormatName of the underlying git repository (sha1 or sha256).
+- `private` (Boolean) Whether the repository is private.
+- `readme` (String) Readme of the repository to create.
+- `template` (Boolean) Whether the repository is template.
+- `trust_model` (String) TrustModel of the repository.
 
 ### Read-Only
 
-- `clone_url` (String) The HTTPS URL to clone the repository
-- `html_url` (String) The URL to the repository in the web UI
-- `id` (Number) The ID of the repository
-- `ssh_url` (String) The SSH URL to clone the repository
+- `clone_url` (String) The HTTPS URL to clone the repository.
+- `html_url` (String) The URL to the repository in the web UI.
+- `id` (Number) The ID of the repository.
+- `ssh_url` (String) The SSH URL to clone the repository.
 
 ## Import
 

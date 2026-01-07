@@ -36,31 +36,31 @@ func (r *teamMembershipResource) Metadata(_ context.Context, req resource.Metada
 
 func (r *teamMembershipResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description:         "Manages a team membership (assigns a user to a team)",
-		MarkdownDescription: "Manages a team membership (assigns a user to a team)",
+		Description:         "Manages a team membership, assigning a user to a team.",
+		MarkdownDescription: "Manages a team membership, assigning a user to a team.",
 		Attributes: map[string]schema.Attribute{
 
 			// required - these are fundamental configuration options
 			"org": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the organization",
-				MarkdownDescription: "The name of the organization",
+				Description:         "The name of the organization.",
+				MarkdownDescription: "The name of the organization.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"team_name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the team",
-				MarkdownDescription: "The name of the team",
+				Description:         "The name of the team.",
+				MarkdownDescription: "The name of the team.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"username": schema.StringAttribute{
 				Required:            true,
-				Description:         "The username of the user to add to the team",
-				MarkdownDescription: "The username of the user to add to the team",
+				Description:         "The username of the user to add to the team.",
+				MarkdownDescription: "The username of the user to add to the team.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},

@@ -44,22 +44,24 @@ func (r *teamResource) Metadata(_ context.Context, req resource.MetadataRequest,
 
 func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description:         "Manages a Gitea team.",
+		MarkdownDescription: "Manages a Gitea team.",
 		Attributes: map[string]schema.Attribute{
 
 			// required - these are fundamental configuration options
 			"org": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the organization to create the team in",
-				MarkdownDescription: "The name of the organization to create the team in",
+				Description:         "The name of the organization to create the team in.",
+				MarkdownDescription: "The name of the organization to create the team in.",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the team",
-				MarkdownDescription: "The name of the team",
+				Description:         "The name of the team.",
+				MarkdownDescription: "The name of the team.",
 			},
 			"units_map": schema.MapAttribute{
 				Required:    true,
-				Description: "The units this team has access to, and the permission mode granted",
+				Description: "The units this team has access to, and the permission mode granted.",
 				ElementType: types.StringType,
 			},
 
@@ -67,27 +69,27 @@ func (r *teamResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 			"can_create_org_repo": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the team can create repositories in the organization",
-				MarkdownDescription: "Whether the team can create repositories in the organization",
+				Description:         "Whether the team can create repositories in the organization.",
+				MarkdownDescription: "Whether the team can create repositories in the organization.",
 			},
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The description of the team",
-				MarkdownDescription: "The description of the team",
+				Description:         "The description of the team.",
+				MarkdownDescription: "The description of the team.",
 			},
 			"includes_all_repositories": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the team has access to all repositories in the organization",
-				MarkdownDescription: "Whether the team has access to all repositories in the organization",
+				Description:         "Whether the team has access to all repositories in the organization.",
+				MarkdownDescription: "Whether the team has access to all repositories in the organization.",
 			},
 
 			// computed - these are available to read back after creation but are really just metadata
 			"id": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The unique identifier of the team",
-				MarkdownDescription: "The unique identifier of the team",
+				Description:         "The unique identifier of the team.",
+				MarkdownDescription: "The unique identifier of the team.",
 
 				// ID doesnt change once set, only computed once so refer to state
 				PlanModifiers: []planmodifier.Int64{

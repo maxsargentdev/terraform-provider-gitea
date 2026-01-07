@@ -27,32 +27,32 @@ resource "gitea_user" "test_user" {
 
 - `email` (String) The email address of the user
 - `password` (String, Sensitive) The plain text password for the user. This is write-only and cannot be read back.
-- `username` (String) Username of the user
+- `username` (String) Username of the user.
 
 ### Optional
 
-- `active` (Boolean) Is user active (can login)
-- `admin` (Boolean) Is the user an administrator
-- `allow_create_organization` (Boolean) Whether the user can create organizations
-- `allow_git_hook` (Boolean) Whether the user can use git hooks
-- `allow_import_local` (Boolean) Whether the user can import local repositories
-- `description` (String) The user's description
-- `full_name` (String) The full display name of the user
-- `location` (String) The user's location
-- `login_name` (String) The login name for the authentication source
-- `max_repo_creation` (Number) Maximum number of repositories the user can create
-- `must_change_password` (Boolean) Whether the user must change password on first login
-- `prohibit_login` (Boolean) Is user login prohibited
-- `restricted` (Boolean) Whether the user has restricted access privileges
-- `send_notify` (Boolean) Whether to send welcome notification email to the user
-- `source_id` (Number) The authentication source ID to associate with the user
+- `active` (Boolean) Is user active (can login).
+- `admin` (Boolean) Is the user an administrator.
+- `allow_create_organization` (Boolean) Whether the user can create organizations.
+- `allow_git_hook` (Boolean) Whether the user can use git hooks.
+- `allow_import_local` (Boolean) Whether the user can import local repositories.
+- `description` (String) The user's description.
+- `full_name` (String) The full display name of the user.
+- `location` (String) The user's location.
+- `login_name` (String) The login name for the authentication source.
+- `max_repo_creation` (Number) Maximum number of repositories the user can create.
+- `must_change_password` (Boolean) Whether the user must change password on first login.
+- `prohibit_login` (Boolean) Is user login prohibited.
+- `restricted` (Boolean) Whether the user has restricted access privileges.
+- `send_notify` (Boolean) Whether to send welcome notification email to the user.
+- `source_id` (Number) The authentication source ID to associate with the user.
 - `visibility` (String) User visibility level: public, limited, or private
-- `website` (String) The user's website
+- `website` (String) The user's website.
 
 ### Read-Only
 
-- `avatar_url` (String) URL to the user's avatar
-- `id` (Number) The user's ID
+- `avatar_url` (String) URL to the user's avatar.
+- `id` (Number) The user's ID.
 
 ## Import
 

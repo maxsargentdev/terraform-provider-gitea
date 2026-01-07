@@ -2,12 +2,12 @@
 page_title: "Resource gitea_team_repository - gitea"
 subcategory: ""
 description: |-
-  Manages a team repository association in Gitea.
+  Manages a team repository association in Gitea, assigning a repository to a team.
 ---
 
 # gitea_team_repository (Resource)
 
-Manages a team repository association in Gitea.
+Manages a team repository association in Gitea, assigning a repository to a team.
 
 ~> **Warning:** Do not use this resource if the team has `includes_all_repositories = true`. When a team includes all repositories, Gitea automatically grants access to all repositories in the organization, making explicit repository associations unnecessary and potentially confusing. Set `includes_all_repositories = false` on the team to manage repository access explicitly using this resource.
 
