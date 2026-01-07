@@ -17,15 +17,15 @@ func TestAccUserResource(t *testing.T) {
 			{
 				Config: testAccUserResourceConfig("testuser1", "test1@example.com", "testpass123", "Test User"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("gitea_user.test", "username", "testuser1"),
-					resource.TestCheckResourceAttr("gitea_user.test", "email", "test1@example.com"),
-					resource.TestCheckResourceAttr("gitea_user.test", "full_name", "Test User"),
-					resource.TestCheckResourceAttrSet("gitea_user.test", "id"),
+					resource.TestCheckResourceAttr("icegitea_user.test", "username", "testuser1"),
+					resource.TestCheckResourceAttr("icegitea_user.test", "email", "test1@example.com"),
+					resource.TestCheckResourceAttr("icegitea_user.test", "full_name", "Test User"),
+					resource.TestCheckResourceAttrSet("icegitea_user.test", "id"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:            "gitea_user.test",
+				ResourceName:            "icegitea_user.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"password", "must_change_password"},
@@ -37,7 +37,7 @@ func TestAccUserResource(t *testing.T) {
 			{
 				Config: testAccUserResourceConfig("testuser1", "test1@example.com", "testpass123", "Updated Test User"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("gitea_user.test", "full_name", "Updated Test User"),
+					resource.TestCheckResourceAttr("icegitea_user.test", "full_name", "Updated Test User"),
 				),
 			},
 		},
@@ -46,7 +46,7 @@ func TestAccUserResource(t *testing.T) {
 
 func testAccUserResourceConfig(username, email, password, fullName string) string {
 	return providerConfig() + fmt.Sprintf(`
-resource "gitea_user" "test" {
+resource "icegitea_user" "test" {
   username  = %[1]q
   email     = %[2]q
   password  = %[3]q
