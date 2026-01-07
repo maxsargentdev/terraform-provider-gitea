@@ -1,5 +1,1 @@
-- use a generated schema and data model for resource_team_membership and datasource_team_membership
-- review all generated code and create better tests
-- setup resource imports
-- add descriptions to all attributes for docs
-- To audit: Check each resource's Create/Update/Read against its schema and the SDK's option structs to find gaps.
+- minimal org, team, team_repo and repo

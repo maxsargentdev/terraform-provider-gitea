@@ -3,13 +3,13 @@ output "team_id" {
 }
 
 output "team_organization" {
-  value = gitea_org.test_org.username
+  value = gitea_org.test_org.name
 }
 
 # Comprehensive test team - tests ALL possible attributes
 resource "gitea_team" "test_team" {
   # Required attributes
-  org  = gitea_org.test_org.username
+  org  = gitea_org.test_org.name
   name = "test-team"
 
   # Optional string attributes
@@ -34,26 +34,26 @@ resource "gitea_team" "test_team" {
 }
 
 resource "gitea_team_repository" "test_team_repo_association" {
-  org             = gitea_org.test_org.username
+  org             = gitea_org.test_org.name
   team_name       = "test-team"
   repository_name = gitea_repository.test_repo_3.name
 }
 resource "gitea_team_repository" "test_team_repo_association_2" {
-  org             = gitea_org.test_org.username
+  org             = gitea_org.test_org.name
   team_name       = "test-team"
   repository_name = gitea_repository.test_repo_2.name
 }
 
 
 data "gitea_team" "test_team" {
-  org  = gitea_org.test_org.username
+  org  = gitea_org.test_org.name
   name = gitea_team.test_team.name
 
   depends_on = [gitea_team.test_team]
 }
 
 resource "gitea_team" "foo" {
-  org             = gitea_org.test_org.username
+  org             = gitea_org.test_org.name
   name                     = "foo"
   description              = "foo"
   units_map = {
@@ -70,7 +70,7 @@ resource "gitea_team" "foo" {
 }
 
 resource "gitea_team_repository" "test_team_repo_association_3" {
-  org             = gitea_org.test_org.username
+  org             = gitea_org.test_org.name
   team_name       = gitea_team.foo.name
   repository_name = gitea_repository.test_repo_2.name
 }

@@ -6,7 +6,7 @@ resource "gitea_team_membership" "test_membership" {
 
 # Use the team_membership datasource to verify it exists
 data "gitea_team_membership" "test_membership" {
-  org       = gitea_org.test_org.username
+  org       = gitea_org.test_org.name
   team_name = gitea_team.test_team.name
   username  = gitea_user.test_user.username
   

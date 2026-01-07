@@ -23,9 +23,8 @@ func NewOrgResource() resource.Resource {
 // Helper function to map Gitea Organization to Terraform model
 func mapOrgToModel(org *gitea.Organization, model *orgResourceModel) {
 	model.Id = types.Int64Value(org.ID)
-	model.Username = types.StringValue(org.UserName)
 	model.Name = types.StringValue(org.UserName)
-	model.FullName = types.StringValue(org.FullName)
+	model.DisplayName = types.StringValue(org.FullName)
 	model.Description = types.StringValue(org.Description)
 	model.Website = types.StringValue(org.Website)
 	model.Location = types.StringValue(org.Location)
@@ -33,7 +32,6 @@ func mapOrgToModel(org *gitea.Organization, model *orgResourceModel) {
 	model.Visibility = types.StringValue(org.Visibility)
 	model.RepoAdminChangeTeamAccess = types.BoolNull()
 	model.Email = types.StringNull()
-	model.Org = types.StringValue(org.UserName)
 }
 
 type orgResource struct {
@@ -41,16 +39,14 @@ type orgResource struct {
 }
 
 type orgResourceModel struct {
+	Name                      types.String `tfsdk:"name"`
 	AvatarUrl                 types.String `tfsdk:"avatar_url"`
 	Description               types.String `tfsdk:"description"`
 	Email                     types.String `tfsdk:"email"`
-	FullName                  types.String `tfsdk:"full_name"`
+	DisplayName               types.String `tfsdk:"display_name"`
 	Id                        types.Int64  `tfsdk:"id"`
 	Location                  types.String `tfsdk:"location"`
-	Name                      types.String `tfsdk:"name"`
-	Org                       types.String `tfsdk:"org"`
 	RepoAdminChangeTeamAccess types.Bool   `tfsdk:"repo_admin_change_team_access"`
-	Username                  types.String `tfsdk:"username"`
 	Visibility                types.String `tfsdk:"visibility"`
 	Website                   types.String `tfsdk:"website"`
 }
@@ -62,11 +58,15 @@ func (r *orgResource) Metadata(ctx context.Context, req resource.MetadataRequest
 func (r *orgResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"avatar_url": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The URL of the organization's avatar",
-				MarkdownDescription: "The URL of the organization's avatar",
+
+			// required - these are fundamental configuration options
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the organization",
+				MarkdownDescription: "The name of the organization",
 			},
+
+			// optional - these tweak the created resource away from its defaults
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
@@ -79,16 +79,11 @@ func (r *orgResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Description:         "The email address of the organization",
 				MarkdownDescription: "The email address of the organization",
 			},
-			"full_name": schema.StringAttribute{
+			"display_name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
 				Description:         "The full display name of the organization",
 				MarkdownDescription: "The full display name of the organization",
-			},
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "The unique identifier of the organization",
-				MarkdownDescription: "The unique identifier of the organization",
 			},
 			"location": schema.StringAttribute{
 				Optional:            true,
@@ -96,27 +91,11 @@ func (r *orgResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Description:         "The location of the organization",
 				MarkdownDescription: "The location of the organization",
 			},
-			"name": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The name of the organization",
-				MarkdownDescription: "The name of the organization",
-			},
-			"org": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
-				Description:         "name of the organization to get",
-				MarkdownDescription: "name of the organization to get",
-			},
 			"repo_admin_change_team_access": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
 				Description:         "Whether repository administrators can change team access",
 				MarkdownDescription: "Whether repository administrators can change team access",
-			},
-			"username": schema.StringAttribute{
-				Required:            true,
-				Description:         "username of the organization",
-				MarkdownDescription: "username of the organization",
 			},
 			"visibility": schema.StringAttribute{
 				Optional:            true,
@@ -136,6 +115,18 @@ func (r *orgResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Computed:            true,
 				Description:         "The website URL of the organization",
 				MarkdownDescription: "The website URL of the organization",
+			},
+
+			// computed - these are available to read back after creation but are really just metadata
+			"avatar_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The URL of the organization's avatar",
+				MarkdownDescription: "The URL of the organization's avatar",
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The unique identifier of the organization",
+				MarkdownDescription: "The unique identifier of the organization",
 			},
 		},
 	}
@@ -168,12 +159,13 @@ func (r *orgResource) Create(ctx context.Context, req resource.CreateRequest, re
 
 	// Create org via Gitea API
 	createOpts := gitea.CreateOrgOption{
-		Name:        data.Username.ValueString(),
-		FullName:    data.FullName.ValueString(),
-		Description: data.Description.ValueString(),
-		Website:     data.Website.ValueString(),
-		Location:    data.Location.ValueString(),
-		Visibility:  gitea.VisibleType(data.Visibility.ValueString()),
+		Name:                      data.Name.ValueString(),
+		FullName:                  data.DisplayName.ValueString(),
+		Description:               data.Description.ValueString(),
+		Website:                   data.Website.ValueString(),
+		Location:                  data.Location.ValueString(),
+		Visibility:                gitea.VisibleType(data.Visibility.ValueString()),
+		RepoAdminChangeTeamAccess: data.RepoAdminChangeTeamAccess.ValueBool(),
 	}
 
 	org, _, err := r.client.CreateOrg(createOpts)
@@ -200,11 +192,11 @@ func (r *orgResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	}
 
 	// Get org from Gitea API
-	org, _, err := r.client.GetOrg(data.Username.ValueString())
+	org, _, err := r.client.GetOrg(data.Name.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Organization",
-			"Could not read organization "+data.Username.ValueString()+": "+err.Error(),
+			"Could not read organization "+data.Name.ValueString()+": "+err.Error(),
 		)
 		return
 	}
@@ -225,28 +217,28 @@ func (r *orgResource) Update(ctx context.Context, req resource.UpdateRequest, re
 
 	// Update org via Gitea API
 	editOpts := gitea.EditOrgOption{
-		FullName:    data.FullName.ValueString(),
+		FullName:    data.DisplayName.ValueString(),
 		Description: data.Description.ValueString(),
 		Website:     data.Website.ValueString(),
 		Location:    data.Location.ValueString(),
 		Visibility:  gitea.VisibleType(data.Visibility.ValueString()),
 	}
 
-	_, err := r.client.EditOrg(data.Username.ValueString(), editOpts)
+	_, err := r.client.EditOrg(data.Name.ValueString(), editOpts)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Organization",
-			"Could not update organization "+data.Username.ValueString()+": "+err.Error(),
+			"Could not update organization "+data.Name.ValueString()+": "+err.Error(),
 		)
 		return
 	}
 
 	// Read back the org to get updated values
-	org, _, err := r.client.GetOrg(data.Username.ValueString())
+	org, _, err := r.client.GetOrg(data.Name.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Organization After Update",
-			"Could not read organization "+data.Username.ValueString()+": "+err.Error(),
+			"Could not read organization "+data.Name.ValueString()+": "+err.Error(),
 		)
 		return
 	}
@@ -266,11 +258,11 @@ func (r *orgResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 	}
 
 	// Delete org via Gitea API
-	_, err := r.client.DeleteOrg(data.Username.ValueString())
+	_, err := r.client.DeleteOrg(data.Name.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting Organization",
-			"Could not delete organization "+data.Username.ValueString()+": "+err.Error(),
+			"Could not delete organization "+data.Name.ValueString()+": "+err.Error(),
 		)
 		return
 	}
