@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -20,8 +22,10 @@ func NewOrgResource() resource.Resource {
 	return &orgResource{}
 }
 
-// Helper function to map Gitea Organization to Terraform model
-func mapOrgToModel(org *gitea.Organization, model *orgResourceModel) {
+// mapOrgToModel maps a Gitea Organization to a Terraform model.
+// Note: email and repo_admin_change_team_access are not returned by the API,
+// so they must be preserved from the existing model (plan or state).
+func mapOrgToModel(org *gitea.Organization, model *orgResourceModel, preserveEmail types.String, preserveRepoAdminChangeTeamAccess types.Bool) {
 	model.Id = types.Int64Value(org.ID)
 	model.Name = types.StringValue(org.UserName)
 	model.DisplayName = types.StringValue(org.FullName)
@@ -30,8 +34,9 @@ func mapOrgToModel(org *gitea.Organization, model *orgResourceModel) {
 	model.Location = types.StringValue(org.Location)
 	model.AvatarUrl = types.StringValue(org.AvatarURL)
 	model.Visibility = types.StringValue(org.Visibility)
-	model.RepoAdminChangeTeamAccess = types.BoolNull()
-	model.Email = types.StringNull()
+	// These fields are not returned by the Gitea API, preserve from plan/state
+	model.RepoAdminChangeTeamAccess = preserveRepoAdminChangeTeamAccess
+	model.Email = preserveEmail
 }
 
 type orgResource struct {
@@ -57,52 +62,52 @@ func (r *orgResource) Metadata(ctx context.Context, req resource.MetadataRequest
 
 func (r *orgResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description:         "Manages a Gitea organization.",
-		MarkdownDescription: "Manages a Gitea organization.",
+		Description:         "Manages a Gitea organization, including its profile settings and visibility configuration.",
+		MarkdownDescription: "Manages a Gitea organization, including its profile settings and visibility configuration.",
 		Attributes: map[string]schema.Attribute{
 			// required - these are fundamental configuration options
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the organization.",
-				MarkdownDescription: "The name of the organization.",
+				Description:         "The unique username/login name of the organization. This is used in URLs and API calls.",
+				MarkdownDescription: "The unique username/login name of the organization. This is used in URLs and API calls.",
 			},
 
 			// optional - these tweak the created resource away from its defaults
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The description of the organization.",
-				MarkdownDescription: "The description of the organization.",
+				Description:         "A brief description of the organization displayed on the organization's profile page.",
+				MarkdownDescription: "A brief description of the organization displayed on the organization's profile page.",
 			},
 			"email": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The email address of the organization.",
-				MarkdownDescription: "The email address of the organization.",
+				Description:         "The public email address associated with the organization. Note: This field is stored in Terraform state but may not be returned by the Gitea API.",
+				MarkdownDescription: "The public email address associated with the organization. Note: This field is stored in Terraform state but may not be returned by the Gitea API.",
 			},
 			"display_name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The full display name of the organization.",
-				MarkdownDescription: "The full display name of the organization.",
+				Description:         "The full display name of the organization shown in the UI. Also known as 'full_name' in the Gitea API.",
+				MarkdownDescription: "The full display name of the organization shown in the UI. Also known as `full_name` in the Gitea API.",
 			},
 			"location": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The location of the organization.",
-				MarkdownDescription: "The location of the organization.",
+				Description:         "The geographic location of the organization displayed on its profile page.",
+				MarkdownDescription: "The geographic location of the organization displayed on its profile page.",
 			},
 			"repo_admin_change_team_access": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether repository administrators can change team access.",
-				MarkdownDescription: "Whether repository administrators can change team access.",
+				Description:         "When enabled, repository administrators can modify team access permissions for repositories. When disabled, only organization owners can change team access. Defaults to false.",
+				MarkdownDescription: "When enabled, repository administrators can modify team access permissions for repositories. When disabled, only organization owners can change team access. Defaults to `false`.",
 			},
 			"visibility": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "possible values are `public` (default), `limited` or `private`.",
-				MarkdownDescription: "possible values are `public` (default), `limited` or `private`.",
+				Description:         "The visibility level of the organization. Valid values are: 'public' (visible to everyone), 'limited' (visible to logged-in users), or 'private' (visible only to organization members). Defaults to 'public'.",
+				MarkdownDescription: "The visibility level of the organization. Valid values are: `public` (visible to everyone), `limited` (visible to logged-in users), or `private` (visible only to organization members). Defaults to `public`.",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"public",
@@ -114,20 +119,23 @@ func (r *orgResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 			"website": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The website URL of the organization.",
-				MarkdownDescription: "The website URL of the organization.",
+				Description:         "The URL of the organization's website displayed on its profile page.",
+				MarkdownDescription: "The URL of the organization's website displayed on its profile page.",
 			},
 
 			// computed - these are available to read back after creation but are really just metadata
 			"avatar_url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The URL of the organization's avatar.",
-				MarkdownDescription: "The URL of the organization's avatar.",
+				Description:         "The URL of the organization's avatar image. This is automatically generated by Gitea.",
+				MarkdownDescription: "The URL of the organization's avatar image. This is automatically generated by Gitea.",
 			},
 			"id": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The unique identifier of the organization.",
-				MarkdownDescription: "The unique identifier of the organization.",
+				Description:         "The unique numeric identifier of the organization assigned by Gitea.",
+				MarkdownDescription: "The unique numeric identifier of the organization assigned by Gitea.",
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -178,8 +186,9 @@ func (r *orgResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
-	// Map response to model
-	mapOrgToModel(org, &data)
+	// Map response to model, preserving email and repo_admin_change_team_access from plan
+	// since they are not returned by the API
+	mapOrgToModel(org, &data, data.Email, data.RepoAdminChangeTeamAccess)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -192,9 +201,17 @@ func (r *orgResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
+	// Preserve values from state that API doesn't return
+	preserveEmail := data.Email
+	preserveRepoAdminChangeTeamAccess := data.RepoAdminChangeTeamAccess
+
 	// Get org from Gitea API
-	org, _, err := r.client.GetOrg(data.Name.ValueString())
+	org, httpResp, err := r.client.GetOrg(data.Name.ValueString())
 	if err != nil {
+		if httpResp != nil && httpResp.StatusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Reading Organization",
 			"Could not read organization "+data.Name.ValueString()+": "+err.Error(),
@@ -202,8 +219,8 @@ func (r *orgResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	// Map response to model
-	mapOrgToModel(org, &data)
+	// Map response to model, preserving fields not returned by API
+	mapOrgToModel(org, &data, preserveEmail, preserveRepoAdminChangeTeamAccess)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -244,8 +261,9 @@ func (r *orgResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		return
 	}
 
-	// Map response to model
-	mapOrgToModel(org, &data)
+	// Map response to model, preserving email and repo_admin_change_team_access from plan
+	// since they are not returned by the API
+	mapOrgToModel(org, &data, data.Email, data.RepoAdminChangeTeamAccess)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -283,9 +301,10 @@ func (r *orgResource) ImportState(ctx context.Context, req resource.ImportStateR
 		return
 	}
 
-	// Map to model
+	// Map to model - email and repo_admin_change_team_access will be null after import
+	// since they are not returned by the API
 	var data orgResourceModel
-	mapOrgToModel(org, &data)
+	mapOrgToModel(org, &data, types.StringNull(), types.BoolNull())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

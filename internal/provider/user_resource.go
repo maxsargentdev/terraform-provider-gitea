@@ -3,12 +3,17 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"regexp"
 
 	"code.gitea.io/sdk/gitea"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -25,6 +30,12 @@ func mapUserToModel(user *gitea.User, model *userResourceModel) {
 	// Computed fields
 	model.Id = types.Int64Value(user.ID)
 	model.AvatarUrl = types.StringValue(user.AvatarURL)
+	model.Created = types.StringValue(user.Created.Format("2006-01-02T15:04:05Z07:00"))
+	model.LastLogin = types.StringValue(user.LastLogin.Format("2006-01-02T15:04:05Z07:00"))
+	model.Language = types.StringValue(user.Language)
+	model.FollowersCount = types.Int64Value(int64(user.FollowerCount))
+	model.FollowingCount = types.Int64Value(int64(user.FollowingCount))
+	model.StarredReposCount = types.Int64Value(int64(user.StarredRepoCount))
 
 	// Optional fields returned by API
 	model.Username = types.StringValue(user.UserName)
@@ -99,8 +110,14 @@ type userResourceModel struct {
 	Restricted              types.Bool   `tfsdk:"restricted"`
 
 	// Computed - key outputs
-	Id        types.Int64  `tfsdk:"id"`
-	AvatarUrl types.String `tfsdk:"avatar_url"`
+	Id               types.Int64  `tfsdk:"id"`
+	AvatarUrl        types.String `tfsdk:"avatar_url"`
+	Created          types.String `tfsdk:"created"`
+	LastLogin        types.String `tfsdk:"last_login"`
+	Language         types.String `tfsdk:"language"`
+	FollowersCount   types.Int64  `tfsdk:"followers_count"`
+	FollowingCount   types.Int64  `tfsdk:"following_count"`
+	StarredReposCount types.Int64  `tfsdk:"starred_repos_count"`
 }
 
 func (r *userResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -109,136 +126,145 @@ func (r *userResource) Metadata(ctx context.Context, req resource.MetadataReques
 
 func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description:         "Manages a Gitea user.",
-		MarkdownDescription: "Manages a Gitea user.",
+		Description:         "Manages a Gitea user account. This resource allows you to create, update, and delete user accounts in your Gitea instance. Requires admin privileges.",
+		MarkdownDescription: "Manages a **Gitea user account**. This resource allows you to create, update, and delete user accounts in your Gitea instance. Requires admin privileges.",
 		Attributes: map[string]schema.Attribute{
 			// Required
 			"username": schema.StringAttribute{
 				Required:            true,
-				Description:         "Username of the user.",
-				MarkdownDescription: "Username of the user.",
+				Description:         "The unique username for the user account. This is used for login and is displayed publicly. Cannot be changed after creation.",
+				MarkdownDescription: "The unique **username** for the user account. This is used for login and is displayed publicly. Cannot be changed after creation.",
 			},
 			"email": schema.StringAttribute{
 				Required:            true,
-				Description:         "The email address of the user",
-				MarkdownDescription: "The email address of the user",
+				Description:         "The primary email address associated with the user account. Must be a valid email format (e.g., user@example.com). Used for notifications and account recovery.",
+				MarkdownDescription: "The primary **email address** associated with the user account. Must be a valid email format (e.g., `user@example.com`). Used for notifications and account recovery.",
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`),
+						"must be a valid email address (e.g., user@example.com)",
+					),
+				},
 			},
 			"password": schema.StringAttribute{
 				Required:            true,
 				Sensitive:           true,
-				Description:         "The plain text password for the user. This is write-only and cannot be read back.",
-				MarkdownDescription: "The plain text password for the user. This is write-only and cannot be read back.",
+				Description:         "The password for the user account. Must meet the password complexity requirements configured in Gitea. This value is write-only and cannot be read back from the API.",
+				MarkdownDescription: "The **password** for the user account. Must meet the password complexity requirements configured in Gitea. This value is write-only and cannot be read back from the API.",
 			},
 
 			// Optional - from CreateUserOption and EditUserOption
 			"source_id": schema.Int64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The authentication source ID to associate with the user.",
-				MarkdownDescription: "The authentication source ID to associate with the user.",
+				Description:         "The ID of the authentication source (e.g., LDAP, OAuth, SMTP) to associate with this user. Use 0 or leave unset for local authentication.",
+				MarkdownDescription: "The ID of the **authentication source** (e.g., LDAP, OAuth, SMTP) to associate with this user. Use `0` or leave unset for local authentication.",
 			},
 			"login_name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The login name for the authentication source.",
-				MarkdownDescription: "The login name for the authentication source.",
+				Description:         "The login name used for external authentication sources (e.g., LDAP DN, OAuth username). Only applicable when source_id is set to a non-local authentication source.",
+				MarkdownDescription: "The **login name** used for external authentication sources (e.g., LDAP DN, OAuth username). Only applicable when `source_id` is set to a non-local authentication source.",
 			},
 			"full_name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The full display name of the user.",
-				MarkdownDescription: "The full display name of the user.",
+				Description:         "The user's full display name (e.g., 'John Doe'). This is shown in the UI alongside the username.",
+				MarkdownDescription: "The user's **full display name** (e.g., 'John Doe'). This is shown in the UI alongside the username.",
 			},
 			"must_change_password": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the user must change password on first login.",
-				MarkdownDescription: "Whether the user must change password on first login.",
+				Description:         "If true, the user will be required to change their password upon next login. Useful for initial account setup or password reset scenarios.",
+				MarkdownDescription: "If `true`, the user will be required to change their password upon next login. Useful for initial account setup or password reset scenarios.",
 			},
 			"send_notify": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether to send welcome notification email to the user.",
-				MarkdownDescription: "Whether to send welcome notification email to the user.",
+				Description:         "If true, sends a welcome notification email to the user upon account creation. Requires email settings to be configured in Gitea.",
+				MarkdownDescription: "If `true`, sends a welcome notification email to the user upon account creation. Requires email settings to be configured in Gitea.",
 			},
 			"visibility": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "User visibility level: public, limited, or private",
-				MarkdownDescription: "User visibility level: public, limited, or private",
+				Description:         "The visibility level of the user's profile. Valid values are: 'public' (visible to everyone), 'limited' (visible to logged-in users only), or 'private' (visible only to the user and admins).",
+				MarkdownDescription: "The **visibility level** of the user's profile. Valid values are: `public` (visible to everyone), `limited` (visible to logged-in users only), or `private` (visible only to the user and admins).",
+				Validators: []validator.String{
+					stringvalidator.OneOf("public", "limited", "private"),
+				},
 			},
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The user's description.",
-				MarkdownDescription: "The user's description.",
+				Description:         "A short biography or description for the user's profile. Displayed on the user's public profile page.",
+				MarkdownDescription: "A short **biography or description** for the user's profile. Displayed on the user's public profile page.",
 			},
 			"website": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The user's website.",
-				MarkdownDescription: "The user's website.",
+				Description:         "The user's personal or professional website URL. Displayed on the user's public profile page.",
+				MarkdownDescription: "The user's personal or professional **website URL**. Displayed on the user's public profile page.",
 			},
 			"location": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The user's location.",
-				MarkdownDescription: "The user's location.",
+				Description:         "The user's geographic location (e.g., 'San Francisco, CA'). Displayed on the user's public profile page.",
+				MarkdownDescription: "The user's geographic **location** (e.g., 'San Francisco, CA'). Displayed on the user's public profile page.",
 			},
 			"active": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Is user active (can login).",
-				MarkdownDescription: "Is user active (can login).",
+				Description:         "Whether the user account is active. If false, the user cannot log in. Use this to temporarily disable accounts without deleting them.",
+				MarkdownDescription: "Whether the user account is **active**. If `false`, the user cannot log in. Use this to temporarily disable accounts without deleting them.",
 			},
 			"admin": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Is the user an administrator.",
-				MarkdownDescription: "Is the user an administrator.",
+				Description:         "Whether the user has administrator privileges. Admins have full access to all Gitea settings, users, and repositories.",
+				MarkdownDescription: "Whether the user has **administrator privileges**. Admins have full access to all Gitea settings, users, and repositories.",
 			},
 			"allow_git_hook": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the user can use git hooks.",
-				MarkdownDescription: "Whether the user can use git hooks.",
+				Description:         "Whether the user is allowed to create and manage Git hooks. Git hooks can execute arbitrary code, so this should only be granted to trusted users.",
+				MarkdownDescription: "Whether the user is allowed to create and manage **Git hooks**. Git hooks can execute arbitrary code, so this should only be granted to trusted users.",
 			},
 			"allow_import_local": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the user can import local repositories.",
-				MarkdownDescription: "Whether the user can import local repositories.",
+				Description:         "Whether the user is allowed to import repositories from the local filesystem of the Gitea server. This is a privileged operation that requires filesystem access.",
+				MarkdownDescription: "Whether the user is allowed to **import repositories from the local filesystem** of the Gitea server. This is a privileged operation that requires filesystem access.",
 			},
 			"max_repo_creation": schema.Int64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Maximum number of repositories the user can create.",
-				MarkdownDescription: "Maximum number of repositories the user can create.",
+				Description:         "The maximum number of repositories this user can create. Set to -1 for unlimited. Defaults to the global setting if not specified.",
+				MarkdownDescription: "The **maximum number of repositories** this user can create. Set to `-1` for unlimited. Defaults to the global setting if not specified.",
 			},
 			"prohibit_login": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Is user login prohibited.",
-				MarkdownDescription: "Is user login prohibited.",
+				Description:         "Whether the user is prohibited from logging in. Unlike 'active', this is typically used for bot accounts or accounts that should only be used programmatically.",
+				MarkdownDescription: "Whether the user is **prohibited from logging in**. Unlike `active`, this is typically used for bot accounts or accounts that should only be used programmatically.",
 			},
 			"allow_create_organization": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the user can create organizations.",
-				MarkdownDescription: "Whether the user can create organizations.",
+				Description:         "Whether the user is allowed to create new organizations. Organizations allow grouping repositories and managing team permissions.",
+				MarkdownDescription: "Whether the user is allowed to **create new organizations**. Organizations allow grouping repositories and managing team permissions.",
 			},
 			"restricted": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Whether the user has restricted access privileges.",
-				MarkdownDescription: "Whether the user has restricted access privileges.",
+				Description:         "Whether the user has restricted access. Restricted users can only see public repositories and their own repositories, and cannot interact with others.",
+				MarkdownDescription: "Whether the user has **restricted access**. Restricted users can only see public repositories and their own repositories, and cannot interact with others.",
 			},
 
 			// Computed - key outputs
 			"id": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The user's ID.",
-				MarkdownDescription: "The user's ID.",
+				Description:         "The unique numeric identifier for this user in Gitea. This ID is stable and can be used for API operations.",
+				MarkdownDescription: "The unique **numeric identifier** for this user in Gitea. This ID is stable and can be used for API operations.",
 
 				// ID doesnt change once set, only computed once so refer to state
 				PlanModifiers: []planmodifier.Int64{
@@ -247,8 +273,41 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 			"avatar_url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "URL to the user's avatar.",
-				MarkdownDescription: "URL to the user's avatar.",
+				Description:         "The URL to the user's avatar image. This is either a Gravatar URL based on the user's email or a custom uploaded avatar.",
+				MarkdownDescription: "The URL to the user's **avatar image**. This is either a Gravatar URL based on the user's email or a custom uploaded avatar.",
+			},
+			"created": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The timestamp when this user account was created, in RFC 3339 format (e.g., '2024-01-15T10:30:00Z').",
+				MarkdownDescription: "The **timestamp** when this user account was created, in RFC 3339 format (e.g., `2024-01-15T10:30:00Z`).",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"last_login": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The timestamp of the user's most recent login, in RFC 3339 format. Useful for identifying inactive accounts.",
+				MarkdownDescription: "The **timestamp** of the user's most recent login, in RFC 3339 format. Useful for identifying inactive accounts.",
+			},
+			"language": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The user's preferred language/locale setting for the Gitea UI (e.g., 'en-US', 'zh-CN'). Set by the user in their profile settings.",
+				MarkdownDescription: "The user's preferred **language/locale** setting for the Gitea UI (e.g., `en-US`, `zh-CN`). Set by the user in their profile settings.",
+			},
+			"followers_count": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The number of users following this user. Reflects the user's community engagement and popularity.",
+				MarkdownDescription: "The number of **users following** this user. Reflects the user's community engagement and popularity.",
+			},
+			"following_count": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The number of users this user is following. Reflects the user's engagement with other community members.",
+				MarkdownDescription: "The number of **users this user is following**. Reflects the user's engagement with other community members.",
+			},
+			"starred_repos_count": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The number of repositories this user has starred. Starred repositories appear in the user's starred list for quick access.",
+				MarkdownDescription: "The number of **repositories this user has starred**. Starred repositories appear in the user's starred list for quick access.",
 			},
 		},
 	}
@@ -363,8 +422,13 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Get user from Gitea API
-	user, _, err := r.client.GetUserInfo(state.Username.ValueString())
+	user, response, err := r.client.GetUserInfo(state.Username.ValueString())
 	if err != nil {
+		// If user was deleted externally, remove from state
+		if response != nil && response.StatusCode == http.StatusNotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Reading User",
 			"Could not read user "+state.Username.ValueString()+": "+err.Error(),

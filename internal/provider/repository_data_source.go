@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -19,96 +20,59 @@ func NewRepositoryDataSource() datasource.DataSource {
 	return &repositoryDataSource{}
 }
 
-// Helper function to map Gitea Repository to Terraform data source model
-func mapRepositoryToDataSourceModel(repo *gitea.Repository, model *repositoryDataSourceModel) {
-	model.Id = types.Int64Value(repo.ID)
-	model.Name = types.StringValue(repo.Name)
-	model.FullName = types.StringValue(repo.FullName)
-	model.Description = types.StringValue(repo.Description)
-	model.Private = types.BoolValue(repo.Private)
-	model.DefaultBranch = types.StringValue(repo.DefaultBranch)
-	model.Website = types.StringValue(repo.Website)
-	model.HtmlUrl = types.StringValue(repo.HTMLURL)
-	model.CloneUrl = types.StringValue(repo.CloneURL)
-	model.SshUrl = types.StringValue(repo.SSHURL)
-	model.Empty = types.BoolValue(repo.Empty)
-	model.Fork = types.BoolValue(repo.Fork)
-	model.Mirror = types.BoolValue(repo.Mirror)
-	model.Size = types.Int64Value(int64(repo.Size))
-	model.Archived = types.BoolValue(repo.Archived)
-	model.StarsCount = types.Int64Value(int64(repo.Stars))
-	model.WatchersCount = types.Int64Value(int64(repo.Watchers))
-	model.ForksCount = types.Int64Value(int64(repo.Forks))
-	model.OpenIssuesCount = types.Int64Value(int64(repo.OpenIssues))
-	model.AvatarUrl = types.StringValue(repo.AvatarURL)
-	model.Template = types.BoolValue(repo.Template)
-	model.Internal = types.BoolValue(repo.Internal)
-}
-
 type repositoryDataSource struct {
 	client *gitea.Client
 }
 
 type repositoryDataSourceModel struct {
-	AllowFastForwardOnlyMerge     types.Bool   `tfsdk:"allow_fast_forward_only_merge"`
-	AllowManualMerge              types.Bool   `tfsdk:"allow_manual_merge"`
+	// Required inputs
+	Owner types.String `tfsdk:"owner"`
+	Name  types.String `tfsdk:"name"`
+
+	// Computed outputs
+	Id                            types.Int64  `tfsdk:"id"`
+	FullName                      types.String `tfsdk:"full_name"`
+	Description                   types.String `tfsdk:"description"`
+	Private                       types.Bool   `tfsdk:"private"`
+	Fork                          types.Bool   `tfsdk:"fork"`
+	Mirror                        types.Bool   `tfsdk:"mirror"`
+	Template                      types.Bool   `tfsdk:"template"`
+	Internal                      types.Bool   `tfsdk:"internal"`
+	Empty                         types.Bool   `tfsdk:"empty"`
+	Archived                      types.Bool   `tfsdk:"archived"`
+	DefaultBranch                 types.String `tfsdk:"default_branch"`
+	Website                       types.String `tfsdk:"website"`
+	HtmlUrl                       types.String `tfsdk:"html_url"`
+	CloneUrl                      types.String `tfsdk:"clone_url"`
+	SshUrl                        types.String `tfsdk:"ssh_url"`
+	Size                          types.Int64  `tfsdk:"size"`
+	StarsCount                    types.Int64  `tfsdk:"stars_count"`
+	WatchersCount                 types.Int64  `tfsdk:"watchers_count"`
+	ForksCount                    types.Int64  `tfsdk:"forks_count"`
+	OpenIssuesCount               types.Int64  `tfsdk:"open_issues_count"`
+	OpenPrCounter                 types.Int64  `tfsdk:"open_pr_counter"`
+	ReleaseCounter                types.Int64  `tfsdk:"release_counter"`
+	AvatarUrl                     types.String `tfsdk:"avatar_url"`
+	ObjectFormatName              types.String `tfsdk:"object_format_name"`
+	HasIssues                     types.Bool   `tfsdk:"has_issues"`
+	HasWiki                       types.Bool   `tfsdk:"has_wiki"`
+	HasPullRequests               types.Bool   `tfsdk:"has_pull_requests"`
+	HasProjects                   types.Bool   `tfsdk:"has_projects"`
+	HasReleases                   types.Bool   `tfsdk:"has_releases"`
+	HasPackages                   types.Bool   `tfsdk:"has_packages"`
+	HasActions                    types.Bool   `tfsdk:"has_actions"`
+	IgnoreWhitespaceConflicts     types.Bool   `tfsdk:"ignore_whitespace_conflicts"`
 	AllowMergeCommits             types.Bool   `tfsdk:"allow_merge_commits"`
 	AllowRebase                   types.Bool   `tfsdk:"allow_rebase"`
 	AllowRebaseExplicit           types.Bool   `tfsdk:"allow_rebase_explicit"`
 	AllowRebaseUpdate             types.Bool   `tfsdk:"allow_rebase_update"`
 	AllowSquashMerge              types.Bool   `tfsdk:"allow_squash_merge"`
-	Archived                      types.Bool   `tfsdk:"archived"`
-	ArchivedAt                    types.String `tfsdk:"archived_at"`
+	AllowFastForwardOnlyMerge     types.Bool   `tfsdk:"allow_fast_forward_only_merge"`
+	AllowManualMerge              types.Bool   `tfsdk:"allow_manual_merge"`
 	AutodetectManualMerge         types.Bool   `tfsdk:"autodetect_manual_merge"`
-	AvatarUrl                     types.String `tfsdk:"avatar_url"`
-	CloneUrl                      types.String `tfsdk:"clone_url"`
-	CreatedAt                     types.String `tfsdk:"created_at"`
-	DefaultAllowMaintainerEdit    types.Bool   `tfsdk:"default_allow_maintainer_edit"`
-	DefaultBranch                 types.String `tfsdk:"default_branch"`
 	DefaultDeleteBranchAfterMerge types.Bool   `tfsdk:"default_delete_branch_after_merge"`
 	DefaultMergeStyle             types.String `tfsdk:"default_merge_style"`
-	Description                   types.String `tfsdk:"description"`
-	Empty                         types.Bool   `tfsdk:"empty"`
-	Fork                          types.Bool   `tfsdk:"fork"`
-	ForksCount                    types.Int64  `tfsdk:"forks_count"`
-	FullName                      types.String `tfsdk:"full_name"`
-	HasActions                    types.Bool   `tfsdk:"has_actions"`
-	HasCode                       types.Bool   `tfsdk:"has_code"`
-	HasIssues                     types.Bool   `tfsdk:"has_issues"`
-	HasPackages                   types.Bool   `tfsdk:"has_packages"`
-	HasProjects                   types.Bool   `tfsdk:"has_projects"`
-	HasPullRequests               types.Bool   `tfsdk:"has_pull_requests"`
-	HasReleases                   types.Bool   `tfsdk:"has_releases"`
-	HasWiki                       types.Bool   `tfsdk:"has_wiki"`
-	HtmlUrl                       types.String `tfsdk:"html_url"`
-	Id                            types.Int64  `tfsdk:"id"`
-	IgnoreWhitespaceConflicts     types.Bool   `tfsdk:"ignore_whitespace_conflicts"`
-	Internal                      types.Bool   `tfsdk:"internal"`
-	Language                      types.String `tfsdk:"language"`
-	LanguagesUrl                  types.String `tfsdk:"languages_url"`
-	Licenses                      types.List   `tfsdk:"licenses"`
-	Link                          types.String `tfsdk:"link"`
-	Mirror                        types.Bool   `tfsdk:"mirror"`
-	MirrorInterval                types.String `tfsdk:"mirror_interval"`
-	MirrorUpdated                 types.String `tfsdk:"mirror_updated"`
-	Name                          types.String `tfsdk:"name"`
-	ObjectFormatName              types.String `tfsdk:"object_format_name"`
-	OpenIssuesCount               types.Int64  `tfsdk:"open_issues_count"`
-	OpenPrCounter                 types.Int64  `tfsdk:"open_pr_counter"`
-	OriginalUrl                   types.String `tfsdk:"original_url"`
-	Private                       types.Bool   `tfsdk:"private"`
-	ProjectsMode                  types.String `tfsdk:"projects_mode"`
-	ReleaseCounter                types.Int64  `tfsdk:"release_counter"`
-	Repo                          types.String `tfsdk:"repo"`
-	Size                          types.Int64  `tfsdk:"size"`
-	SshUrl                        types.String `tfsdk:"ssh_url"`
-	StarsCount                    types.Int64  `tfsdk:"stars_count"`
-	Template                      types.Bool   `tfsdk:"template"`
-	Topics                        types.List   `tfsdk:"topics"`
-	UpdatedAt                     types.String `tfsdk:"updated_at"`
-	Url                           types.String `tfsdk:"url"`
-	WatchersCount                 types.Int64  `tfsdk:"watchers_count"`
-	Website                       types.String `tfsdk:"website"`
+	DefaultAllowMaintainerEdit    types.Bool   `tfsdk:"default_allow_maintainer_edit"`
 }
 
 func (d *repositoryDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -117,189 +81,236 @@ func (d *repositoryDataSource) Metadata(_ context.Context, req datasource.Metada
 
 func (d *repositoryDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description:         "Use this data source to retrieve information about an existing Gitea repository.",
+		MarkdownDescription: "Use this data source to retrieve information about an existing Gitea repository.",
 		Attributes: map[string]schema.Attribute{
-			"allow_fast_forward_only_merge": schema.BoolAttribute{
-				Computed: true,
-			},
-			"allow_manual_merge": schema.BoolAttribute{
-				Computed: true,
-			},
-			"allow_merge_commits": schema.BoolAttribute{
-				Computed: true,
-			},
-			"allow_rebase": schema.BoolAttribute{
-				Computed: true,
-			},
-			"allow_rebase_explicit": schema.BoolAttribute{
-				Computed: true,
-			},
-			"allow_rebase_update": schema.BoolAttribute{
-				Computed: true,
-			},
-			"allow_squash_merge": schema.BoolAttribute{
-				Computed: true,
-			},
-			"archived": schema.BoolAttribute{
-				Computed: true,
-			},
-			"archived_at": schema.StringAttribute{
-				Computed: true,
-			},
-			"autodetect_manual_merge": schema.BoolAttribute{
-				Computed: true,
-			},
-			"avatar_url": schema.StringAttribute{
-				Computed: true,
-			},
-			"clone_url": schema.StringAttribute{
-				Computed: true,
-			},
-			"created_at": schema.StringAttribute{
-				Computed: true,
-			},
-			"default_allow_maintainer_edit": schema.BoolAttribute{
-				Computed: true,
-			},
-			"default_branch": schema.StringAttribute{
-				Computed: true,
-			},
-			"default_delete_branch_after_merge": schema.BoolAttribute{
-				Computed: true,
-			},
-			"default_merge_style": schema.StringAttribute{
-				Computed: true,
-			},
-			"description": schema.StringAttribute{
-				Computed: true,
-			},
-			"empty": schema.BoolAttribute{
-				Computed: true,
-			},
-			"fork": schema.BoolAttribute{
-				Computed: true,
-			},
-			"forks_count": schema.Int64Attribute{
-				Computed: true,
-			},
-			"full_name": schema.StringAttribute{
-				Computed: true,
-			},
-			"has_actions": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_code": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_issues": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_packages": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_projects": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_pull_requests": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_releases": schema.BoolAttribute{
-				Computed: true,
-			},
-			"has_wiki": schema.BoolAttribute{
-				Computed: true,
-			},
-			"html_url": schema.StringAttribute{
-				Computed: true,
-			},
-			"id": schema.Int64Attribute{
-				Computed: true,
-			},
-			"ignore_whitespace_conflicts": schema.BoolAttribute{
-				Computed: true,
-			},
-			"internal": schema.BoolAttribute{
-				Computed: true,
-			},
-			"language": schema.StringAttribute{
-				Computed: true,
-			},
-			"languages_url": schema.StringAttribute{
-				Computed: true,
-			},
-			"licenses": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"link": schema.StringAttribute{
-				Computed: true,
-			},
-			"mirror": schema.BoolAttribute{
-				Computed: true,
-			},
-			"mirror_interval": schema.StringAttribute{
-				Computed: true,
-			},
-			"mirror_updated": schema.StringAttribute{
-				Computed: true,
+			// Required inputs
+			"owner": schema.StringAttribute{
+				Required:            true,
+				Description:         "The owner of the repository (username or organization name).",
+				MarkdownDescription: "The owner of the repository (username or organization name).",
 			},
 			"name": schema.StringAttribute{
-				Computed: true,
+				Required:            true,
+				Description:         "The name of the repository.",
+				MarkdownDescription: "The name of the repository.",
+			},
+
+			// Computed outputs
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The numeric ID of the repository.",
+				MarkdownDescription: "The numeric ID of the repository.",
+			},
+			"full_name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The full name of the repository in owner/repo format.",
+				MarkdownDescription: "The full name of the repository in `owner/repo` format.",
+			},
+			"description": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The description of the repository.",
+				MarkdownDescription: "The description of the repository.",
+			},
+			"private": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository is private.",
+				MarkdownDescription: "Whether the repository is private.",
+			},
+			"fork": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository is a fork.",
+				MarkdownDescription: "Whether the repository is a fork.",
+			},
+			"mirror": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository is a mirror.",
+				MarkdownDescription: "Whether the repository is a mirror.",
+			},
+			"template": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository is a template.",
+				MarkdownDescription: "Whether the repository is a template.",
+			},
+			"internal": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository is internal.",
+				MarkdownDescription: "Whether the repository is internal.",
+			},
+			"empty": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository is empty.",
+				MarkdownDescription: "Whether the repository is empty.",
+			},
+			"archived": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository is archived.",
+				MarkdownDescription: "Whether the repository is archived.",
+			},
+			"default_branch": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The default branch of the repository.",
+				MarkdownDescription: "The default branch of the repository.",
+			},
+			"website": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The website URL associated with the repository.",
+				MarkdownDescription: "The website URL associated with the repository.",
+			},
+			"html_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The URL to view the repository in the web UI.",
+				MarkdownDescription: "The URL to view the repository in the web UI.",
+			},
+			"clone_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The HTTPS URL to clone the repository.",
+				MarkdownDescription: "The HTTPS URL to clone the repository.",
+			},
+			"ssh_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The SSH URL to clone the repository.",
+				MarkdownDescription: "The SSH URL to clone the repository.",
+			},
+			"size": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The size of the repository in KB.",
+				MarkdownDescription: "The size of the repository in KB.",
+			},
+			"stars_count": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The number of stars the repository has.",
+				MarkdownDescription: "The number of stars the repository has.",
+			},
+			"watchers_count": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The number of watchers the repository has.",
+				MarkdownDescription: "The number of watchers the repository has.",
+			},
+			"forks_count": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The number of forks of the repository.",
+				MarkdownDescription: "The number of forks of the repository.",
+			},
+			"open_issues_count": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The number of open issues in the repository.",
+				MarkdownDescription: "The number of open issues in the repository.",
+			},
+			"open_pr_counter": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The number of open pull requests in the repository.",
+				MarkdownDescription: "The number of open pull requests in the repository.",
+			},
+			"release_counter": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The number of releases in the repository.",
+				MarkdownDescription: "The number of releases in the repository.",
+			},
+			"avatar_url": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The URL of the repository's avatar.",
+				MarkdownDescription: "The URL of the repository's avatar.",
 			},
 			"object_format_name": schema.StringAttribute{
 				Computed:            true,
-				Description:         "ObjectFormatName of the underlying git repository",
-				MarkdownDescription: "ObjectFormatName of the underlying git repository",
+				Description:         "The object format name of the underlying git repository (sha1 or sha256).",
+				MarkdownDescription: "The object format name of the underlying git repository (sha1 or sha256).",
 			},
-			"open_issues_count": schema.Int64Attribute{
-				Computed: true,
+			"has_issues": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository has issues enabled.",
+				MarkdownDescription: "Whether the repository has issues enabled.",
 			},
-			"open_pr_counter": schema.Int64Attribute{
-				Computed: true,
+			"has_wiki": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository has wiki enabled.",
+				MarkdownDescription: "Whether the repository has wiki enabled.",
 			},
-			"original_url": schema.StringAttribute{
-				Computed: true,
+			"has_pull_requests": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository has pull requests enabled.",
+				MarkdownDescription: "Whether the repository has pull requests enabled.",
 			},
-			"private": schema.BoolAttribute{
-				Computed: true,
+			"has_projects": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository has projects enabled.",
+				MarkdownDescription: "Whether the repository has projects enabled.",
 			},
-			"projects_mode": schema.StringAttribute{
-				Computed: true,
+			"has_releases": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository has releases enabled.",
+				MarkdownDescription: "Whether the repository has releases enabled.",
 			},
-			"release_counter": schema.Int64Attribute{
-				Computed: true,
+			"has_packages": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository has packages enabled.",
+				MarkdownDescription: "Whether the repository has packages enabled.",
 			},
-			"repo": schema.StringAttribute{
-				Required:            true,
-				Description:         "name of the repo",
-				MarkdownDescription: "name of the repo",
+			"has_actions": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository has actions enabled.",
+				MarkdownDescription: "Whether the repository has actions enabled.",
 			},
-			"size": schema.Int64Attribute{
-				Computed: true,
+			"ignore_whitespace_conflicts": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the repository ignores whitespace conflicts.",
+				MarkdownDescription: "Whether the repository ignores whitespace conflicts.",
 			},
-			"ssh_url": schema.StringAttribute{
-				Computed: true,
+			"allow_merge_commits": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether merge commits are allowed.",
+				MarkdownDescription: "Whether merge commits are allowed.",
 			},
-			"stars_count": schema.Int64Attribute{
-				Computed: true,
+			"allow_rebase": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether rebase merging is allowed.",
+				MarkdownDescription: "Whether rebase merging is allowed.",
 			},
-			"template": schema.BoolAttribute{
-				Computed: true,
+			"allow_rebase_explicit": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether explicit rebase merging is allowed.",
+				MarkdownDescription: "Whether explicit rebase merging is allowed.",
 			},
-			"topics": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
+			"allow_rebase_update": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether rebase update is allowed.",
+				MarkdownDescription: "Whether rebase update is allowed.",
 			},
-			"updated_at": schema.StringAttribute{
-				Computed: true,
+			"allow_squash_merge": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether squash merging is allowed.",
+				MarkdownDescription: "Whether squash merging is allowed.",
 			},
-			"url": schema.StringAttribute{
-				Computed: true,
+			"allow_fast_forward_only_merge": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether fast-forward only merging is allowed.",
+				MarkdownDescription: "Whether fast-forward only merging is allowed.",
 			},
-			"watchers_count": schema.Int64Attribute{
-				Computed: true,
+			"allow_manual_merge": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether manual merging is allowed.",
+				MarkdownDescription: "Whether manual merging is allowed.",
 			},
-			"website": schema.StringAttribute{
-				Computed: true,
+			"autodetect_manual_merge": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether manual merge is autodetected.",
+				MarkdownDescription: "Whether manual merge is autodetected.",
+			},
+			"default_delete_branch_after_merge": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether branches are deleted after merge by default.",
+				MarkdownDescription: "Whether branches are deleted after merge by default.",
+			},
+			"default_merge_style": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The default merge style for pull requests.",
+				MarkdownDescription: "The default merge style for pull requests.",
+			},
+			"default_allow_maintainer_edit": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether maintainers can edit pull requests by default.",
+				MarkdownDescription: "Whether maintainers can edit pull requests by default.",
 			},
 		},
 	}
@@ -330,41 +341,70 @@ func (d *repositoryDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	// Parse owner and repo from config
-	// For data sources, we expect owner/repo to be provided
-	owner := ""
+	owner := data.Owner.ValueString()
 	repoName := data.Name.ValueString()
 
-	if !data.FullName.IsNull() && data.FullName.ValueString() != "" {
-		fullName := data.FullName.ValueString()
-		for i, c := range fullName {
-			if c == '/' {
-				owner = fullName[:i]
-				repoName = fullName[i+1:]
-				break
-			}
-		}
-	}
-
-	if owner == "" {
-		resp.Diagnostics.AddError(
-			"Missing Owner",
-			"Repository owner must be specified via full_name (owner/repo format)",
-		)
-		return
-	}
-
-	repo, _, err := d.client.GetRepo(owner, repoName)
+	repo, httpResp, err := d.client.GetRepo(owner, repoName)
 	if err != nil {
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+			resp.Diagnostics.AddError(
+				"Repository Not Found",
+				fmt.Sprintf("Repository %s/%s does not exist or you do not have permission to access it.", owner, repoName),
+			)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Reading Repository",
-			"Could not read repository "+owner+"/"+repoName+": "+err.Error(),
+			fmt.Sprintf("Could not read repository %s/%s: %s", owner, repoName, err.Error()),
 		)
 		return
 	}
 
-	// Map response to data
-	mapRepositoryToDataSourceModel(repo, &data)
+	// Map response to model
+	data.Id = types.Int64Value(repo.ID)
+	data.Name = types.StringValue(repo.Name)
+	data.FullName = types.StringValue(repo.FullName)
+	data.Description = types.StringValue(repo.Description)
+	data.Private = types.BoolValue(repo.Private)
+	data.Fork = types.BoolValue(repo.Fork)
+	data.Mirror = types.BoolValue(repo.Mirror)
+	data.Template = types.BoolValue(repo.Template)
+	data.Internal = types.BoolValue(repo.Internal)
+	data.Empty = types.BoolValue(repo.Empty)
+	data.Archived = types.BoolValue(repo.Archived)
+	data.DefaultBranch = types.StringValue(repo.DefaultBranch)
+	data.Website = types.StringValue(repo.Website)
+	data.HtmlUrl = types.StringValue(repo.HTMLURL)
+	data.CloneUrl = types.StringValue(repo.CloneURL)
+	data.SshUrl = types.StringValue(repo.SSHURL)
+	data.Size = types.Int64Value(int64(repo.Size))
+	data.StarsCount = types.Int64Value(int64(repo.Stars))
+	data.WatchersCount = types.Int64Value(int64(repo.Watchers))
+	data.ForksCount = types.Int64Value(int64(repo.Forks))
+	data.OpenIssuesCount = types.Int64Value(int64(repo.OpenIssues))
+	data.OpenPrCounter = types.Int64Value(int64(repo.OpenPRCount))
+	data.ReleaseCounter = types.Int64Value(int64(repo.ReleaseCount))
+	data.AvatarUrl = types.StringValue(repo.AvatarURL)
+	data.ObjectFormatName = types.StringValue(repo.ObjectFormatName)
+	data.HasIssues = types.BoolValue(repo.HasIssues)
+	data.HasWiki = types.BoolValue(repo.HasWiki)
+	data.HasPullRequests = types.BoolValue(repo.HasPullRequests)
+	data.HasProjects = types.BoolValue(repo.HasProjects)
+	data.HasReleases = types.BoolValue(repo.HasReleases)
+	data.HasPackages = types.BoolValue(repo.HasPackages)
+	data.HasActions = types.BoolValue(repo.HasActions)
+	data.IgnoreWhitespaceConflicts = types.BoolValue(repo.IgnoreWhitespaceConflicts)
+	data.AllowMergeCommits = types.BoolValue(repo.AllowMerge)
+	data.AllowRebase = types.BoolValue(repo.AllowRebase)
+	data.AllowRebaseExplicit = types.BoolValue(repo.AllowRebaseMerge)
+	data.AllowRebaseUpdate = types.BoolValue(repo.AllowRebaseUpdate)
+	data.AllowSquashMerge = types.BoolValue(repo.AllowSquash)
+	data.AllowFastForwardOnlyMerge = types.BoolValue(repo.AllowFastForwardOnly)
+	data.AllowManualMerge = types.BoolValue(repo.AllowManualMerge)
+	data.AutodetectManualMerge = types.BoolValue(repo.AutodetectManualMerge)
+	data.DefaultDeleteBranchAfterMerge = types.BoolValue(repo.DefaultDeleteBranchAfterMerge)
+	data.DefaultMergeStyle = types.StringValue(string(repo.DefaultMergeStyle))
+	data.DefaultAllowMaintainerEdit = types.BoolValue(repo.DefaultAllowMaintainerEdit)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

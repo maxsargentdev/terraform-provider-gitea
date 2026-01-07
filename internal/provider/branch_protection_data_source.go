@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -69,135 +70,213 @@ func (d *branchProtectionDataSource) Metadata(_ context.Context, req datasource.
 
 func (d *branchProtectionDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description:         "Use this data source to retrieve information about branch protection rules for a Gitea repository.",
+		MarkdownDescription: "Use this data source to retrieve information about branch protection rules for a Gitea repository.",
 		Attributes: map[string]schema.Attribute{
-			"approvals_whitelist_teams": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"approvals_whitelist_username": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"block_admin_merge_override": schema.BoolAttribute{
-				Computed: true,
-			},
-			"block_on_official_review_requests": schema.BoolAttribute{
-				Computed: true,
-			},
-			"block_on_outdated_branch": schema.BoolAttribute{
-				Computed: true,
-			},
-			"block_on_rejected_reviews": schema.BoolAttribute{
-				Computed: true,
-			},
-			"branch_name": schema.StringAttribute{
-				Computed:            true,
-				Description:         "Deprecated: true",
-				MarkdownDescription: "Deprecated: true",
-			},
-			"created_at": schema.StringAttribute{
-				Computed: true,
-			},
-			"dismiss_stale_approvals": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_approvals_whitelist": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_force_push": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_force_push_allowlist": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_merge_whitelist": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_push": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_push_whitelist": schema.BoolAttribute{
-				Computed: true,
-			},
-			"enable_status_check": schema.BoolAttribute{
-				Computed: true,
-			},
-			"force_push_allowlist_deploy_keys": schema.BoolAttribute{
-				Computed: true,
-			},
-			"force_push_allowlist_teams": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"force_push_allowlist_usernames": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"ignore_stale_approvals": schema.BoolAttribute{
-				Computed: true,
-			},
-			"merge_whitelist_teams": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"merge_whitelist_usernames": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"name": schema.StringAttribute{
-				Required:            true,
-				Description:         "name of protected branch",
-				MarkdownDescription: "name of protected branch",
-			},
+			// Required inputs
 			"owner": schema.StringAttribute{
 				Required:            true,
-				Description:         "owner of the repo",
-				MarkdownDescription: "owner of the repo",
-			},
-			"priority": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "Priority is the priority of this branch protection rule",
-				MarkdownDescription: "Priority is the priority of this branch protection rule",
-			},
-			"protected_file_patterns": schema.StringAttribute{
-				Computed: true,
-			},
-			"push_whitelist_deploy_keys": schema.BoolAttribute{
-				Computed: true,
-			},
-			"push_whitelist_teams": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-			"push_whitelist_usernames": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
+				Description:         "The owner of the repository (username or organization name).",
+				MarkdownDescription: "The owner of the repository (username or organization name).",
 			},
 			"repo": schema.StringAttribute{
 				Required:            true,
-				Description:         "name of the repo",
-				MarkdownDescription: "name of the repo",
+				Description:         "The name of the repository.",
+				MarkdownDescription: "The name of the repository.",
 			},
-			"require_signed_commits": schema.BoolAttribute{
-				Computed: true,
+			"name": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name or pattern of the protected branch rule to look up.",
+				MarkdownDescription: "The name or pattern of the protected branch rule to look up.",
 			},
-			"required_approvals": schema.Int64Attribute{
-				Computed: true,
+
+			// Computed outputs
+			"branch_name": schema.StringAttribute{
+				Computed:            true,
+				DeprecationMessage:  "Use 'name' instead. This field is deprecated and will be removed in a future version.",
+				Description:         "Deprecated: Use 'name' instead. The branch name pattern for this protection rule.",
+				MarkdownDescription: "**Deprecated:** Use `name` instead. The branch name pattern for this protection rule.",
 			},
 			"rule_name": schema.StringAttribute{
 				Computed:            true,
-				Description:         "RuleName is the name of the branch protection rule",
-				MarkdownDescription: "RuleName is the name of the branch protection rule",
+				Description:         "The name of the branch protection rule.",
+				MarkdownDescription: "The name of the branch protection rule.",
 			},
-			"status_check_contexts": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
+			"priority": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The priority of this branch protection rule (higher values take precedence).",
+				MarkdownDescription: "The priority of this branch protection rule (higher values take precedence).",
 			},
-			"unprotected_file_patterns": schema.StringAttribute{
-				Computed: true,
+			"created_at": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The timestamp when the branch protection rule was created.",
+				MarkdownDescription: "The timestamp when the branch protection rule was created.",
 			},
 			"updated_at": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "The timestamp when the branch protection rule was last updated.",
+				MarkdownDescription: "The timestamp when the branch protection rule was last updated.",
+			},
+
+			// Push settings
+			"enable_push": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether pushing to the branch is enabled.",
+				MarkdownDescription: "Whether pushing to the branch is enabled.",
+			},
+			"enable_push_whitelist": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether push access is restricted to a whitelist of users and teams.",
+				MarkdownDescription: "Whether push access is restricted to a whitelist of users and teams.",
+			},
+			"push_whitelist_usernames": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "List of usernames allowed to push to the protected branch.",
+				MarkdownDescription: "List of usernames allowed to push to the protected branch.",
+			},
+			"push_whitelist_teams": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "List of team names allowed to push to the protected branch.",
+				MarkdownDescription: "List of team names allowed to push to the protected branch.",
+			},
+			"push_whitelist_deploy_keys": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether deploy keys can push to the protected branch.",
+				MarkdownDescription: "Whether deploy keys can push to the protected branch.",
+			},
+
+			// Force push settings
+			"enable_force_push": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether force pushing is allowed.",
+				MarkdownDescription: "Whether force pushing is allowed.",
+			},
+			"enable_force_push_allowlist": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether force push access is restricted to a whitelist.",
+				MarkdownDescription: "Whether force push access is restricted to a whitelist.",
+			},
+			"force_push_allowlist_usernames": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "List of usernames allowed to force push to the protected branch.",
+				MarkdownDescription: "List of usernames allowed to force push to the protected branch.",
+			},
+			"force_push_allowlist_teams": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "List of team names allowed to force push to the protected branch.",
+				MarkdownDescription: "List of team names allowed to force push to the protected branch.",
+			},
+			"force_push_allowlist_deploy_keys": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether deploy keys can force push to the protected branch.",
+				MarkdownDescription: "Whether deploy keys can force push to the protected branch.",
+			},
+
+			// Merge settings
+			"enable_merge_whitelist": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether merge access is restricted to a whitelist of users and teams.",
+				MarkdownDescription: "Whether merge access is restricted to a whitelist of users and teams.",
+			},
+			"merge_whitelist_usernames": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "List of usernames allowed to merge pull requests.",
+				MarkdownDescription: "List of usernames allowed to merge pull requests.",
+			},
+			"merge_whitelist_teams": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "List of team names allowed to merge pull requests.",
+				MarkdownDescription: "List of team names allowed to merge pull requests.",
+			},
+
+			// Review/approval settings
+			"enable_approvals_whitelist": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether only whitelisted users/teams count toward required approvals.",
+				MarkdownDescription: "Whether only whitelisted users/teams count toward required approvals.",
+			},
+			"approvals_whitelist_username": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "List of usernames whose approvals count toward the required approval count.",
+				MarkdownDescription: "List of usernames whose approvals count toward the required approval count.",
+			},
+			"approvals_whitelist_teams": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "List of team names whose members' approvals count toward the required approval count.",
+				MarkdownDescription: "List of team names whose members' approvals count toward the required approval count.",
+			},
+			"required_approvals": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The number of approvals required before a pull request can be merged.",
+				MarkdownDescription: "The number of approvals required before a pull request can be merged.",
+			},
+			"dismiss_stale_approvals": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether to dismiss existing approvals when new commits are pushed.",
+				MarkdownDescription: "Whether to dismiss existing approvals when new commits are pushed.",
+			},
+			"ignore_stale_approvals": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether to ignore stale approvals instead of dismissing them.",
+				MarkdownDescription: "Whether to ignore stale approvals instead of dismissing them.",
+			},
+			"block_on_rejected_reviews": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether to block merging if there are rejected reviews.",
+				MarkdownDescription: "Whether to block merging if there are rejected reviews.",
+			},
+			"block_on_official_review_requests": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether to block merging if there are pending official review requests.",
+				MarkdownDescription: "Whether to block merging if there are pending official review requests.",
+			},
+			"block_on_outdated_branch": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether to block merging if the branch is not up to date with the base branch.",
+				MarkdownDescription: "Whether to block merging if the branch is not up to date with the base branch.",
+			},
+			"block_admin_merge_override": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether to prevent administrators from bypassing branch protection.",
+				MarkdownDescription: "Whether to prevent administrators from bypassing branch protection.",
+			},
+
+			// Status check settings
+			"enable_status_check": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether status checks must pass before merging.",
+				MarkdownDescription: "Whether status checks must pass before merging.",
+			},
+			"status_check_contexts": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "List of status check contexts that must pass before merging.",
+				MarkdownDescription: "List of status check contexts that must pass before merging.",
+			},
+
+			// Other settings
+			"require_signed_commits": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether commits must be signed.",
+				MarkdownDescription: "Whether commits must be signed.",
+			},
+			"protected_file_patterns": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Glob patterns of files that are protected from changes.",
+				MarkdownDescription: "Glob patterns of files that are protected from changes.",
+			},
+			"unprotected_file_patterns": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Glob patterns of files that are exempt from protection.",
+				MarkdownDescription: "Glob patterns of files that are exempt from protection.",
 			},
 		},
 	}
@@ -228,15 +307,22 @@ func (d *branchProtectionDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 
-	protection, _, err := d.client.GetBranchProtection(
-		data.Owner.ValueString(),
-		data.Repo.ValueString(),
-		data.BranchName.ValueString(),
-	)
+	owner := data.Owner.ValueString()
+	repo := data.Repo.ValueString()
+	branchName := data.Name.ValueString()
+
+	protection, httpResp, err := d.client.GetBranchProtection(owner, repo, branchName)
 	if err != nil {
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+			resp.Diagnostics.AddError(
+				"Branch Protection Not Found",
+				fmt.Sprintf("Branch protection rule '%s' does not exist for repository %s/%s or you do not have permission to access it.", branchName, owner, repo),
+			)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Reading Branch Protection",
-			"Could not read branch protection: "+err.Error(),
+			fmt.Sprintf("Could not read branch protection '%s' for repository %s/%s: %s", branchName, owner, repo, err.Error()),
 		)
 		return
 	}
@@ -248,9 +334,9 @@ func (d *branchProtectionDataSource) Read(ctx context.Context, req datasource.Re
 
 // Helper function to map Gitea BranchProtection to data source model
 func mapBranchProtectionToDataSourceModel(ctx context.Context, protection *gitea.BranchProtection, model *branchProtectionDataSourceModel) {
-	// Note: owner, repo, and branch_name need to be preserved from config (not overwritten from API)
+	// Note: owner, repo, and name need to be preserved from config (not overwritten from API)
 	model.RuleName = types.StringValue(protection.RuleName)
-	model.Name = types.StringValue(protection.BranchName)
+	model.BranchName = types.StringValue(protection.BranchName)
 	model.EnablePush = types.BoolValue(protection.EnablePush)
 	model.EnablePushWhitelist = types.BoolValue(protection.EnablePushWhitelist)
 	model.EnableMergeWhitelist = types.BoolValue(protection.EnableMergeWhitelist)

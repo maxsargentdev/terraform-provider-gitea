@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 
 	"code.gitea.io/sdk/gitea"
@@ -42,13 +43,15 @@ func (r *tokenResource) Metadata(_ context.Context, req resource.MetadataRequest
 
 func (r *tokenResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description:         "Manages an API access token for the authenticated user.",
+		MarkdownDescription: "Manages an API access token for the authenticated user.",
 		Attributes: map[string]schema.Attribute{
 
 			// required - these are fundamental configuration options
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the access token",
-				MarkdownDescription: "The name of the access token",
+				Description:         "The name of the access token. Must be unique for the user.",
+				MarkdownDescription: "The name of the access token. Must be unique for the user.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -56,8 +59,8 @@ func (r *tokenResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 			"scopes": schema.SetAttribute{
 				ElementType:         types.StringType,
 				Required:            true,
-				Description:         "The scopes granted to this access token",
-				MarkdownDescription: "The scopes granted to this access token",
+				Description:         "The scopes granted to this access token (e.g., 'repo', 'admin:org', 'user').",
+				MarkdownDescription: "The scopes granted to this access token (e.g., `repo`, `admin:org`, `user`).",
 				PlanModifiers: []planmodifier.Set{
 					setplanmodifier.RequiresReplace(),
 				},
@@ -66,28 +69,32 @@ func (r *tokenResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 			// computed - these are available to read back after creation but are really just metadata
 			"created_at": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The timestamp when the token was created",
-				MarkdownDescription: "The timestamp when the token was created",
+				Description:         "The timestamp when the token was created.",
+				MarkdownDescription: "The timestamp when the token was created.",
 			},
 			"id": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "The unique identifier of the access token",
-				MarkdownDescription: "The unique identifier of the access token",
+				Description:         "The unique numeric identifier of the access token.",
+				MarkdownDescription: "The unique numeric identifier of the access token.",
 			},
 			"last_used_at": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The timestamp when the token was last used",
-				MarkdownDescription: "The timestamp when the token was last used",
+				Description:         "The timestamp when the token was last used.",
+				MarkdownDescription: "The timestamp when the token was last used.",
 			},
 			"sha1": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The SHA1 hash of the access token",
-				MarkdownDescription: "The SHA1 hash of the access token",
+				Sensitive:           true,
+				Description:         "The actual token value. Only available immediately after creation; cannot be retrieved later from the API.",
+				MarkdownDescription: "The actual token value. **Only available immediately after creation**; cannot be retrieved later from the API.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"token_last_eight": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The last eight characters of the token",
-				MarkdownDescription: "The last eight characters of the token",
+				Description:         "The last eight characters of the token for identification.",
+				MarkdownDescription: "The last eight characters of the token for identification.",
 			},
 		},
 	}
@@ -141,7 +148,7 @@ func (r *tokenResource) Create(ctx context.Context, req resource.CreateRequest, 
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating Token",
-			"Could not create token, unexpected error: "+err.Error(),
+			fmt.Sprintf("Could not create token '%s': %s", plan.Name.ValueString(), err.Error()),
 		)
 		return
 	}
@@ -162,11 +169,12 @@ func (r *tokenResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	tokenID := state.Id.ValueInt64()
 
 	// List all tokens for the user and find the matching one
+	// Note: The Gitea API does not provide a direct endpoint to get a single token by ID
 	tokens, _, err := r.client.ListAccessTokens(gitea.ListAccessTokensOptions{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Token",
-			"Could not list tokens: "+err.Error(),
+			fmt.Sprintf("Could not list tokens: %s", err.Error()),
 		)
 		return
 	}
@@ -186,7 +194,13 @@ func (r *tokenResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
+	// Preserve sha1 from state since API doesn't return it after creation
+	sha1Value := state.Sha1
+
 	mapTokenToModel(found, &state)
+
+	// Restore sha1 from previous state
+	state.Sha1 = sha1Value
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -210,11 +224,15 @@ func (r *tokenResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 
 	tokenID := state.Id.ValueInt64()
 
-	_, err := r.client.DeleteAccessToken(tokenID)
+	httpResp, err := r.client.DeleteAccessToken(tokenID)
 	if err != nil {
+		// If already deleted (404), treat as success
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Deleting Token",
-			"Could not delete token: "+err.Error(),
+			fmt.Sprintf("Could not delete token with ID %d: %s", tokenID, err.Error()),
 		)
 		return
 	}
@@ -226,7 +244,7 @@ func (r *tokenResource) ImportState(ctx context.Context, req resource.ImportStat
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Token ID",
-			"Could not parse token ID: "+err.Error(),
+			fmt.Sprintf("Could not parse token ID '%s': %s. Token ID must be a numeric value.", req.ID, err.Error()),
 		)
 		return
 	}
@@ -236,7 +254,7 @@ func (r *tokenResource) ImportState(ctx context.Context, req resource.ImportStat
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Importing Token",
-			"Could not list tokens: "+err.Error(),
+			fmt.Sprintf("Could not list tokens: %s", err.Error()),
 		)
 		return
 	}
@@ -252,7 +270,7 @@ func (r *tokenResource) ImportState(ctx context.Context, req resource.ImportStat
 	if found == nil {
 		resp.Diagnostics.AddError(
 			"Token Not Found",
-			fmt.Sprintf("Could not find token with ID %d", tokenID),
+			fmt.Sprintf("Could not find token with ID %d. The token may have been deleted or you may not have permission to access it.", tokenID),
 		)
 		return
 	}
@@ -260,14 +278,24 @@ func (r *tokenResource) ImportState(ctx context.Context, req resource.ImportStat
 	var data tokenResourceModel
 	mapTokenToModel(found, &data)
 
+	// Note: sha1 will be empty for imported tokens since API doesn't return it
+	resp.Diagnostics.AddWarning(
+		"Token Value Not Available",
+		"The token value (sha1) is not available for imported tokens. It is only provided at creation time.",
+	)
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func mapTokenToModel(token *gitea.AccessToken, model *tokenResourceModel) {
 	model.Id = types.Int64Value(token.ID)
 	model.Name = types.StringValue(token.Name)
-	model.Sha1 = types.StringValue(token.Token)
 	model.TokenLastEight = types.StringValue(token.TokenLastEight)
+
+	// Only set sha1 if it's present (only available on create)
+	if token.Token != "" {
+		model.Sha1 = types.StringValue(token.Token)
+	}
 
 	if !token.Created.IsZero() {
 		model.CreatedAt = types.StringValue(token.Created.String())

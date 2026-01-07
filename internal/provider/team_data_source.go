@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -40,44 +41,48 @@ func (d *teamDataSource) Metadata(_ context.Context, req datasource.MetadataRequ
 
 func (d *teamDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description:         "Use this data source to retrieve information about an existing team within a Gitea organization.",
+		MarkdownDescription: "Use this data source to retrieve information about an existing team within a Gitea organization.",
 		Attributes: map[string]schema.Attribute{
 
 			// required - these are fundamental configuration options
 			"org": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the organization",
-				MarkdownDescription: "The name of the organization",
+				Description:         "The name of the organization that owns the team.",
+				MarkdownDescription: "The name of the organization that owns the team.",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the team",
-				MarkdownDescription: "The name of the team",
+				Description:         "The name of the team to look up.",
+				MarkdownDescription: "The name of the team to look up.",
 			},
 
 			// computed - these are available to read back after creation but are really just metadata
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "The numeric ID of the team.",
+				MarkdownDescription: "The numeric ID of the team.",
+			},
 			"can_create_org_repo": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Whether the team can create repositories in the organization",
-				MarkdownDescription: "Whether the team can create repositories in the organization",
+				Description:         "Whether team members can create repositories in the organization.",
+				MarkdownDescription: "Whether team members can create repositories in the organization.",
 			},
 			"description": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The description of the team",
-				MarkdownDescription: "The description of the team",
-			},
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "The unique identifier of the team",
-				MarkdownDescription: "The unique identifier of the team",
+				Description:         "The description of the team.",
+				MarkdownDescription: "The description of the team.",
 			},
 			"includes_all_repositories": schema.BoolAttribute{
 				Computed:            true,
-				Description:         "Whether the team has access to all repositories in the organization",
-				MarkdownDescription: "Whether the team has access to all repositories in the organization",
+				Description:         "Whether the team has access to all repositories in the organization.",
+				MarkdownDescription: "Whether the team has access to all repositories in the organization.",
 			},
 			"units_map": schema.MapAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "A map of unit names to permission levels (e.g., 'repo.code': 'read', 'repo.issues': 'write').",
+				MarkdownDescription: "A map of unit names to permission levels (e.g., `repo.code`: `read`, `repo.issues`: `write`).",
 			},
 		},
 	}
@@ -112,8 +117,15 @@ func (d *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	teamName := data.Name.ValueString()
 
 	// Get team by org and name
-	teams, _, err := d.client.ListOrgTeams(org, gitea.ListTeamsOptions{})
+	teams, httpResp, err := d.client.ListOrgTeams(org, gitea.ListTeamsOptions{})
 	if err != nil {
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+			resp.Diagnostics.AddError(
+				"Organization Not Found",
+				fmt.Sprintf("Organization '%s' does not exist or you do not have permission to access it.", org),
+			)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Listing Teams",
 			fmt.Sprintf("Could not list teams for organization '%s': %s", org, err.Error()),
@@ -132,7 +144,7 @@ func (d *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	if team == nil {
 		resp.Diagnostics.AddError(
 			"Team Not Found",
-			fmt.Sprintf("Could not find team '%s' in organization '%s'", teamName, org),
+			fmt.Sprintf("Team '%s' does not exist in organization '%s' or you do not have permission to access it.", teamName, org),
 		)
 		return
 	}
