@@ -14,10 +14,10 @@ Manages a Gitea organization. This resource allows you to create, update, and de
 
 ```terraform
 resource "gitea_org" "test_org" {
-  name         = "testorg"
-  display_name = "Test Organization"
-  description  = "A test organization"
-  visibility   = "public"
+  name        = "testorg"
+  full_name   = "Test Organization"
+  description = "A test organization"
+  visibility  = "public"
 }
 ```
 

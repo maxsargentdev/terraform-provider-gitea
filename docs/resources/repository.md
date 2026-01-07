@@ -14,14 +14,14 @@ Manages a Gitea repository. This resource allows you to create, update, and dele
 
 ```terraform
 resource "gitea_repository" "test_repo" {
-  owner       = "root"
+  username    = "root"
   name        = "test-repo"
   description = "A test repository created with Terraform, using a user as the owner"
   private     = true
 }
 
 resource "gitea_repository" "test_repo_for_org" {
-  owner       = "testorg"
+  username    = "testorg"
   name        = "test-repo-for-org"
   description = "A test repository created with Terraform"
   private     = true
