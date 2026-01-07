@@ -17,16 +17,16 @@ func TestAccOrgResource(t *testing.T) {
 			{
 				Config: testAccOrgResourceConfig("testorg", "Test Org", "public"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("icegitea_org.test", "username", "testorg"),
-					resource.TestCheckResourceAttr("icegitea_org.test", "full_name", "Test Org"),
-					resource.TestCheckResourceAttr("icegitea_org.test", "visibility", "public"),
-					resource.TestCheckResourceAttrSet("icegitea_org.test", "id"),
-					resource.TestCheckResourceAttrSet("icegitea_org.test", "avatar_url"),
+					resource.TestCheckResourceAttr("gitea_org.test", "username", "testorg"),
+					resource.TestCheckResourceAttr("gitea_org.test", "full_name", "Test Org"),
+					resource.TestCheckResourceAttr("gitea_org.test", "visibility", "public"),
+					resource.TestCheckResourceAttrSet("gitea_org.test", "id"),
+					resource.TestCheckResourceAttrSet("gitea_org.test", "avatar_url"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:      "icegitea_org.test",
+				ResourceName:      "gitea_org.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
@@ -37,8 +37,8 @@ func TestAccOrgResource(t *testing.T) {
 			{
 				Config: testAccOrgResourceConfig("testorg", "Updated Test Org", "public"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("icegitea_org.test", "username", "testorg"),
-					resource.TestCheckResourceAttr("icegitea_org.test", "full_name", "Updated Test Org"),
+					resource.TestCheckResourceAttr("gitea_org.test", "username", "testorg"),
+					resource.TestCheckResourceAttr("gitea_org.test", "full_name", "Updated Test Org"),
 				),
 			},
 		},
@@ -53,9 +53,9 @@ func TestAccOrgResource_WithDescription(t *testing.T) {
 			{
 				Config: testAccOrgResourceConfigWithDescription("testorg2", "Test Org 2", "A test organization", "private"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("icegitea_org.test", "username", "testorg2"),
-					resource.TestCheckResourceAttr("icegitea_org.test", "description", "A test organization"),
-					resource.TestCheckResourceAttr("icegitea_org.test", "visibility", "private"),
+					resource.TestCheckResourceAttr("gitea_org.test", "username", "testorg2"),
+					resource.TestCheckResourceAttr("gitea_org.test", "description", "A test organization"),
+					resource.TestCheckResourceAttr("gitea_org.test", "visibility", "private"),
 				),
 			},
 		},
@@ -64,7 +64,7 @@ func TestAccOrgResource_WithDescription(t *testing.T) {
 
 func testAccOrgResourceConfig(username, fullName, visibility string) string {
 	return providerConfig() + fmt.Sprintf(`
-resource "icegitea_org" "test" {
+resource "gitea_org" "test" {
   username   = %[1]q
   full_name  = %[2]q
   visibility = %[3]q
@@ -74,7 +74,7 @@ resource "icegitea_org" "test" {
 
 func testAccOrgResourceConfigWithDescription(username, fullName, description, visibility string) string {
 	return providerConfig() + fmt.Sprintf(`
-resource "icegitea_org" "test" {
+resource "gitea_org" "test" {
   username    = %[1]q
   full_name   = %[2]q
   description = %[3]q

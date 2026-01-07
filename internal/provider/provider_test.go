@@ -33,7 +33,7 @@ func testAccPreCheck(t *testing.T) {
 // providerConfig returns a basic provider configuration for testing.
 func providerConfig() string {
 	return `
-provider "icegitea" {
+provider "gitea" {
   gitea_username = "root"
   gitea_password = "admin1234"
   gitea_hostname = "http://localhost:3000"

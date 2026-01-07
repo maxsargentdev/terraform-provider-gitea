@@ -123,7 +123,7 @@
 		{
 			"label": "Generate Docs",
 			"type": "shell",
-			"command": "tfplugindocs generate --provider-dir . -provider-name icegitea",
+			"command": "tfplugindocs generate --provider-dir . -provider-name gitea",
 			"options": {
 				"cwd": "${workspaceFolder}"
 			}

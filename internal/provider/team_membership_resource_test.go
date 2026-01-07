@@ -17,18 +17,18 @@ func TestAccTeamMembershipResource(t *testing.T) {
 			{
 				Config: testAccTeamMembershipResourceConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("icegitea_team_membership.test", "team_id"),
-					resource.TestCheckResourceAttr("icegitea_team_membership.test", "username", "testuser"),
+					resource.TestCheckResourceAttrSet("gitea_team_membership.test", "team_id"),
+					resource.TestCheckResourceAttr("gitea_team_membership.test", "username", "testuser"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:                         "icegitea_team_membership.test",
+				ResourceName:                         "gitea_team_membership.test",
 				ImportState:                          true,
 				ImportStateVerify:                    true,
 				ImportStateVerifyIdentifierAttribute: "team_id",
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
-					rs, ok := s.RootModule().Resources["icegitea_team_membership.test"]
+					rs, ok := s.RootModule().Resources["gitea_team_membership.test"]
 					if !ok {
 						return "", fmt.Errorf("Resource not found")
 					}
@@ -43,14 +43,14 @@ func TestAccTeamMembershipResource(t *testing.T) {
 
 func testAccTeamMembershipResourceConfig() string {
 	return providerConfig() + `
-resource "icegitea_org" "test_org" {
+resource "gitea_org" "test_org" {
   username   = "testorg"
   full_name  = "Test Organization"
   visibility = "public"
 }
 
-resource "icegitea_team" "test" {
-  org                       = icegitea_org.test_org.name
+resource "gitea_team" "test" {
+  org                       = gitea_org.test_org.name
   name                      = "testteam"
   description               = "Test Team"
   can_create_org_repo       = false
@@ -65,16 +65,16 @@ resource "icegitea_team" "test" {
   }
 }
 
-resource "icegitea_user" "test" {
+resource "gitea_user" "test" {
   username  = "testuser"
   email     = "testuser@example.com"
   password  = "testpass123"
   full_name = "Test User"
 }
 
-resource "icegitea_team_membership" "test" {
-  team_id  = icegitea_team.test.id
-  username = icegitea_user.test.username
+resource "gitea_team_membership" "test" {
+  team_id  = gitea_team.test.id
+  username = gitea_user.test.username
 }
 `
 }

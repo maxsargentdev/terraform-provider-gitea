@@ -30,6 +30,13 @@ func mapUserToModel(user *gitea.User, model *userResourceModel) {
 	model.Username = types.StringValue(user.UserName)
 	model.Email = types.StringValue(user.Email)
 	model.FullName = types.StringValue(user.FullName)
+	model.Description = types.StringValue(user.Description)
+	model.Website = types.StringValue(user.Website)
+	model.Location = types.StringValue(user.Location)
+	model.Active = types.BoolValue(user.IsActive)
+	model.Admin = types.BoolValue(user.IsAdmin)
+	model.ProhibitLogin = types.BoolValue(user.ProhibitLogin)
+	model.Restricted = types.BoolValue(user.Restricted)
 	model.Visibility = types.StringValue(string(user.Visibility))
 	model.SourceId = types.Int64Value(user.SourceID)
 
@@ -45,6 +52,18 @@ func mapUserToModel(user *gitea.User, model *userResourceModel) {
 	}
 	if model.SendNotify.IsUnknown() {
 		model.SendNotify = types.BoolNull()
+	}
+	if model.AllowGitHook.IsUnknown() {
+		model.AllowGitHook = types.BoolNull()
+	}
+	if model.AllowImportLocal.IsUnknown() {
+		model.AllowImportLocal = types.BoolNull()
+	}
+	if model.MaxRepoCreation.IsUnknown() {
+		model.MaxRepoCreation = types.Int64Null()
+	}
+	if model.AllowCreateOrganization.IsUnknown() {
+		model.AllowCreateOrganization = types.BoolNull()
 	}
 }
 
@@ -65,6 +84,19 @@ type userResourceModel struct {
 	MustChangePassword types.Bool   `tfsdk:"must_change_password"`
 	SendNotify         types.Bool   `tfsdk:"send_notify"`
 	Visibility         types.String `tfsdk:"visibility"`
+
+	// Optional - from EditUserOption only
+	Description             types.String `tfsdk:"description"`
+	Website                 types.String `tfsdk:"website"`
+	Location                types.String `tfsdk:"location"`
+	Active                  types.Bool   `tfsdk:"active"`
+	Admin                   types.Bool   `tfsdk:"admin"`
+	AllowGitHook            types.Bool   `tfsdk:"allow_git_hook"`
+	AllowImportLocal        types.Bool   `tfsdk:"allow_import_local"`
+	MaxRepoCreation         types.Int64  `tfsdk:"max_repo_creation"`
+	ProhibitLogin           types.Bool   `tfsdk:"prohibit_login"`
+	AllowCreateOrganization types.Bool   `tfsdk:"allow_create_organization"`
+	Restricted              types.Bool   `tfsdk:"restricted"`
 
 	// Computed - key outputs
 	Id        types.Int64  `tfsdk:"id"`
@@ -135,6 +167,72 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Description:         "User visibility level: public, limited, or private",
 				MarkdownDescription: "User visibility level: public, limited, or private",
 			},
+			"description": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The user's description.",
+				MarkdownDescription: "The user's description.",
+			},
+			"website": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The user's website.",
+				MarkdownDescription: "The user's website.",
+			},
+			"location": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The user's location.",
+				MarkdownDescription: "The user's location.",
+			},
+			"active": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Is user active (can login).",
+				MarkdownDescription: "Is user active (can login).",
+			},
+			"admin": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Is the user an administrator.",
+				MarkdownDescription: "Is the user an administrator.",
+			},
+			"allow_git_hook": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the user can use git hooks.",
+				MarkdownDescription: "Whether the user can use git hooks.",
+			},
+			"allow_import_local": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the user can import local repositories.",
+				MarkdownDescription: "Whether the user can import local repositories.",
+			},
+			"max_repo_creation": schema.Int64Attribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Maximum number of repositories the user can create.",
+				MarkdownDescription: "Maximum number of repositories the user can create.",
+			},
+			"prohibit_login": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Is user login prohibited.",
+				MarkdownDescription: "Is user login prohibited.",
+			},
+			"allow_create_organization": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the user can create organizations.",
+				MarkdownDescription: "Whether the user can create organizations.",
+			},
+			"restricted": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Whether the user has restricted access privileges.",
+				MarkdownDescription: "Whether the user has restricted access privileges.",
+			},
 
 			// Computed - key outputs
 			"id": schema.Int64Attribute{
@@ -203,6 +301,53 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
+	// Apply EditUserOption fields via update (since some fields aren't in CreateUserOption)
+	editOpts := gitea.EditUserOption{
+		LoginName:               plan.LoginName.ValueString(),
+		Description:             plan.Description.ValueStringPointer(),
+		Website:                 plan.Website.ValueStringPointer(),
+		Location:                plan.Location.ValueStringPointer(),
+		Active:                  plan.Active.ValueBoolPointer(),
+		Admin:                   plan.Admin.ValueBoolPointer(),
+		AllowGitHook:            plan.AllowGitHook.ValueBoolPointer(),
+		AllowImportLocal:        plan.AllowImportLocal.ValueBoolPointer(),
+		ProhibitLogin:           plan.ProhibitLogin.ValueBoolPointer(),
+		AllowCreateOrganization: plan.AllowCreateOrganization.ValueBoolPointer(),
+		Restricted:              plan.Restricted.ValueBoolPointer(),
+	}
+
+	if !plan.MaxRepoCreation.IsNull() && !plan.MaxRepoCreation.IsUnknown() {
+		maxRepoInt := int(plan.MaxRepoCreation.ValueInt64())
+		editOpts.MaxRepoCreation = &maxRepoInt
+	}
+
+	// Only call edit if we have fields to update
+	hasEditFields := !plan.Description.IsNull() || !plan.Website.IsNull() || !plan.Location.IsNull() ||
+		!plan.Active.IsNull() || !plan.Admin.IsNull() || !plan.AllowGitHook.IsNull() ||
+		!plan.AllowImportLocal.IsNull() || !plan.MaxRepoCreation.IsNull() || !plan.ProhibitLogin.IsNull() ||
+		!plan.AllowCreateOrganization.IsNull() || !plan.Restricted.IsNull()
+
+	if hasEditFields {
+		_, err = r.client.AdminEditUser(plan.Username.ValueString(), editOpts)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Updating User After Creation",
+				"User was created but could not apply additional settings: "+err.Error(),
+			)
+			return
+		}
+
+		// Re-read the user to get updated values
+		user, _, err = r.client.GetUserInfo(plan.Username.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading User After Update",
+				"Could not read user "+plan.Username.ValueString()+": "+err.Error(),
+			)
+			return
+		}
+	}
+
 	// Map response to model
 	mapUserToModel(user, &plan)
 
@@ -243,13 +388,28 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	// Update user via Gitea API
 	editOpts := gitea.EditUserOption{
-		LoginName:          plan.LoginName.ValueString(),
-		SourceID:           plan.SourceId.ValueInt64(),
-		Email:              plan.Email.ValueStringPointer(),
-		FullName:           plan.FullName.ValueStringPointer(),
-		Password:           plan.Password.ValueString(),
-		MustChangePassword: plan.MustChangePassword.ValueBoolPointer(),
-		Visibility:         (*gitea.VisibleType)(plan.Visibility.ValueStringPointer()),
+		LoginName:               plan.LoginName.ValueString(),
+		SourceID:                plan.SourceId.ValueInt64(),
+		Email:                   plan.Email.ValueStringPointer(),
+		FullName:                plan.FullName.ValueStringPointer(),
+		Password:                plan.Password.ValueString(),
+		Description:             plan.Description.ValueStringPointer(),
+		MustChangePassword:      plan.MustChangePassword.ValueBoolPointer(),
+		Website:                 plan.Website.ValueStringPointer(),
+		Location:                plan.Location.ValueStringPointer(),
+		Active:                  plan.Active.ValueBoolPointer(),
+		Admin:                   plan.Admin.ValueBoolPointer(),
+		AllowGitHook:            plan.AllowGitHook.ValueBoolPointer(),
+		AllowImportLocal:        plan.AllowImportLocal.ValueBoolPointer(),
+		ProhibitLogin:           plan.ProhibitLogin.ValueBoolPointer(),
+		AllowCreateOrganization: plan.AllowCreateOrganization.ValueBoolPointer(),
+		Restricted:              plan.Restricted.ValueBoolPointer(),
+		Visibility:              (*gitea.VisibleType)(plan.Visibility.ValueStringPointer()),
+	}
+
+	if !plan.MaxRepoCreation.IsNull() && !plan.MaxRepoCreation.IsUnknown() {
+		maxRepoInt := int(plan.MaxRepoCreation.ValueInt64())
+		editOpts.MaxRepoCreation = &maxRepoInt
 	}
 
 	_, err := r.client.AdminEditUser(plan.Username.ValueString(), editOpts)

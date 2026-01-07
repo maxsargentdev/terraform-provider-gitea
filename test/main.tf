@@ -1,26 +1,26 @@
 terraform {
   required_providers {
-    icegitea = {
-      source = "hashicorp.com/maxsargentdev/icegitea"
+    gitea = {
+      source = "hashicorp.com/maxsargentdev/gitea"
     }
   }
 }
 
-provider "icegitea" {
+provider "gitea" {
   gitea_username = "root"
   gitea_password = "admin1234"
   gitea_hostname = "http://localhost:3000"
 }
 
-resource "icegitea_org" "test_org" {
+resource "gitea_org" "test_org" {
   name         = "testorg"
   display_name = "Test Organization"
   description  = "A test organization"
   visibility   = "public"
 }
 
-resource "icegitea_team" "test_team" {
-  org  = icegitea_org.test_org.name
+resource "gitea_team" "test_team" {
+  org  = gitea_org.test_org.name
   name = "test-team"
 
   description = "A  test team with all attributes configured"
@@ -39,33 +39,33 @@ resource "icegitea_team" "test_team" {
 
 }
 
-resource "icegitea_repository" "test_repo" {
+resource "gitea_repository" "test_repo" {
   owner       = "root"
   name        = "test-repo"
   description = "A test repository created with Terraform"
   private     = true
 }
 
-resource "icegitea_repository" "test_repo_for_org" {
-  owner       = icegitea_org.test_org.name
+resource "gitea_repository" "test_repo_for_org" {
+  owner       = "testorg"
   name        = "test-repo-for-org"
   description = "A test repository created with Terraform"
   private     = true
 }
 
-resource "icegitea_team_repository" "test_team_repo_association" {
-  org             = icegitea_org.test_org.name
-  team_name       = icegitea_team.test_team.name
-  repository_name = icegitea_repository.test_repo_for_org.name
+resource "gitea_team_repository" "test_team_repo_association" {
+  org             = gitea_org.test_org.name
+  team_name       = gitea_team.test_team.name
+  repository_name = gitea_repository.test_repo_for_org.name
 }
 
-resource "icegitea_team_membership" "test_membership" {
+resource "gitea_team_membership" "test_membership" {
   org       = "testorg"
-  team_name = icegitea_team.test_team.name
-  username  = icegitea_user.test_user.username
+  team_name = gitea_team.test_team.name
+  username  = gitea_user.test_user.username
 }
 
-resource "icegitea_user" "test_user" {
+resource "gitea_user" "test_user" {
   username = "test"
   email    = "test@gitea.local"
   password = "testpassword123"
