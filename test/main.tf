@@ -14,9 +14,9 @@ provider "gitea" {
 
 # Create an organization
 resource "gitea_org" "test_org" {
-  name       = "testorg"
-  full_name  = "Test Organization"
-  description = "A test organization"
+  name        = "testorg"
+  full_name   = "Test Organization"
+  description = "A test organization created by Terraform"
   visibility  = "public"
 }
 
@@ -25,7 +25,7 @@ resource "gitea_team" "test_team" {
   org  = gitea_org.test_org.name
   name = "test-team"
 
-  description = "A test team with all attributes configured"
+  description = "A test team with custom permissions"
 
   can_create_org_repo       = true
   includes_all_repositories = false
@@ -34,9 +34,9 @@ resource "gitea_team" "test_team" {
     "repo.code"       = "write" # Source code access (none, read, write, admin)
     "repo.issues"     = "write" # Issue tracker access
     "repo.pulls"      = "write" # Pull requests access
-    "repo.releases"   = "none"  # Releases access
+    "repo.releases"   = "read"  # Releases access
     "repo.ext_wiki"   = "none"  # External wiki access
-    "repo.ext_issues" = "read"  # External issue tracker access
+    "repo.ext_issues" = "none"  # External issue tracker access
   }
 }
 
@@ -52,8 +52,9 @@ resource "gitea_user" "test_user" {
 resource "gitea_repository" "test_repo" {
   username    = "root"
   name        = "test-repo"
-  description = "A test repository created with Terraform, using a user as the owner"
+  description = "A test repository created with Terraform"
   private     = true
+  auto_init   = true
 }
 
 # Create a repository owned by the organization
@@ -61,7 +62,14 @@ resource "gitea_repository" "test_repo_for_org" {
   username    = gitea_org.test_org.name
   name        = "test-repo-for-org"
   description = "A test repository owned by an organization"
-  private     = true
+  private     = false
+  auto_init   = true
+}
+
+# Add the user to the team
+resource "gitea_team_membership" "test_membership" {
+  team_id  = gitea_team.test_team.id
+  username = gitea_user.test_user.username
 }
 
 # Add the organization's repository to the team
@@ -71,13 +79,7 @@ resource "gitea_team_repository" "test_team_repo_association" {
   repository_name = gitea_repository.test_repo_for_org.name
 }
 
-# Add the user to the team
-resource "gitea_team_membership" "test_membership" {
-  team_id  = gitea_team.test_team.id
-  username = gitea_user.test_user.username
-}
-
-# Create a fork of the test repository
+# Create a fork of the test repository to the organization
 resource "gitea_fork" "test_fork" {
   owner        = "root"
   repo         = gitea_repository.test_repo.name
@@ -92,20 +94,17 @@ resource "gitea_repository_branch_protection" "test_protection" {
 
   enable_push             = true
   push_whitelist_users    = ["root"]
-  require_signed_commits  = false
   required_approvals      = 1
   block_merge_on_outdated_branch = true
 }
 
 # Create a token for the authenticated user
 resource "gitea_token" "test_token" {
-  name = "test-token"
+  name = "terraform-test-token"
 }
 
-# Create a public key for a user
-resource "gitea_public_key" "test_key" {
-  username = gitea_user.test_user.username
-  title    = "Test SSH Key"
-  key      = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC... test@example.com"
-  read_only = false
+# Output the token (sensitive)
+output "token_value" {
+  value     = gitea_token.test_token.token
+  sensitive = true
 }
