@@ -218,6 +218,7 @@ func (p *giteaProvider) Resources(ctx context.Context) []func() resource.Resourc
 		NewRepositoryWebhookResource,
 		NewRepositoryActionsSecretResource,
 		NewRepositoryActionsVariableResource,
+		NewOrgActionsSecretResource,
 		NewForkResource,
 		NewGitHookResource,
 	}

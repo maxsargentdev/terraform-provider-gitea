@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     gitea = {
-      source = "hashicorp.com/maxsargentdev/gitea"
+      source = "maxsargentdev/gitea"
     }
   }
 }
@@ -108,8 +108,17 @@ resource "gitea_token" "test_token" {
   ]
 }
 
+# Create an organization actions secret
+resource "gitea_org_actions_secret" "test_org_secret" {
+  org         = gitea_org.test_org.name
+  name        = "TEST_ORG_SECRET"
+  data        = "my-secret-value"
+  description = "A test organization secret for GitHub Actions"
+}
+
 # Output the token (sensitive)
 output "token_value" {
   value     = gitea_token.test_token.token
   sensitive = true
 }
+

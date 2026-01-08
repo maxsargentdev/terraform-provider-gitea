@@ -227,3 +227,19 @@ func (c *Client) CreateOrgActionSecret(org string, opt CreateSecretOption) (*Res
 		return resp, fmt.Errorf("unexpected Status: %d", status)
 	}
 }
+
+// DeleteOrgActionSecret deletes a secret from the specified organization in the Gitea Actions.
+// It takes the organization name and the secret name as parameters.
+// The function returns the HTTP response and an error, if any.
+func (c *Client) DeleteOrgActionSecret(org, secretName string) (*Response, error) {
+	if err := escapeValidatePathSegments(&org, &secretName); err != nil {
+		return nil, err
+	}
+
+	resp, err := c.doRequestWithStatusHandle("DELETE", fmt.Sprintf("/orgs/%s/actions/secrets/%s", org, secretName), nil, nil)
+	if err != nil {
+		return resp, fmt.Errorf("failed to delete organization secret '%s' from org '%s': %w", secretName, org, err)
+	}
+
+	return resp, nil
+}

@@ -32,6 +32,11 @@ provider "gitea" {
 
 ### Required
 
-- `gitea_hostname` (String)
-- `gitea_password` (String)
-- `gitea_username` (String)
+- `gitea_hostname` (String) The hostname/URL of the Gitea server (e.g., `https://gitea.example.com`).
+- `gitea_password` (String, Sensitive) The password for authentication with the Gitea server.
+- `gitea_username` (String) The username for authentication with the Gitea server.
+
+### Optional
+
+- `ca_cert_file` (String) Path to a custom CA certificate file to use for TLS verification.
+- `insecure_skip_verify` (Boolean) Skip TLS certificate verification. **Not recommended for production use.**
