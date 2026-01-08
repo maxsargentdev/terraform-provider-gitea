@@ -1,5 +1,3 @@
-//TODO: We need to verify the user running the provider has admin
-
 package provider
 
 import (
@@ -10,12 +8,9 @@ import (
 	"net/http"
 	"os"
 
-	//"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	//"github.com/hashicorp/terraform-plugin-framework/ephemeral"
-	//"github.com/hashicorp/terraform-plugin-framework/function"
 	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -48,6 +43,8 @@ type giteaProviderModel struct {
 
 func (p *giteaProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description:         "Provider for managing resources in Gitea.",
+		MarkdownDescription: "Provider for managing resources in Gitea.\n\n## Authentication\n\nThe provider supports authentication using a username and password. These can be provided via environment variables or directly in the provider configuration block. The user must have admin access.",
 		Attributes: map[string]schema.Attribute{
 			"gitea_username": schema.StringAttribute{
 				Required:            true,
@@ -180,6 +177,28 @@ func (p *giteaProvider) Configure(ctx context.Context, req provider.ConfigureReq
 		return
 	}
 
+	// Verify the authenticated user has admin privileges
+	currentUser, _, err := client.GetMyUserInfo()
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to Verify User Permissions",
+			"Could not retrieve current user information to verify admin access. "+
+				"Please ensure your credentials are correct.\n\n"+
+				"Error: "+err.Error(),
+		)
+		return
+	}
+
+	if !currentUser.IsAdmin {
+		resp.Diagnostics.AddError(
+			"Admin Access Required",
+			fmt.Sprintf("The authenticated user '%s' does not have administrator privileges. "+
+				"This Terraform provider requires admin access to manage Gitea resources. "+
+				"Please authenticate with an admin account.", currentUser.UserName),
+		)
+		return
+	}
+
 	resp.DataSourceData = client
 	resp.ResourceData = client
 }
@@ -218,6 +237,7 @@ func (p *giteaProvider) Resources(ctx context.Context) []func() resource.Resourc
 		NewRepositoryWebhookResource,
 		NewRepositoryActionsSecretResource,
 		NewRepositoryActionsVariableResource,
+		NewOrgActionsSecretResource,
 		NewForkResource,
 		NewGitHookResource,
 	}
