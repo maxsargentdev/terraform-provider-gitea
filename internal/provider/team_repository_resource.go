@@ -103,17 +103,31 @@ func (r *TeamRepositoryResource) Configure(ctx context.Context, req resource.Con
 // findTeamByName searches for a team by name within an organization.
 // Returns the team ID if found, 0 if not found, and an error if the API call fails.
 func (r *TeamRepositoryResource) findTeamByName(org, teamName string) (int64, error) {
-	teams, _, err := r.client.ListOrgTeams(org, gitea.ListTeamsOptions{
-		ListOptions: gitea.ListOptions{Page: -1}, // Get all teams with pagination
-	})
-	if err != nil {
-		return 0, err
-	}
-
-	for _, team := range teams {
-		if team.Name == teamName {
-			return team.ID, nil
+	page := 1
+	for {
+		teams, _, err := r.client.ListOrgTeams(org, gitea.ListTeamsOptions{
+			ListOptions: gitea.ListOptions{
+				Page:     page,
+				PageSize: 50, // Use default max page size
+			},
+		})
+		if err != nil {
+			return 0, err
 		}
+
+		// Check teams on this page
+		for _, team := range teams {
+			if team.Name == teamName {
+				return team.ID, nil
+			}
+		}
+
+		// No more results if we got fewer than page size
+		if len(teams) < 50 {
+			break
+		}
+
+		page++
 	}
 
 	return 0, nil
@@ -122,17 +136,43 @@ func (r *TeamRepositoryResource) findTeamByName(org, teamName string) (int64, er
 // checkRepositoryInTeam checks if a repository is assigned to a team.
 // Returns true if found, false otherwise.
 func (r *TeamRepositoryResource) checkRepositoryInTeam(teamID int64, repoName string) (bool, error) {
-	repos, _, err := r.client.ListTeamRepositories(teamID, gitea.ListTeamRepositoriesOptions{
-		ListOptions: gitea.ListOptions{Page: -1}, // Get all repositories with pagination
-	})
-	if err != nil {
-		return false, err
-	}
-
-	for _, repo := range repos {
-		if repo.Name == repoName {
-			return true, nil
+	page := 1
+	for {
+		repos, _, err := r.client.ListTeamRepositories(teamID, gitea.ListTeamRepositoriesOptions{
+			ListOptions: gitea.ListOptions{
+				Page:     page,
+				PageSize: 50, // Use default max page size
+			},
+		})
+		if err != nil {
+			return false, err
 		}
+
+		// Check repos on this page
+		for _, repo := range repos {
+			// Check both Name and FullName fields, and do case-insensitive comparison
+			if strings.EqualFold(repo.Name, repoName) {
+				return true, nil
+			}
+			// Also check if FullName ends with the repo name (handles "org/repo" format)
+			if repo.FullName != "" && strings.EqualFold(repo.FullName, repoName) {
+				return true, nil
+			}
+			// Check if FullName is in format "org/repo" and matches our repo
+			if repo.FullName != "" && strings.Contains(repo.FullName, "/") {
+				parts := strings.Split(repo.FullName, "/")
+				if len(parts) == 2 && strings.EqualFold(parts[1], repoName) {
+					return true, nil
+				}
+			}
+		}
+
+		// No more results if we got fewer than page size
+		if len(repos) < 50 {
+			break
+		}
+
+		page++
 	}
 
 	return false, nil
