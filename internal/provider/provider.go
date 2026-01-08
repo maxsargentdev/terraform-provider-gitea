@@ -4,6 +4,10 @@ package provider
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"net/http"
 	"os"
 
 	//"github.com/hashicorp/terraform-plugin-framework/action"
@@ -35,22 +39,41 @@ type giteaProvider struct {
 }
 
 type giteaProviderModel struct {
-	GiteaUsername types.String `tfsdk:"gitea_username"`
-	GiteaPassword types.String `tfsdk:"gitea_password"`
-	GiteaHostname types.String `tfsdk:"gitea_hostname"`
+	GiteaUsername      types.String `tfsdk:"gitea_username"`
+	GiteaPassword      types.String `tfsdk:"gitea_password"`
+	GiteaHostname      types.String `tfsdk:"gitea_hostname"`
+	InsecureSkipVerify types.Bool   `tfsdk:"insecure_skip_verify"`
+	CACertFile         types.String `tfsdk:"ca_cert_file"`
 }
 
 func (p *giteaProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"gitea_username": schema.StringAttribute{
-				Required: true,
+				Required:            true,
+				Description:         "The username for authentication with the Gitea server.",
+				MarkdownDescription: "The username for authentication with the Gitea server.",
 			},
 			"gitea_password": schema.StringAttribute{
-				Required: true,
+				Required:            true,
+				Sensitive:           true,
+				Description:         "The password for authentication with the Gitea server.",
+				MarkdownDescription: "The password for authentication with the Gitea server.",
 			},
 			"gitea_hostname": schema.StringAttribute{
-				Required: true,
+				Required:            true,
+				Description:         "The hostname/URL of the Gitea server (e.g., https://gitea.example.com).",
+				MarkdownDescription: "The hostname/URL of the Gitea server (e.g., `https://gitea.example.com`).",
+			},
+			"insecure_skip_verify": schema.BoolAttribute{
+				Optional:            true,
+				Description:         "Skip TLS certificate verification. Not recommended for production use.",
+				MarkdownDescription: "Skip TLS certificate verification. **Not recommended for production use.**",
+			},
+			"ca_cert_file": schema.StringAttribute{
+				Optional:            true,
+				Description:         "Path to a custom CA certificate file to use for TLS verification.",
+				MarkdownDescription: "Path to a custom CA certificate file to use for TLS verification.",
 			},
 		},
 	}
@@ -104,7 +127,49 @@ func (p *giteaProvider) Configure(ctx context.Context, req provider.ConfigureReq
 		)
 	}
 
-	client, err := gitea.NewClient(giteaHostname)
+	// Configure TLS settings
+	tlsConfig := &tls.Config{}
+
+	// Handle insecure skip verify
+	if !data.InsecureSkipVerify.IsNull() && data.InsecureSkipVerify.ValueBool() {
+		tlsConfig.InsecureSkipVerify = true
+	}
+
+	// Handle custom CA certificate
+	if !data.CACertFile.IsNull() && data.CACertFile.ValueString() != "" {
+		caCertFile := data.CACertFile.ValueString()
+		caCert, err := os.ReadFile(caCertFile)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Unable to Read CA Certificate File",
+				fmt.Sprintf("Could not read CA certificate file '%s': %s", caCertFile, err.Error()),
+			)
+			return
+		}
+
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			resp.Diagnostics.AddError(
+				"Invalid CA Certificate",
+				fmt.Sprintf("Could not parse CA certificate from file '%s'", caCertFile),
+			)
+			return
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	// Create HTTP client with TLS configuration
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConfig,
+		},
+	}
+
+	client, err := gitea.NewClient(
+		giteaHostname,
+		gitea.SetHTTPClient(httpClient),
+		gitea.SetBasicAuth(giteaUsername, giteaPassword),
+	)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Create Gitea API Client",
@@ -114,8 +179,6 @@ func (p *giteaProvider) Configure(ctx context.Context, req provider.ConfigureReq
 		)
 		return
 	}
-
-	client.SetBasicAuth(giteaUsername, giteaPassword)
 
 	resp.DataSourceData = client
 	resp.ResourceData = client
