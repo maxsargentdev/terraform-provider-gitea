@@ -4,6 +4,7 @@ go 1.25.5
 
 require (
 	code.gitea.io/sdk/gitea v0.22.1
+	github.com/avast/retry-go/v5 v5.0.0
 	github.com/hashicorp/terraform-plugin-framework v1.17.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.19.0
 	github.com/hashicorp/terraform-plugin-go v0.29.0

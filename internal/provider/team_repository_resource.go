@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"code.gitea.io/sdk/gitea"
+	"github.com/avast/retry-go/v5"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -208,20 +210,51 @@ func (r *TeamRepositoryResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	// Add repository to team
-	httpResp, err := r.client.AddTeamRepository(teamID, org, repoName)
+	// Add repository to team with retry logic to handle concurrent access issues
+	err = retry.New(
+		retry.Attempts(5),
+		retry.Delay(100*time.Millisecond),
+		retry.MaxDelay(2*time.Second),
+		retry.DelayType(retry.BackOffDelay),
+		retry.LastErrorOnly(true),
+	).Do(
+		func() error {
+			httpResp, err := r.client.AddTeamRepository(teamID, org, repoName)
+			if err != nil {
+				// Handle 404 - repository or team not found (don't retry)
+				if httpResp != nil && httpResp.StatusCode == 404 {
+					return retry.Unrecoverable(fmt.Errorf("repository or team not found"))
+				}
+
+				// Check if this is a duplicate key constraint violation
+				errMsg := err.Error()
+				if strings.Contains(errMsg, "duplicate key") ||
+					strings.Contains(errMsg, "UQE_access") ||
+					strings.Contains(errMsg, "recalculateAccesses") {
+					// This is a transient error due to concurrent operations, retry
+					return err
+				}
+
+				// Other errors - don't retry
+				return retry.Unrecoverable(err)
+			}
+			return nil
+		},
+	)
+
 	if err != nil {
-		// Handle 404 - repository or team not found
-		if httpResp != nil && httpResp.StatusCode == 404 {
+		// Check if it's the 404 error
+		if strings.Contains(err.Error(), "repository or team not found") {
 			resp.Diagnostics.AddError(
 				"Repository or Team Not Found",
 				fmt.Sprintf("Could not add repository '%s' to team '%s': the repository or team was not found", repoName, teamName),
 			)
 			return
 		}
+
 		resp.Diagnostics.AddError(
 			"Error Adding Repository to Team",
-			fmt.Sprintf("Could not add repository '%s' to team '%s': %s", repoName, teamName, err.Error()),
+			fmt.Sprintf("Could not add repository '%s' to team '%s' after retries: %s", repoName, teamName, err.Error()),
 		)
 		return
 	}
