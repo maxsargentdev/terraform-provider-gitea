@@ -8,6 +8,14 @@ This project also moves to the new TF plugin framework instead of the old sdk.
 
 I plan on extending this in my spare time to support Giteas configuration via IaC in a more complete fashion than what is offered currently.
 
+## Migrating from go-gitea/gitea Provider
+
+**⚠️ If you're migrating from the existing Gitea provider**, please see [MIGRATION.md](MIGRATION.md) for a comprehensive guide. Key differences:
+
+- Team resources use `units_map` for granular permissions instead of simple `permission` field
+- Repository assignments are separate `gitea_team_repository` resources
+- All resources support `terraform import` for easy migration
+
 ## Original Usecase
 
 The original usecase for this project is to fix issues seen with the current Gitea provider around granular unit level permissions where there would be persistent drift.
