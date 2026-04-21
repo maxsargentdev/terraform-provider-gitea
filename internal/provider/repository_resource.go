@@ -729,7 +729,11 @@ func buildEditRepoOption(ctx context.Context, plan *repositoryResourceModel) git
 	if !plan.Archived.IsNull() {
 		editOpts.Archived = plan.Archived.ValueBoolPointer()
 	}
-	if !plan.MigrationMirrorInterval.IsNull() {
+	// MirrorInterval is only valid for mirror repositories. Gitea returns a
+	// default value (e.g. "8h0m0s") for non-mirror repos, so the field is
+	// never null after Read; we must gate on the actual mirror state to avoid
+	// "repo is not a mirror, can not change mirror interval" errors.
+	if plan.Mirror.ValueBool() && !plan.MigrationMirrorInterval.IsNull() && !plan.MigrationMirrorInterval.IsUnknown() {
 		editOpts.MirrorInterval = plan.MigrationMirrorInterval.ValueStringPointer()
 	}
 
