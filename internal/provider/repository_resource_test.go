@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -41,6 +42,28 @@ func TestBuildEditRepoOption_SetsMirrorIntervalForMirror(t *testing.T) {
 		t.Fatalf("expected MirrorInterval %q for mirror repo, got %s", "1h0m0s", got)
 	}
 }
+
+	func TestBuildEditRepoOption_PreservesExplicitFeatureFlagsFromPlan(t *testing.T) {
+		planned := repositoryResourceModel{
+			Name:      types.StringValue("example"),
+			HasIssues: types.BoolValue(false),
+		}
+
+		state := planned
+		mapRepositoryToModel(context.Background(), &gitea.Repository{
+			ID:        1,
+			Name:      "example",
+			HasIssues: true,
+		}, &state)
+
+		opts := buildEditRepoOption(context.Background(), &planned)
+		if opts.HasIssues == nil {
+			t.Fatal("expected HasIssues to be forwarded to EditRepo")
+		}
+		if *opts.HasIssues {
+			t.Fatal("expected EditRepo to preserve planned has_issues=false")
+		}
+	}
 
 func TestAccRepositoryResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -113,6 +136,22 @@ func TestAccRepositoryResource_NonMirrorWithEditSettings(t *testing.T) {
 	})
 }
 
+func TestAccRepositoryResource_ExplicitlyDisablesIssues(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRepositoryResourceConfigIssuesDisabled("test-repo-issues-disabled"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-issues-disabled"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "has_issues", "false"),
+				),
+			},
+		},
+	})
+}
+
 func testAccRepositoryResourceConfigNonMirror(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "gitea_repository" "test" {
@@ -124,6 +163,18 @@ resource "gitea_repository" "test" {
   has_issues        = true
   has_wiki          = false
   has_pull_requests = true
+}
+`, name)
+}
+
+func testAccRepositoryResourceConfigIssuesDisabled(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "gitea_repository" "test" {
+	username    = "root"
+	name        = %[1]q
+	description = "repo with issues disabled"
+	private     = true
+	has_issues  = false
 }
 `, name)
 }

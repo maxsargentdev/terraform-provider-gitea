@@ -540,6 +540,8 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
+	desired := plan
+
 	username := plan.Username.ValueString()
 
 	// Check if this is a migration
@@ -626,12 +628,13 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Map response to state
-	mapRepositoryToModel(ctx, repo, &plan)
-	plan.Username = types.StringValue(username)
+	state := desired
+	mapRepositoryToModel(ctx, repo, &state)
+	state.Username = types.StringValue(username)
 
 	// If additional edit-only settings were specified, apply them now
-	if needsPostCreateUpdate(&plan) {
-		editOpts := buildEditRepoOption(ctx, &plan)
+	if needsPostCreateUpdate(&desired) {
+		editOpts := buildEditRepoOption(ctx, &desired)
 		repo, _, err = r.client.EditRepo(username, repo.Name, editOpts)
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -640,11 +643,11 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 			)
 			return
 		}
-		mapRepositoryToModel(ctx, repo, &plan)
-		plan.Username = types.StringValue(username)
+		mapRepositoryToModel(ctx, repo, &state)
+		state.Username = types.StringValue(username)
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 // needsPostCreateUpdate checks if any edit-only fields were specified that need to be applied after creation
