@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"code.gitea.io/sdk/gitea"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -39,6 +40,72 @@ func TestBuildEditRepoOption_SetsMirrorIntervalForMirror(t *testing.T) {
 			got = *opts.MirrorInterval
 		}
 		t.Fatalf("expected MirrorInterval %q for mirror repo, got %s", "1h0m0s", got)
+	}
+}
+
+func TestBuildEditRepoOption_PreservesExplicitFeatureFlagsFromPlan(t *testing.T) {
+	planned := repositoryResourceModel{
+		Name:      types.StringValue("example"),
+		HasIssues: types.BoolValue(false),
+	}
+
+	state := planned
+	mapRepositoryToModel(context.Background(), &gitea.Repository{
+		ID:        1,
+		Name:      "example",
+		HasIssues: true,
+	}, &state)
+
+	opts := buildEditRepoOption(context.Background(), &planned)
+	if opts.HasIssues == nil {
+		t.Fatal("expected HasIssues to be forwarded to EditRepo")
+	}
+	if *opts.HasIssues {
+		t.Fatal("expected EditRepo to preserve planned has_issues=false")
+	}
+}
+
+func TestBuildEditRepoOption_PreservesExplicitHasWikiFromPlan(t *testing.T) {
+	planned := repositoryResourceModel{
+		Name:    types.StringValue("example"),
+		HasWiki: types.BoolValue(false),
+	}
+
+	state := planned
+	mapRepositoryToModel(context.Background(), &gitea.Repository{
+		ID:      1,
+		Name:    "example",
+		HasWiki: true,
+	}, &state)
+
+	opts := buildEditRepoOption(context.Background(), &planned)
+	if opts.HasWiki == nil {
+		t.Fatal("expected HasWiki to be forwarded to EditRepo")
+	}
+	if *opts.HasWiki {
+		t.Fatal("expected EditRepo to preserve planned has_wiki=false")
+	}
+}
+
+func TestBuildEditRepoOption_PreservesExplicitHasProjectsFromPlan(t *testing.T) {
+	planned := repositoryResourceModel{
+		Name:        types.StringValue("example"),
+		HasProjects: types.BoolValue(false),
+	}
+
+	state := planned
+	mapRepositoryToModel(context.Background(), &gitea.Repository{
+		ID:          1,
+		Name:        "example",
+		HasProjects: true,
+	}, &state)
+
+	opts := buildEditRepoOption(context.Background(), &planned)
+	if opts.HasProjects == nil {
+		t.Fatal("expected HasProjects to be forwarded to EditRepo")
+	}
+	if *opts.HasProjects {
+		t.Fatal("expected EditRepo to preserve planned has_projects=false")
 	}
 }
 
@@ -93,7 +160,8 @@ resource "gitea_repository" "test" {
 // Regression test for https://github.com/maxsargentdev/terraform-provider-gitea/issues/16
 // Creates a non-mirror repo with feature flags set, which forces the post-create
 // EditRepo path. Prior to the fix this failed with:
-//   "repo is not a mirror, can not change mirror interval"
+//
+//	"repo is not a mirror, can not change mirror interval"
 func TestAccRepositoryResource_NonMirrorWithEditSettings(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -113,6 +181,38 @@ func TestAccRepositoryResource_NonMirrorWithEditSettings(t *testing.T) {
 	})
 }
 
+func TestAccRepositoryResource_ExplicitlyDisablesIssues(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRepositoryResourceConfigIssuesDisabled("test-repo-issues-disabled"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-issues-disabled"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "has_issues", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccRepositoryResource_ExplicitlyDisablesWiki(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRepositoryResourceConfigWikiDisabled("test-repo-wiki-disabled"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-wiki-disabled"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "has_wiki", "false"),
+				),
+			},
+		},
+	})
+}
+
 func testAccRepositoryResourceConfigNonMirror(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "gitea_repository" "test" {
@@ -124,6 +224,57 @@ resource "gitea_repository" "test" {
   has_issues        = true
   has_wiki          = false
   has_pull_requests = true
+}
+`, name)
+}
+
+func testAccRepositoryResourceConfigIssuesDisabled(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "gitea_repository" "test" {
+	username    = "root"
+	name        = %[1]q
+	description = "repo with issues disabled"
+	private     = true
+	has_issues  = false
+}
+`, name)
+}
+
+func testAccRepositoryResourceConfigWikiDisabled(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "gitea_repository" "test" {
+	username    = "root"
+	name        = %[1]q
+	description = "repo with wiki disabled"
+	private     = true
+	has_wiki    = false
+}
+`, name)
+}
+func TestAccRepositoryResource_ExplicitlyDisablesProjects(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRepositoryResourceConfigProjectsDisabled("test-repo-projects-disabled"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-projects-disabled"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "has_projects", "false"),
+				),
+			},
+		},
+	})
+}
+
+func testAccRepositoryResourceConfigProjectsDisabled(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "gitea_repository" "test" {
+	username     = "root"
+	name         = %[1]q
+	description  = "repo with projects disabled"
+	private      = true
+	has_projects = false
 }
 `, name)
 }

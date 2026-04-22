@@ -34,3 +34,5 @@ go.work.sum
 
 **/terraform.tfstate
 **/terraform.tfstate.backup
+
+terraform-provider-gitea
