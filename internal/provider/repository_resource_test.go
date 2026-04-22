@@ -87,6 +87,28 @@ func TestBuildEditRepoOption_SetsMirrorIntervalForMirror(t *testing.T) {
 		}
 	}
 
+func TestBuildEditRepoOption_PreservesExplicitHasProjectsFromPlan(t *testing.T) {
+	planned := repositoryResourceModel{
+		Name:        types.StringValue("example"),
+		HasProjects: types.BoolValue(false),
+	}
+
+	state := planned
+	mapRepositoryToModel(context.Background(), &gitea.Repository{
+		ID:          1,
+		Name:        "example",
+		HasProjects: true,
+	}, &state)
+
+	opts := buildEditRepoOption(context.Background(), &planned)
+	if opts.HasProjects == nil {
+		t.Fatal("expected HasProjects to be forwarded to EditRepo")
+	}
+	if *opts.HasProjects {
+		t.Fatal("expected EditRepo to preserve planned has_projects=false")
+	}
+}
+
 func TestAccRepositoryResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -225,6 +247,33 @@ resource "gitea_repository" "test" {
 	description = "repo with wiki disabled"
 	private     = true
 	has_wiki    = false
+}
+`, name)
+}
+func TestAccRepositoryResource_ExplicitlyDisablesProjects(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRepositoryResourceConfigProjectsDisabled("test-repo-projects-disabled"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-projects-disabled"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "has_projects", "false"),
+				),
+			},
+		},
+	})
+}
+
+func testAccRepositoryResourceConfigProjectsDisabled(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "gitea_repository" "test" {
+	username     = "root"
+	name         = %[1]q
+	description  = "repo with projects disabled"
+	private      = true
+	has_projects = false
 }
 `, name)
 }
