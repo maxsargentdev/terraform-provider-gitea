@@ -45,11 +45,11 @@ type repositoryResourceModel struct {
 	Archived      types.Bool   `tfsdk:"archived"`
 
 	// Optional - Creation only settings
-	AutoInit    types.Bool   `tfsdk:"auto_init"`
-	Gitignores  types.String `tfsdk:"gitignores"`
-	IssueLabels types.String `tfsdk:"issue_labels"`
-	License     types.String `tfsdk:"license"`
-	Readme      types.String `tfsdk:"readme"`
+	AutoInit     types.Bool   `tfsdk:"auto_init"`
+	Gitignores   types.String `tfsdk:"gitignores"`
+	IssueLabels  types.String `tfsdk:"issue_labels"`
+	License      types.String `tfsdk:"license"`
+	Readme       types.String `tfsdk:"readme"`
 	RepoTemplate types.Bool   `tfsdk:"repo_template"`
 
 	// Optional - Feature flags
@@ -68,19 +68,19 @@ type repositoryResourceModel struct {
 	IgnoreWhitespaceConflicts types.Bool `tfsdk:"ignore_whitespace_conflicts"`
 
 	// Optional - Migration settings
-	MigrationCloneAddress         types.String `tfsdk:"migration_clone_address"`
-	MigrationCloneAddresse        types.String `tfsdk:"migration_clone_addresse"` // Deprecated
-	MigrationService              types.String `tfsdk:"migration_service"`
-	MigrationServiceAuthUsername  types.String `tfsdk:"migration_service_auth_username"`
-	MigrationServiceAuthPassword  types.String `tfsdk:"migration_service_auth_password"`
-	MigrationServiceAuthToken     types.String `tfsdk:"migration_service_auth_token"`
-	MigrationIssueLabels          types.Bool   `tfsdk:"migration_issue_labels"`
-	MigrationLfs                  types.Bool   `tfsdk:"migration_lfs"`
-	MigrationLfsEndpoint          types.String `tfsdk:"migration_lfs_endpoint"`
-	MigrationMilestones           types.Bool   `tfsdk:"migration_milestones"`
-	MigrationMirrorInterval       types.String `tfsdk:"migration_mirror_interval"`
-	MigrationReleases             types.Bool   `tfsdk:"migration_releases"`
-	Mirror                        types.Bool   `tfsdk:"mirror"`
+	MigrationCloneAddress        types.String `tfsdk:"migration_clone_address"`
+	MigrationCloneAddresse       types.String `tfsdk:"migration_clone_addresse"` // Deprecated
+	MigrationService             types.String `tfsdk:"migration_service"`
+	MigrationServiceAuthUsername types.String `tfsdk:"migration_service_auth_username"`
+	MigrationServiceAuthPassword types.String `tfsdk:"migration_service_auth_password"`
+	MigrationServiceAuthToken    types.String `tfsdk:"migration_service_auth_token"`
+	MigrationIssueLabels         types.Bool   `tfsdk:"migration_issue_labels"`
+	MigrationLfs                 types.Bool   `tfsdk:"migration_lfs"`
+	MigrationLfsEndpoint         types.String `tfsdk:"migration_lfs_endpoint"`
+	MigrationMilestones          types.Bool   `tfsdk:"migration_milestones"`
+	MigrationMirrorInterval      types.String `tfsdk:"migration_mirror_interval"`
+	MigrationReleases            types.Bool   `tfsdk:"migration_releases"`
+	Mirror                       types.Bool   `tfsdk:"mirror"`
 
 	// Optional - Destroy behavior
 	ArchiveOnDestroy types.Bool `tfsdk:"archive_on_destroy"`

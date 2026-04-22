@@ -43,49 +43,49 @@ func TestBuildEditRepoOption_SetsMirrorIntervalForMirror(t *testing.T) {
 	}
 }
 
-	func TestBuildEditRepoOption_PreservesExplicitFeatureFlagsFromPlan(t *testing.T) {
-		planned := repositoryResourceModel{
-			Name:      types.StringValue("example"),
-			HasIssues: types.BoolValue(false),
-		}
-
-		state := planned
-		mapRepositoryToModel(context.Background(), &gitea.Repository{
-			ID:        1,
-			Name:      "example",
-			HasIssues: true,
-		}, &state)
-
-		opts := buildEditRepoOption(context.Background(), &planned)
-		if opts.HasIssues == nil {
-			t.Fatal("expected HasIssues to be forwarded to EditRepo")
-		}
-		if *opts.HasIssues {
-			t.Fatal("expected EditRepo to preserve planned has_issues=false")
-		}
+func TestBuildEditRepoOption_PreservesExplicitFeatureFlagsFromPlan(t *testing.T) {
+	planned := repositoryResourceModel{
+		Name:      types.StringValue("example"),
+		HasIssues: types.BoolValue(false),
 	}
 
-	func TestBuildEditRepoOption_PreservesExplicitHasWikiFromPlan(t *testing.T) {
-		planned := repositoryResourceModel{
-			Name:    types.StringValue("example"),
-			HasWiki: types.BoolValue(false),
-		}
+	state := planned
+	mapRepositoryToModel(context.Background(), &gitea.Repository{
+		ID:        1,
+		Name:      "example",
+		HasIssues: true,
+	}, &state)
 
-		state := planned
-		mapRepositoryToModel(context.Background(), &gitea.Repository{
-			ID:      1,
-			Name:    "example",
-			HasWiki: true,
-		}, &state)
-
-		opts := buildEditRepoOption(context.Background(), &planned)
-		if opts.HasWiki == nil {
-			t.Fatal("expected HasWiki to be forwarded to EditRepo")
-		}
-		if *opts.HasWiki {
-			t.Fatal("expected EditRepo to preserve planned has_wiki=false")
-		}
+	opts := buildEditRepoOption(context.Background(), &planned)
+	if opts.HasIssues == nil {
+		t.Fatal("expected HasIssues to be forwarded to EditRepo")
 	}
+	if *opts.HasIssues {
+		t.Fatal("expected EditRepo to preserve planned has_issues=false")
+	}
+}
+
+func TestBuildEditRepoOption_PreservesExplicitHasWikiFromPlan(t *testing.T) {
+	planned := repositoryResourceModel{
+		Name:    types.StringValue("example"),
+		HasWiki: types.BoolValue(false),
+	}
+
+	state := planned
+	mapRepositoryToModel(context.Background(), &gitea.Repository{
+		ID:      1,
+		Name:    "example",
+		HasWiki: true,
+	}, &state)
+
+	opts := buildEditRepoOption(context.Background(), &planned)
+	if opts.HasWiki == nil {
+		t.Fatal("expected HasWiki to be forwarded to EditRepo")
+	}
+	if *opts.HasWiki {
+		t.Fatal("expected EditRepo to preserve planned has_wiki=false")
+	}
+}
 
 func TestBuildEditRepoOption_PreservesExplicitHasProjectsFromPlan(t *testing.T) {
 	planned := repositoryResourceModel{
@@ -160,7 +160,8 @@ resource "gitea_repository" "test" {
 // Regression test for https://github.com/maxsargentdev/terraform-provider-gitea/issues/16
 // Creates a non-mirror repo with feature flags set, which forces the post-create
 // EditRepo path. Prior to the fix this failed with:
-//   "repo is not a mirror, can not change mirror interval"
+//
+//	"repo is not a mirror, can not change mirror interval"
 func TestAccRepositoryResource_NonMirrorWithEditSettings(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
