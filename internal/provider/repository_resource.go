@@ -45,11 +45,11 @@ type repositoryResourceModel struct {
 	Archived      types.Bool   `tfsdk:"archived"`
 
 	// Optional - Creation only settings
-	AutoInit    types.Bool   `tfsdk:"auto_init"`
-	Gitignores  types.String `tfsdk:"gitignores"`
-	IssueLabels types.String `tfsdk:"issue_labels"`
-	License     types.String `tfsdk:"license"`
-	Readme      types.String `tfsdk:"readme"`
+	AutoInit     types.Bool   `tfsdk:"auto_init"`
+	Gitignores   types.String `tfsdk:"gitignores"`
+	IssueLabels  types.String `tfsdk:"issue_labels"`
+	License      types.String `tfsdk:"license"`
+	Readme       types.String `tfsdk:"readme"`
 	RepoTemplate types.Bool   `tfsdk:"repo_template"`
 
 	// Optional - Feature flags
@@ -68,19 +68,19 @@ type repositoryResourceModel struct {
 	IgnoreWhitespaceConflicts types.Bool `tfsdk:"ignore_whitespace_conflicts"`
 
 	// Optional - Migration settings
-	MigrationCloneAddress         types.String `tfsdk:"migration_clone_address"`
-	MigrationCloneAddresse        types.String `tfsdk:"migration_clone_addresse"` // Deprecated
-	MigrationService              types.String `tfsdk:"migration_service"`
-	MigrationServiceAuthUsername  types.String `tfsdk:"migration_service_auth_username"`
-	MigrationServiceAuthPassword  types.String `tfsdk:"migration_service_auth_password"`
-	MigrationServiceAuthToken     types.String `tfsdk:"migration_service_auth_token"`
-	MigrationIssueLabels          types.Bool   `tfsdk:"migration_issue_labels"`
-	MigrationLfs                  types.Bool   `tfsdk:"migration_lfs"`
-	MigrationLfsEndpoint          types.String `tfsdk:"migration_lfs_endpoint"`
-	MigrationMilestones           types.Bool   `tfsdk:"migration_milestones"`
-	MigrationMirrorInterval       types.String `tfsdk:"migration_mirror_interval"`
-	MigrationReleases             types.Bool   `tfsdk:"migration_releases"`
-	Mirror                        types.Bool   `tfsdk:"mirror"`
+	MigrationCloneAddress        types.String `tfsdk:"migration_clone_address"`
+	MigrationCloneAddresse       types.String `tfsdk:"migration_clone_addresse"` // Deprecated
+	MigrationService             types.String `tfsdk:"migration_service"`
+	MigrationServiceAuthUsername types.String `tfsdk:"migration_service_auth_username"`
+	MigrationServiceAuthPassword types.String `tfsdk:"migration_service_auth_password"`
+	MigrationServiceAuthToken    types.String `tfsdk:"migration_service_auth_token"`
+	MigrationIssueLabels         types.Bool   `tfsdk:"migration_issue_labels"`
+	MigrationLfs                 types.Bool   `tfsdk:"migration_lfs"`
+	MigrationLfsEndpoint         types.String `tfsdk:"migration_lfs_endpoint"`
+	MigrationMilestones          types.Bool   `tfsdk:"migration_milestones"`
+	MigrationMirrorInterval      types.String `tfsdk:"migration_mirror_interval"`
+	MigrationReleases            types.Bool   `tfsdk:"migration_releases"`
+	Mirror                       types.Bool   `tfsdk:"mirror"`
 
 	// Optional - Destroy behavior
 	ArchiveOnDestroy types.Bool `tfsdk:"archive_on_destroy"`
@@ -540,6 +540,8 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
+	desired := plan
+
 	username := plan.Username.ValueString()
 
 	// Check if this is a migration
@@ -626,12 +628,13 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Map response to state
-	mapRepositoryToModel(ctx, repo, &plan)
-	plan.Username = types.StringValue(username)
+	state := desired
+	mapRepositoryToModel(ctx, repo, &state)
+	state.Username = types.StringValue(username)
 
 	// If additional edit-only settings were specified, apply them now
-	if needsPostCreateUpdate(&plan) {
-		editOpts := buildEditRepoOption(ctx, &plan)
+	if needsPostCreateUpdate(&desired) {
+		editOpts := buildEditRepoOption(ctx, &desired)
 		repo, _, err = r.client.EditRepo(username, repo.Name, editOpts)
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -640,11 +643,11 @@ func (r *repositoryResource) Create(ctx context.Context, req resource.CreateRequ
 			)
 			return
 		}
-		mapRepositoryToModel(ctx, repo, &plan)
-		plan.Username = types.StringValue(username)
+		mapRepositoryToModel(ctx, repo, &state)
+		state.Username = types.StringValue(username)
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 // needsPostCreateUpdate checks if any edit-only fields were specified that need to be applied after creation
@@ -729,7 +732,11 @@ func buildEditRepoOption(ctx context.Context, plan *repositoryResourceModel) git
 	if !plan.Archived.IsNull() {
 		editOpts.Archived = plan.Archived.ValueBoolPointer()
 	}
-	if !plan.MigrationMirrorInterval.IsNull() {
+	// MirrorInterval is only valid for mirror repositories. Gitea returns a
+	// default value (e.g. "8h0m0s") for non-mirror repos, so the field is
+	// never null after Read; we must gate on the actual mirror state to avoid
+	// "repo is not a mirror, can not change mirror interval" errors.
+	if plan.Mirror.ValueBool() && !plan.MigrationMirrorInterval.IsNull() && !plan.MigrationMirrorInterval.IsUnknown() {
 		editOpts.MirrorInterval = plan.MigrationMirrorInterval.ValueStringPointer()
 	}
 
