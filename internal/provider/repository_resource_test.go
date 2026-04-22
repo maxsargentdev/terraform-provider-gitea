@@ -65,6 +65,28 @@ func TestBuildEditRepoOption_SetsMirrorIntervalForMirror(t *testing.T) {
 		}
 	}
 
+	func TestBuildEditRepoOption_PreservesExplicitHasWikiFromPlan(t *testing.T) {
+		planned := repositoryResourceModel{
+			Name:    types.StringValue("example"),
+			HasWiki: types.BoolValue(false),
+		}
+
+		state := planned
+		mapRepositoryToModel(context.Background(), &gitea.Repository{
+			ID:      1,
+			Name:    "example",
+			HasWiki: true,
+		}, &state)
+
+		opts := buildEditRepoOption(context.Background(), &planned)
+		if opts.HasWiki == nil {
+			t.Fatal("expected HasWiki to be forwarded to EditRepo")
+		}
+		if *opts.HasWiki {
+			t.Fatal("expected EditRepo to preserve planned has_wiki=false")
+		}
+	}
+
 func TestAccRepositoryResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -152,6 +174,22 @@ func TestAccRepositoryResource_ExplicitlyDisablesIssues(t *testing.T) {
 	})
 }
 
+func TestAccRepositoryResource_ExplicitlyDisablesWiki(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRepositoryResourceConfigWikiDisabled("test-repo-wiki-disabled"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-wiki-disabled"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "has_wiki", "false"),
+				),
+			},
+		},
+	})
+}
+
 func testAccRepositoryResourceConfigNonMirror(name string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "gitea_repository" "test" {
@@ -175,6 +213,18 @@ resource "gitea_repository" "test" {
 	description = "repo with issues disabled"
 	private     = true
 	has_issues  = false
+}
+`, name)
+}
+
+func testAccRepositoryResourceConfigWikiDisabled(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "gitea_repository" "test" {
+	username    = "root"
+	name        = %[1]q
+	description = "repo with wiki disabled"
+	private     = true
+	has_wiki    = false
 }
 `, name)
 }
