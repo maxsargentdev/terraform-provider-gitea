@@ -729,7 +729,9 @@ func buildEditRepoOption(ctx context.Context, plan *repositoryResourceModel) git
 	}
 
 	// Other settings
-	if !plan.Archived.IsNull() {
+	// Gitea does not allow archiving/un-archiving mirror repositories, so skip
+	// the Archived field when the repository is a mirror.
+	if !plan.Archived.IsNull() && !plan.Mirror.ValueBool() {
 		editOpts.Archived = plan.Archived.ValueBoolPointer()
 	}
 	// MirrorInterval is only valid for mirror repositories. Gitea returns a

@@ -43,6 +43,37 @@ func TestBuildEditRepoOption_SetsMirrorIntervalForMirror(t *testing.T) {
 	}
 }
 
+// Regression test: Gitea rejects archive/un-archive on mirror repos.
+// buildEditRepoOption must not set Archived when the plan marks the repo as a mirror.
+func TestBuildEditRepoOption_SkipsArchivedForMirrorRepo(t *testing.T) {
+	archived := true
+	plan := &repositoryResourceModel{
+		Name:     types.StringValue("example"),
+		Mirror:   types.BoolValue(true),
+		Archived: types.BoolValue(archived),
+	}
+	opts := buildEditRepoOption(context.Background(), plan)
+	if opts.Archived != nil {
+		t.Fatalf("expected Archived to be nil for mirror repo, got %v", *opts.Archived)
+	}
+}
+
+// Archived must still be forwarded for non-mirror repos.
+func TestBuildEditRepoOption_SetsArchivedForNonMirrorRepo(t *testing.T) {
+	plan := &repositoryResourceModel{
+		Name:     types.StringValue("example"),
+		Mirror:   types.BoolValue(false),
+		Archived: types.BoolValue(true),
+	}
+	opts := buildEditRepoOption(context.Background(), plan)
+	if opts.Archived == nil {
+		t.Fatal("expected Archived to be set for non-mirror repo")
+	}
+	if !*opts.Archived {
+		t.Fatal("expected Archived to be true for non-mirror repo")
+	}
+}
+
 func TestBuildEditRepoOption_PreservesExplicitFeatureFlagsFromPlan(t *testing.T) {
 	planned := repositoryResourceModel{
 		Name:      types.StringValue("example"),
@@ -275,6 +306,43 @@ resource "gitea_repository" "test" {
 	description  = "repo with projects disabled"
 	private      = true
 	has_projects = false
+}
+`, name)
+}
+
+// Regression test: creating a mirror repo with archived=false must not fail with
+// "repo is a mirror, cannot archive/un-archive". Prior to the fix, the post-create
+// EditRepo call unconditionally forwarded the Archived field, which Gitea rejects
+// for mirror repositories.
+func TestAccRepositoryResource_MirrorRepoWithArchivedFalse(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRepositoryResourceConfigMirror("test-mirror-archived-false"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-mirror-archived-false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "mirror", "true"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "archived", "false"),
+				),
+			},
+		},
+	})
+}
+
+func testAccRepositoryResourceConfigMirror(name string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "gitea_repository" "test" {
+  username                = "root"
+  name                    = %[1]q
+  description             = "mirror repo regression test"
+  private                 = true
+  migration_clone_address = "https://github.com/octocat/Hello-World.git"
+  migration_service       = "git"
+  mirror                  = true
+  archived                = false
+  default_branch          = "master"
 }
 `, name)
 }
