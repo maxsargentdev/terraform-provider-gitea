@@ -22,6 +22,7 @@ func NewOrgDataSource() datasource.DataSource {
 func mapOrgToDataSourceModel(org *gitea.Organization, model *orgDataSourceModel) {
 	model.Id = types.Int64Value(org.ID)
 	model.Name = types.StringValue(org.UserName)
+	model.Org = types.StringValue(org.UserName)
 	model.FullName = types.StringValue(org.FullName)
 	model.Description = types.StringValue(org.Description)
 	model.Website = types.StringValue(org.Website)
@@ -44,6 +45,7 @@ type orgDataSourceModel struct {
 	Id                        types.Int64  `tfsdk:"id"`
 	Location                  types.String `tfsdk:"location"`
 	Name                      types.String `tfsdk:"name"`
+	Org                       types.String `tfsdk:"org"`
 	RepoAdminChangeTeamAccess types.Bool   `tfsdk:"repo_admin_change_team_access"`
 	Visibility                types.String `tfsdk:"visibility"`
 	Website                   types.String `tfsdk:"website"`
@@ -58,11 +60,18 @@ func (d *orgDataSource) Schema(ctx context.Context, req datasource.SchemaRequest
 		Description:         "Use this data source to retrieve information about an existing Gitea organization.",
 		MarkdownDescription: "Use this data source to retrieve information about an existing Gitea organization.",
 		Attributes: map[string]schema.Attribute{
-			// Required input
+			// Required input (one of name or org)
 			"name": schema.StringAttribute{
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 				Description:         "The name of the organization to look up.",
 				MarkdownDescription: "The name of the organization to look up.",
+			},
+			"org": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Deprecated alias for name. Use name instead.",
+				MarkdownDescription: "Deprecated alias for `name`. Use `name` instead.",
 			},
 
 			// Computed outputs
@@ -141,6 +150,16 @@ func (d *orgDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	}
 
 	orgName := data.Name.ValueString()
+	if orgName == "" {
+		orgName = data.Org.ValueString()
+	}
+	if orgName == "" {
+		resp.Diagnostics.AddError(
+			"Missing Organization Name",
+			"Either name or org must be set.",
+		)
+		return
+	}
 
 	// Get org from Gitea API
 	org, httpResp, err := d.client.GetOrg(orgName)

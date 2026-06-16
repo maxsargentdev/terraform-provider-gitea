@@ -30,13 +30,13 @@ func TestAccOrgDataSource(t *testing.T) {
 func testAccOrgDataSourceConfig(username, fullName string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "gitea_org" "test" {
-  username   = %[1]q
+	username   = %[1]q
   full_name  = %[2]q
   visibility = "public"
 }
 
 data "gitea_org" "test" {
-  org = gitea_org.test.username
+	org = gitea_org.test.username
 }
 `, username, fullName)
 }

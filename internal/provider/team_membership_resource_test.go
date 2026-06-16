@@ -34,7 +34,7 @@ func TestAccTeamMembershipResource(t *testing.T) {
 					}
 					teamID := rs.Primary.Attributes["team_id"]
 					username := rs.Primary.Attributes["username"]
-					return fmt.Sprintf("%s:%s", teamID, username), nil
+					return fmt.Sprintf("%s/%s", teamID, username), nil
 				},
 			},
 		},
@@ -44,7 +44,7 @@ func TestAccTeamMembershipResource(t *testing.T) {
 func testAccTeamMembershipResourceConfig() string {
 	return providerConfig() + `
 resource "gitea_org" "test_org" {
-  username   = "testorg"
+	name       = "testorg"
   full_name  = "Test Organization"
   visibility = "public"
 }
@@ -66,10 +66,11 @@ resource "gitea_team" "test" {
 }
 
 resource "gitea_user" "test" {
-  username  = "testuser"
-  email     = "testuser@example.com"
-  password  = "testpass123"
-  full_name = "Test User"
+	username   = "testuser"
+	login_name = "testuser"
+	email      = "testuser@example.com"
+	password   = "testpass123"
+	full_name  = "Test User"
 }
 
 resource "gitea_team_membership" "test" {

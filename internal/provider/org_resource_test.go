@@ -62,17 +62,17 @@ func TestAccOrgResource_WithDescription(t *testing.T) {
 	})
 }
 
-func testAccOrgResourceConfig(username, fullName, visibility string) string {
+func testAccOrgResourceConfig(name, fullName, visibility string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "gitea_org" "test" {
   username   = %[1]q
   full_name  = %[2]q
   visibility = %[3]q
 }
-`, username, fullName, visibility)
+`, name, fullName, visibility)
 }
 
-func testAccOrgResourceConfigWithDescription(username, fullName, description, visibility string) string {
+func testAccOrgResourceConfigWithDescription(name, fullName, description, visibility string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "gitea_org" "test" {
   username    = %[1]q
@@ -80,5 +80,5 @@ resource "gitea_org" "test" {
   description = %[3]q
   visibility  = %[4]q
 }
-`, username, fullName, description, visibility)
+`, name, fullName, description, visibility)
 }

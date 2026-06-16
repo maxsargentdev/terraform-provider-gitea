@@ -59,13 +59,14 @@ type repositoryResourceModel struct {
 	HasProjects     types.Bool `tfsdk:"has_projects"`
 
 	// Optional - Merge settings
-	AllowMergeCommits         types.Bool `tfsdk:"allow_merge_commits"`
-	AllowRebase               types.Bool `tfsdk:"allow_rebase"`
-	AllowRebaseExplicit       types.Bool `tfsdk:"allow_rebase_explicit"`
-	AllowSquashMerge          types.Bool `tfsdk:"allow_squash_merge"`
-	AllowManualMerge          types.Bool `tfsdk:"allow_manual_merge"`
-	AutodetectManualMerge     types.Bool `tfsdk:"autodetect_manual_merge"`
-	IgnoreWhitespaceConflicts types.Bool `tfsdk:"ignore_whitespace_conflicts"`
+	AllowMergeCommits         types.Bool   `tfsdk:"allow_merge_commits"`
+	AllowRebase               types.Bool   `tfsdk:"allow_rebase"`
+	AllowRebaseExplicit       types.Bool   `tfsdk:"allow_rebase_explicit"`
+	AllowSquashMerge          types.Bool   `tfsdk:"allow_squash_merge"`
+	AllowManualMerge          types.Bool   `tfsdk:"allow_manual_merge"`
+	AutodetectManualMerge     types.Bool   `tfsdk:"autodetect_manual_merge"`
+	IgnoreWhitespaceConflicts types.Bool   `tfsdk:"ignore_whitespace_conflicts"`
+	DefaultMergeStyle         types.String `tfsdk:"default_merge_style"`
 
 	// Optional - Migration settings
 	MigrationCloneAddress        types.String `tfsdk:"migration_clone_address"`
@@ -270,6 +271,15 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 				Computed:            true,
 				Description:         "Whether to ignore whitespace conflicts.",
 				MarkdownDescription: "Whether to ignore whitespace conflicts.",
+			},
+			"default_merge_style": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The default merge style for pull requests. One of: merge, rebase, rebase-merge, squash, or fast-forward-only.",
+				MarkdownDescription: "The default merge style for pull requests. One of: `merge`, `rebase`, `rebase-merge`, `squash`, or `fast-forward-only`.",
+				Validators: []validator.String{
+					stringvalidator.OneOf("merge", "rebase", "rebase-merge", "squash", "fast-forward-only"),
+				},
 			},
 
 			// ==================== OPTIONAL - Migration Settings ====================
@@ -489,6 +499,11 @@ func mapRepositoryToModel(ctx context.Context, repo *gitea.Repository, model *re
 	model.AllowRebase = types.BoolValue(repo.AllowRebase)
 	model.AllowRebaseExplicit = types.BoolValue(repo.AllowRebaseMerge)
 	model.AllowSquashMerge = types.BoolValue(repo.AllowSquash)
+	if repo.DefaultMergeStyle != "" {
+		model.DefaultMergeStyle = types.StringValue(string(repo.DefaultMergeStyle))
+	} else {
+		model.DefaultMergeStyle = types.StringNull()
+	}
 
 	// Creation-only fields - preserve from existing model if unknown/null (not returned by API after creation)
 	if model.AutoInit.IsUnknown() {
@@ -662,6 +677,7 @@ func needsPostCreateUpdate(plan *repositoryResourceModel) bool {
 		!plan.AllowRebase.IsNull() ||
 		!plan.AllowRebaseExplicit.IsNull() ||
 		!plan.AllowSquashMerge.IsNull() ||
+		!plan.DefaultMergeStyle.IsNull() ||
 		!plan.Archived.IsNull() ||
 		!plan.AllowManualMerge.IsNull() ||
 		!plan.AutodetectManualMerge.IsNull()
@@ -709,17 +725,22 @@ func buildEditRepoOption(ctx context.Context, plan *repositoryResourceModel) git
 	if !plan.IgnoreWhitespaceConflicts.IsNull() {
 		editOpts.IgnoreWhitespaceConflicts = plan.IgnoreWhitespaceConflicts.ValueBoolPointer()
 	}
-	if !plan.AllowMergeCommits.IsNull() {
+	if !plan.AllowMergeCommits.IsNull() && !plan.AllowMergeCommits.IsUnknown() {
 		editOpts.AllowMerge = plan.AllowMergeCommits.ValueBoolPointer()
 	}
-	if !plan.AllowRebase.IsNull() {
+	if !plan.AllowRebase.IsNull() && !plan.AllowRebase.IsUnknown() {
 		editOpts.AllowRebase = plan.AllowRebase.ValueBoolPointer()
 	}
-	if !plan.AllowRebaseExplicit.IsNull() {
+	if !plan.AllowRebaseExplicit.IsNull() && !plan.AllowRebaseExplicit.IsUnknown() {
 		editOpts.AllowRebaseMerge = plan.AllowRebaseExplicit.ValueBoolPointer()
 	}
-	if !plan.AllowSquashMerge.IsNull() {
+	if !plan.AllowSquashMerge.IsNull() && !plan.AllowSquashMerge.IsUnknown() {
 		editOpts.AllowSquash = plan.AllowSquashMerge.ValueBoolPointer()
+	}
+	if !plan.DefaultMergeStyle.IsNull() && !plan.DefaultMergeStyle.IsUnknown() {
+		styleStr := plan.DefaultMergeStyle.ValueString()
+		style := gitea.MergeStyle(styleStr)
+		editOpts.DefaultMergeStyle = &style
 	}
 	if !plan.AllowManualMerge.IsNull() {
 		editOpts.AllowManualMerge = plan.AllowManualMerge.ValueBoolPointer()
