@@ -275,10 +275,10 @@ func (r *repositoryResource) Schema(ctx context.Context, _ resource.SchemaReques
 			"default_merge_style": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The default merge style for pull requests. One of: merge, rebase, rebase-merge, rebase-ff, squash, or fast-forward-only.",
-				MarkdownDescription: "The default merge style for pull requests. One of: `merge`, `rebase`, `rebase-merge`, `rebase-ff`, `squash`, or `fast-forward-only`.",
+				Description:         "The default merge style for pull requests. One of: merge, rebase, rebase-merge, squash, or fast-forward-only.",
+				MarkdownDescription: "The default merge style for pull requests. One of: `merge`, `rebase`, `rebase-merge`, `squash`, or `fast-forward-only`.",
 				Validators: []validator.String{
-					stringvalidator.OneOf("merge", "rebase", "rebase-merge", "rebase-ff", "squash", "fast-forward-only"),
+					stringvalidator.OneOf("merge", "rebase", "rebase-merge", "squash", "fast-forward-only"),
 				},
 			},
 

@@ -142,8 +142,8 @@ func TestBuildEditRepoOption_PreservesExplicitHasProjectsFromPlan(t *testing.T) 
 
 func TestBuildEditRepoOption_SetsDefaultMergeStyle(t *testing.T) {
 	plan := &repositoryResourceModel{
-		Name:               types.StringValue("example"),
-		DefaultMergeStyle:  types.StringValue("rebase"),
+		Name:              types.StringValue("example"),
+		DefaultMergeStyle: types.StringValue("rebase"),
 	}
 	opts := buildEditRepoOption(context.Background(), plan)
 	if opts.DefaultMergeStyle == nil || string(*opts.DefaultMergeStyle) != "rebase" {
@@ -155,19 +155,19 @@ func TestBuildEditRepoOption_SetsDefaultMergeStyle(t *testing.T) {
 	}
 }
 
-func TestBuildEditRepoOption_SetsDefaultMergeStyleRebaseFF(t *testing.T) {
+func TestBuildEditRepoOption_SetsDefaultMergeStyleFastForwardOnly(t *testing.T) {
 	plan := &repositoryResourceModel{
 		Name:              types.StringValue("example"),
-		DefaultMergeStyle: types.StringValue("rebase-ff"),
+		DefaultMergeStyle: types.StringValue("fast-forward-only"),
 	}
 
 	opts := buildEditRepoOption(context.Background(), plan)
-	if opts.DefaultMergeStyle == nil || string(*opts.DefaultMergeStyle) != "rebase-ff" {
+	if opts.DefaultMergeStyle == nil || string(*opts.DefaultMergeStyle) != "fast-forward-only" {
 		got := "<nil>"
 		if opts.DefaultMergeStyle != nil {
 			got = string(*opts.DefaultMergeStyle)
 		}
-		t.Fatalf("expected DefaultMergeStyle %q, got %s", "rebase-ff", got)
+		t.Fatalf("expected DefaultMergeStyle %q, got %s", "fast-forward-only", got)
 	}
 }
 
@@ -184,12 +184,12 @@ func TestBuildEditRepoOption_SkipsDefaultMergeStyleWhenNull(t *testing.T) {
 
 func TestBuildEditRepoOption_SetsMergeOptions(t *testing.T) {
 	plan := &repositoryResourceModel{
-		Name:               types.StringValue("example"),
-		AllowMergeCommits:  types.BoolValue(false),
-		AllowRebase:        types.BoolValue(true),
+		Name:                types.StringValue("example"),
+		AllowMergeCommits:   types.BoolValue(false),
+		AllowRebase:         types.BoolValue(true),
 		AllowRebaseExplicit: types.BoolValue(false),
-		AllowSquashMerge:   types.BoolValue(false),
-		DefaultMergeStyle:  types.StringValue("rebase-merge"),
+		AllowSquashMerge:    types.BoolValue(false),
+		DefaultMergeStyle:   types.StringValue("rebase-merge"),
 	}
 
 	opts := buildEditRepoOption(context.Background(), plan)
@@ -477,9 +477,9 @@ func TestAccRepositoryResource_MergeOptionsCreateAndUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("gitea_repository.test", "default_merge_style", "rebase-merge"),
 				),
 			},
-			// Change merge style to rebase-ff and verify it persists.
+			// Change merge style to fast-forward-only and verify it persists.
 			{
-				Config: testAccRepositoryResourceConfigWithMergeOptions("test-repo-merge-options", "rebase-ff"),
+				Config: testAccRepositoryResourceConfigWithMergeOptions("test-repo-merge-options", "fast-forward-only"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-merge-options"),
 					resource.TestCheckResourceAttr("gitea_repository.test", "has_pull_requests", "true"),
@@ -487,7 +487,7 @@ func TestAccRepositoryResource_MergeOptionsCreateAndUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("gitea_repository.test", "allow_rebase", "true"),
 					resource.TestCheckResourceAttr("gitea_repository.test", "allow_rebase_explicit", "false"),
 					resource.TestCheckResourceAttr("gitea_repository.test", "allow_squash_merge", "false"),
-					resource.TestCheckResourceAttr("gitea_repository.test", "default_merge_style", "rebase-ff"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "default_merge_style", "fast-forward-only"),
 				),
 			},
 		},
