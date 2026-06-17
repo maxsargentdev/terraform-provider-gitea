@@ -477,6 +477,19 @@ func TestAccRepositoryResource_MergeOptionsCreateAndUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("gitea_repository.test", "default_merge_style", "rebase-merge"),
 				),
 			},
+			// Change merge style to rebase-ff and verify it persists.
+			{
+				Config: testAccRepositoryResourceConfigWithMergeOptions("test-repo-merge-options", "rebase-ff"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-merge-options"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "has_pull_requests", "true"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_merge_commits", "false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_rebase", "true"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_rebase_explicit", "false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_squash_merge", "false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "default_merge_style", "rebase-ff"),
+				),
+			},
 		},
 	})
 }
