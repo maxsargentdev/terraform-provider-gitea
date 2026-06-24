@@ -47,10 +47,11 @@ func TestAccUserResource(t *testing.T) {
 func testAccUserResourceConfig(username, email, password, fullName string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "gitea_user" "test" {
-  username  = %[1]q
-  email     = %[2]q
-  password  = %[3]q
-  full_name = %[4]q
+	username   = %[1]q
+	login_name = %[1]q
+	email      = %[2]q
+	password   = %[3]q
+	full_name  = %[4]q
 }
 `, username, email, password, fullName)
 }

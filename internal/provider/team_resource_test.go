@@ -103,7 +103,7 @@ func TestAccTeamResourcePermissionsFormat(t *testing.T) {
 func testAccTeamResourceConfig(name, description, permission string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "gitea_org" "test_org" {
-  username   = "testorg"
+	name       = "testorg"
   full_name  = "Test Organization"
   visibility = "public"
 }
@@ -127,7 +127,7 @@ resource "gitea_team" "test" {
 func testAccTeamResourceConfigWithUnitsMap(name, description string) string {
 	return providerConfig() + fmt.Sprintf(`
 resource "gitea_org" "test_org" {
-  username   = "testorg"
+	name       = "testorg"
   full_name  = "Test Organization"
   visibility = "public"
 }

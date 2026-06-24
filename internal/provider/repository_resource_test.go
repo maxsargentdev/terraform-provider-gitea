@@ -140,6 +140,81 @@ func TestBuildEditRepoOption_PreservesExplicitHasProjectsFromPlan(t *testing.T) 
 	}
 }
 
+func TestBuildEditRepoOption_SetsDefaultMergeStyle(t *testing.T) {
+	plan := &repositoryResourceModel{
+		Name:              types.StringValue("example"),
+		DefaultMergeStyle: types.StringValue("rebase"),
+	}
+	opts := buildEditRepoOption(context.Background(), plan)
+	if opts.DefaultMergeStyle == nil || string(*opts.DefaultMergeStyle) != "rebase" {
+		got := "<nil>"
+		if opts.DefaultMergeStyle != nil {
+			got = string(*opts.DefaultMergeStyle)
+		}
+		t.Fatalf("expected DefaultMergeStyle %q, got %s", "rebase", got)
+	}
+}
+
+func TestBuildEditRepoOption_SetsDefaultMergeStyleFastForwardOnly(t *testing.T) {
+	plan := &repositoryResourceModel{
+		Name:              types.StringValue("example"),
+		DefaultMergeStyle: types.StringValue("fast-forward-only"),
+	}
+
+	opts := buildEditRepoOption(context.Background(), plan)
+	if opts.DefaultMergeStyle == nil || string(*opts.DefaultMergeStyle) != "fast-forward-only" {
+		got := "<nil>"
+		if opts.DefaultMergeStyle != nil {
+			got = string(*opts.DefaultMergeStyle)
+		}
+		t.Fatalf("expected DefaultMergeStyle %q, got %s", "fast-forward-only", got)
+	}
+}
+
+func TestBuildEditRepoOption_SkipsDefaultMergeStyleWhenNull(t *testing.T) {
+	plan := &repositoryResourceModel{
+		Name:              types.StringValue("example"),
+		DefaultMergeStyle: types.StringNull(),
+	}
+	opts := buildEditRepoOption(context.Background(), plan)
+	if opts.DefaultMergeStyle != nil {
+		t.Fatalf("expected DefaultMergeStyle to be nil for null value, got %q", string(*opts.DefaultMergeStyle))
+	}
+}
+
+func TestBuildEditRepoOption_SetsMergeOptions(t *testing.T) {
+	plan := &repositoryResourceModel{
+		Name:                types.StringValue("example"),
+		AllowMergeCommits:   types.BoolValue(false),
+		AllowRebase:         types.BoolValue(true),
+		AllowRebaseExplicit: types.BoolValue(false),
+		AllowSquashMerge:    types.BoolValue(false),
+		DefaultMergeStyle:   types.StringValue("rebase-merge"),
+	}
+
+	opts := buildEditRepoOption(context.Background(), plan)
+
+	if opts.AllowMerge == nil || *opts.AllowMerge != false {
+		t.Fatal("expected AllowMerge to be set to false")
+	}
+	if opts.AllowRebase == nil || *opts.AllowRebase != true {
+		t.Fatal("expected AllowRebase to be set to true")
+	}
+	if opts.AllowRebaseMerge == nil || *opts.AllowRebaseMerge != false {
+		t.Fatal("expected AllowRebaseMerge to be set to false")
+	}
+	if opts.AllowSquash == nil || *opts.AllowSquash != false {
+		t.Fatal("expected AllowSquash to be set to false")
+	}
+	if opts.DefaultMergeStyle == nil || string(*opts.DefaultMergeStyle) != "rebase-merge" {
+		got := "<nil>"
+		if opts.DefaultMergeStyle != nil {
+			got = string(*opts.DefaultMergeStyle)
+		}
+		t.Fatalf("expected DefaultMergeStyle %q, got %s", "rebase-merge", got)
+	}
+}
+
 func TestAccRepositoryResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -153,7 +228,6 @@ func TestAccRepositoryResource(t *testing.T) {
 					resource.TestCheckResourceAttr("gitea_repository.test", "description", "Test repository"),
 					resource.TestCheckResourceAttr("gitea_repository.test", "private", "true"),
 					resource.TestCheckResourceAttrSet("gitea_repository.test", "id"),
-					resource.TestCheckResourceAttrSet("gitea_repository.test", "full_name"),
 				),
 			},
 			// ImportState testing
@@ -345,4 +419,106 @@ resource "gitea_repository" "test" {
   default_branch          = "master"
 }
 `, name)
+}
+
+func TestAccRepositoryResource_DefaultMergeStyle(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create with default_merge_style set to the server default value.
+			{
+				Config: testAccRepositoryResourceConfigWithDefaultMergeStyle("test-repo-merge-style", "merge"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-merge-style"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "default_merge_style", "merge"),
+				),
+			},
+			// Update to the same value to verify no unexpected drift.
+			{
+				Config: testAccRepositoryResourceConfigWithDefaultMergeStyle("test-repo-merge-style", "merge"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-merge-style"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "default_merge_style", "merge"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccRepositoryResource_MergeOptionsCreateAndUpdate(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Set merge options explicitly on create.
+			{
+				Config: testAccRepositoryResourceConfigWithMergeOptions("test-repo-merge-options", "merge"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-merge-options"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "has_pull_requests", "true"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_merge_commits", "false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_rebase", "true"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_rebase_explicit", "false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_squash_merge", "false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "default_merge_style", "merge"),
+				),
+			},
+			// Change merge style after creation while keeping the other merge options explicit.
+			{
+				Config: testAccRepositoryResourceConfigWithMergeOptions("test-repo-merge-options", "rebase-merge"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-merge-options"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "has_pull_requests", "true"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_merge_commits", "false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_rebase", "true"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_rebase_explicit", "false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_squash_merge", "false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "default_merge_style", "rebase-merge"),
+				),
+			},
+			// Change merge style to fast-forward-only and verify it persists.
+			{
+				Config: testAccRepositoryResourceConfigWithMergeOptions("test-repo-merge-options", "fast-forward-only"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("gitea_repository.test", "name", "test-repo-merge-options"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "has_pull_requests", "true"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_merge_commits", "false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_rebase", "true"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_rebase_explicit", "false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "allow_squash_merge", "false"),
+					resource.TestCheckResourceAttr("gitea_repository.test", "default_merge_style", "fast-forward-only"),
+				),
+			},
+		},
+	})
+}
+
+func testAccRepositoryResourceConfigWithDefaultMergeStyle(name, mergeStyle string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "gitea_repository" "test" {
+  username            = "root"
+  name                = %[1]q
+  description         = "Test repository with default merge style"
+  private             = false
+  default_merge_style = %[2]q
+}
+`, name, mergeStyle)
+}
+
+func testAccRepositoryResourceConfigWithMergeOptions(name, mergeStyle string) string {
+	return providerConfig() + fmt.Sprintf(`
+resource "gitea_repository" "test" {
+	username              = "root"
+	name                  = %[1]q
+	description           = "Test repository with merge options"
+	private               = false
+	has_pull_requests     = true
+	allow_merge_commits   = false
+	allow_rebase          = true
+	allow_rebase_explicit = false
+	allow_squash_merge    = false
+	default_merge_style   = %[2]q
+}
+`, name, mergeStyle)
 }

@@ -30,8 +30,9 @@ type orgResource struct {
 }
 
 type orgResourceModel struct {
-	// Required
-	Name types.String `tfsdk:"name"`
+	// Required (one of name or username)
+	Name     types.String `tfsdk:"name"`
+	Username types.String `tfsdk:"username"`
 
 	// Optional
 	Description types.String `tfsdk:"description"`
@@ -57,9 +58,19 @@ func (r *orgResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 		Attributes: map[string]schema.Attribute{
 			// Required
 			"name": schema.StringAttribute{
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 				Description:         "The name of the organization.",
 				MarkdownDescription: "The name of the organization.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"username": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Deprecated alias for name. Use name instead.",
+				MarkdownDescription: "Deprecated alias for `name`. Use `name` instead.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -165,6 +176,7 @@ func (r *orgResource) getOrgRepos(ctx context.Context, orgName string) ([]string
 func (r *orgResource) mapOrgToModel(ctx context.Context, org *gitea.Organization, model *orgResourceModel) error {
 	model.Id = types.StringValue(fmt.Sprintf("%d", org.ID))
 	model.Name = types.StringValue(org.UserName)
+	model.Username = types.StringValue(org.UserName)
 	model.Description = types.StringValue(org.Description)
 	model.FullName = types.StringValue(org.FullName)
 	model.Location = types.StringValue(org.Location)
@@ -195,8 +207,27 @@ func (r *orgResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
+	orgName := plan.Name.ValueString()
+	if orgName == "" {
+		orgName = plan.Username.ValueString()
+	}
+	if orgName == "" {
+		resp.Diagnostics.AddError(
+			"Missing Organization Name",
+			"Either name or username must be set.",
+		)
+		return
+	}
+	if !plan.Name.IsNull() && !plan.Username.IsNull() && plan.Name.ValueString() != "" && plan.Username.ValueString() != "" && plan.Name.ValueString() != plan.Username.ValueString() {
+		resp.Diagnostics.AddError(
+			"Conflicting Organization Names",
+			"name and username must match when both are set.",
+		)
+		return
+	}
+
 	createOpts := gitea.CreateOrgOption{
-		Name:        plan.Name.ValueString(),
+		Name:        orgName,
 		Description: plan.Description.ValueString(),
 		FullName:    plan.FullName.ValueString(),
 		Location:    plan.Location.ValueString(),
@@ -232,7 +263,11 @@ func (r *orgResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	org, httpResp, err := r.client.GetOrg(state.Name.ValueString())
+	orgName := state.Name.ValueString()
+	if orgName == "" {
+		orgName = state.Username.ValueString()
+	}
+	org, httpResp, err := r.client.GetOrg(orgName)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == 404 {
 			resp.State.RemoveResource(ctx)
@@ -266,6 +301,11 @@ func (r *orgResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		return
 	}
 
+	orgName := state.Name.ValueString()
+	if orgName == "" {
+		orgName = state.Username.ValueString()
+	}
+
 	editOpts := gitea.EditOrgOption{
 		Description: plan.Description.ValueString(),
 		FullName:    plan.FullName.ValueString(),
@@ -274,7 +314,7 @@ func (r *orgResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		Website:     plan.Website.ValueString(),
 	}
 
-	_, err := r.client.EditOrg(state.Name.ValueString(), editOpts)
+	_, err := r.client.EditOrg(orgName, editOpts)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Organization",
@@ -284,7 +324,7 @@ func (r *orgResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	}
 
 	// Read back the organization
-	org, _, err := r.client.GetOrg(state.Name.ValueString())
+	org, _, err := r.client.GetOrg(orgName)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Organization After Update",
@@ -312,7 +352,12 @@ func (r *orgResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 		return
 	}
 
-	_, err := r.client.DeleteOrg(state.Name.ValueString())
+	orgName := state.Name.ValueString()
+	if orgName == "" {
+		orgName = state.Username.ValueString()
+	}
+
+	_, err := r.client.DeleteOrg(orgName)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting Organization",
